@@ -67,6 +67,9 @@ def main():
                     help="Add SA + SC penalties to composite, drop above hard caps")
     ap.add_argument("--w_sa", type=float, default=1.0)
     ap.add_argument("--w_sc", type=float, default=0.5)
+    ap.add_argument("--with_chem_filter", action="store_true",
+                    help="Drop candidates failing physics/chemistry sanity "
+                         "(implausible properties, unstable motifs, bad composition)")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     ap.add_argument("--threedcnn_dir",
                     default="data/raw/energetic_external/EMDP/Data/smoke_model")
@@ -162,6 +165,16 @@ def main():
     valid_smi = [s for s, k in zip(valid_smi, keep) if k]
     cols = {p: c[keep] for p, c in cols.items()}
     print(f"  fully validated: {len(valid_smi)}")
+
+    if args.with_chem_filter and valid_smi:
+        from chem_filter import chem_filter_batch
+        keep_idx, reasons = chem_filter_batch(valid_smi, cols, pn)
+        n_dropped = len(valid_smi) - len(keep_idx)
+        from collections import Counter
+        drop_counts = Counter(r.split(":")[0] for r in reasons if r)
+        valid_smi = [valid_smi[i] for i in keep_idx]
+        cols = {p: cols[p][np.asarray(keep_idx)] for p in cols}
+        print(f"  chem_filter: kept {len(valid_smi)} / dropped {n_dropped}  reasons={dict(drop_counts)}")
 
     if not valid_smi:
         print("  no fully validated; aborting"); return 1

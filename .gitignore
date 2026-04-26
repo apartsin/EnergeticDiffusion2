@@ -1,5 +1,7 @@
 # Heavy artifacts (47+ GB total — never commit)
 data/
+!data/c2c/
+!data/c2c/**
 experiments/
 external/
 logs/

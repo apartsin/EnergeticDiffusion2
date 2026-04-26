@@ -76,6 +76,8 @@ def main():
                     help="Weight on SA penalty term in composite")
     ap.add_argument("--w_sc", type=float, default=0.5,
                     help="Weight on SC penalty term in composite")
+    ap.add_argument("--with_chem_filter", action="store_true",
+                    help="Drop candidates failing physics/chemistry sanity")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     ap.add_argument("--threedcnn_dir",
                     default="data/raw/energetic_external/EMDP/Data/smoke_model")
