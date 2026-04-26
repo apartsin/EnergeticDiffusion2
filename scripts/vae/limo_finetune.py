@@ -428,8 +428,17 @@ def main():
     log.info(f"  vocab={tok.vocab_size}  max_len={tok.max_len}")
 
     model = LIMOVAE()
-    missing, unexpected = model.load_limo_weights(limo_dir / "vae.pt", strict=True)
-    log.info(f"  weights loaded: missing={len(missing)} unexpected={len(unexpected)}")
+    init_from = cfg.get("paths", {}).get("init_from")
+    if init_from and not args.resume:
+        init_path = base / init_from if not Path(init_from).is_absolute() else Path(init_from)
+        log.info(f"  init_from: {init_path}")
+        prior = torch.load(init_path, map_location="cpu", weights_only=False)
+        ms = prior.get("model_state") or prior.get("state_dict") or prior
+        miss, unx = model.load_state_dict(ms, strict=False)
+        log.info(f"  v1 weights loaded: missing={len(miss)} unexpected={len(unx)}")
+    else:
+        missing, unexpected = model.load_limo_weights(limo_dir / "vae.pt", strict=True)
+        log.info(f"  weights loaded: missing={len(missing)} unexpected={len(unexpected)}")
     model = model.to(args.device)
 
     # ── data ──────────────────────────────────────────────────────────────────

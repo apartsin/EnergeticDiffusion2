@@ -514,19 +514,35 @@ PYTHONIOENCODING=utf-8 python scripts/diagnostics/d15_top_motifs.py
 
 ## 12. Headline production numbers
 
-(All q90, validated with 3DCNN ensemble.)
+(All q90, validated with 3DCNN ensemble, rerank pool=1500.)
 
-| Metric | LIMO v1 + denoiser v4-B + rerank pool=1500 + `--require_neutral` |
-|---|---|
-| density q90 rel_MAE | 0.2 % |
-| density q90 within-10 % | 100 % |
-| D q90 rel_MAE | 0.2 % |
-| D q90 within-10 % | 100 % |
-| P q90 rel_MAE | 0.9 % |
-| P q90 within-10 % | 100 % |
-| HOF q90 rel_MAE | 38 % |
-| HOF q90 max produced | +257 kcal/mol |
-| Sample novelty (vs PubChem + 382k internal) | 100 % (30 / 30 of top candidates) |
+**Two-version production**: v4-B for ρ/D/P, v3 for HOF.
+
+| Metric | v4-B + rerank | v3 + rerank |
+|---|---|---|
+| density q90 rel_MAE | **0.2 %** | 7.4 % |
+| density q90 within-10 % | **100 %** | 82 % |
+| D q90 rel_MAE | **0.2 %** | 8.7 % |
+| D q90 within-10 % | **100 %** | 57 % |
+| P q90 rel_MAE | **0.9 %** | 23.1 % |
+| P q90 within-10 % | **100 %** | 22 % |
+| HOF q90 rel_MAE | 38 % | **20.4 %** |
+| HOF q90 within-10 % | 2 % | **18 %** |
+| HOF q90 max produced | +257 | **+341 kcal/mol** |
+| Sample novelty (PubChem + 382k internal) | 100 % | 100 % |
+
+**Joint v3+v4-B pool** (via `joint_rerank.py`) gives best of both for
+multi-property breakthrough discovery.
+
+## 13. Filters and integrations available
+
+| Flag | Module | What it does |
+|---|---|---|
+| `--require_neutral` | `rerank_sweep.py`, `rerank_multi.py`, `c2c_pipeline.py` | drops candidates with charge ≠ 0 or radical electrons |
+| `--with_chem_filter` | same | physics + chemistry sanity (property bounds, unstable motifs, oxygen balance, composition rules) |
+| `--with_feasibility --w_sa 0.5 --w_sc 0.25` | rerank scripts | adds SA + SC penalties to composite + hard caps |
+| sampling-time SA+SC guidance | `feasibility_sampler.py` | t-aware classifier guidance (modest gain, not default) |
+| latent anchor | `c2c_pipeline.py --anchor_alpha 0.3` | preserves seed scaffold during c2c (bounded by LIMO self-consistency) |
 
 The pipeline reliably generates **novel** molecules satisfying high-energy
 density, detonation velocity, and detonation pressure targets. HOF target

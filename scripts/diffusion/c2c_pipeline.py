@@ -64,8 +64,15 @@ def c2c_sample(denoiser, schedule, limo, tok,
                 strength: float,
                 target_z: torch.Tensor, mask: torch.Tensor,
                 guidance_scale: float = 7.0,
-                device: str = "cuda"):
+                device: str = "cuda",
+                anchor_alpha: float = 0.0,
+                anchor_decay: bool = True):
     """SDEdit-style: noise z_seed to t_edit, then denoise.
+
+    anchor_alpha:  per-step blend toward z_seed (0 = no anchor; 0.3 typical).
+                   z0_pred ← (1−α_t) z0_pred + α_t z_seed
+    anchor_decay:  if True, α_t decays linearly from anchor_alpha at step 0
+                   to 0 at the final step (so the very last steps don't snap).
 
     Returns (smiles_list, final_z).
     """
@@ -102,6 +109,12 @@ def c2c_sample(denoiser, schedule, limo, tok,
         norm = z0_pred.norm(dim=-1, keepdim=True).clamp(min=1e-8)
         scale = (norm.clamp(max=30.0) / norm)
         z0_pred = z0_pred * scale
+        # ANCHOR: blend predicted z0 toward seed to preserve scaffold
+        if anchor_alpha > 0.0:
+            a = anchor_alpha
+            if anchor_decay:
+                a = anchor_alpha * (1.0 - i / max(n_steps - 1, 1))
+            z0_pred = (1 - a) * z0_pred + a * z_seed.expand_as(z0_pred)
         z = ab_next.sqrt() * z0_pred + (1 - ab_next).sqrt() * eps
 
     logits = limo.decode(z)
@@ -127,6 +140,11 @@ def main():
     ap.add_argument("--target_d",       type=float, default=None)
     ap.add_argument("--target_p",       type=float, default=None)
     ap.add_argument("--require_neutral", action="store_true")
+    ap.add_argument("--anchor_alpha", type=float, default=0.0,
+                    help="Latent-anchor coefficient toward seed (0 = pure SDEdit, "
+                         "0.3 typical for scaffold preservation)")
+    ap.add_argument("--no_anchor_decay", action="store_true",
+                    help="By default anchor_alpha decays to 0 over the trajectory")
     ap.add_argument("--out_dir", default=None)
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
@@ -236,7 +254,9 @@ def main():
             smis, _ = c2c_sample(denoiser, schedule, limo, tok,
                                    z_seed.squeeze(0), args.n_variants,
                                    strength, target_z_t, mask,
-                                   guidance_scale=args.cfg, device=args.device)
+                                   guidance_scale=args.cfg, device=args.device,
+                                   anchor_alpha=args.anchor_alpha,
+                                   anchor_decay=not args.no_anchor_decay)
             canons = [canon(s) for s in smis]
             valid = [c for c in canons if c]
             if args.require_neutral:

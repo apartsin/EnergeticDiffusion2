@@ -1,0 +1,76 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LIMO v2: motif-rich continuation of v1 fine-tune.
+#
+# Preserves v1 (experiments/limo_ft_energetic_20260424T150825Z/) entirely;
+# v2 lives at experiments/limo_ft_motif_rich_<ts>/. Original latents.pt and
+# all denoiser experiments stay untouched.
+#
+# Key differences vs v1 (configs/vae_limo.yaml):
+#   - lr 3e-5 → 1e-5 (lower to avoid forgetting)
+#   - epochs 6 → 4 (continuation, not restart)
+#   - total_time_minutes 220 → 360 (overnight cushion)
+#   - resume from v1 best.pt (handled at trainer entry by pointing
+#     init_from at v1 ckpt; trainer treats it as starting weights)
+# ─────────────────────────────────────────────────────────────────────────────
+
+run:
+  name:        "limo_ft_motif_rich"
+  seed:        43
+  notes:       "LIMO v2: continue v1 fine-tune at low LR, motif-rich emphasis"
+
+paths:
+  base:                "E:/Projects/EnergeticDiffusion2"
+  limo_dir:            "external/LIMO"
+  labeled_master:      "data/training/master/labeled_master.csv"
+  unlabeled_master:    "data/training/master/unlabeled_master.csv"
+  cache_dir:           "data/training/vae_tokens_v2"   # SEPARATE cache to not clobber v1
+  experiments_dir:     "experiments"
+  init_from:           "experiments/limo_ft_energetic_20260424T150825Z/checkpoints/best.pt"
+
+data:
+  subset:              "energetic_biased"
+  max_rows:            null
+  train_frac:          0.90
+  val_frac:            0.05
+  test_frac:           0.05
+  drop_oov:            true
+  drop_too_long:       true
+
+training:
+  batch_size:          64
+  grad_accum:          1
+  epochs:              4
+  total_time_minutes:  360
+  optimizer:           "adamw"
+  lr:                  1.0e-5
+  weight_decay:        0.01
+  betas:               [0.9, 0.98]
+  grad_clip:           1.0
+  warmup_steps:        100
+  min_lr_ratio:        0.1
+
+  kl:
+    schedule:          "constant"
+    beta:              0.01
+    free_bits:         0.0
+
+  precision:           "fp16"
+
+log:
+  keep_last_checkpoints:  3
+  keep_best_checkpoints:  2
+  ckpt_every_steps:       1000
+  log_every_steps:        50
+  val_every_steps:        500
+  jsonl_filename:         "train.jsonl"
+  text_filename:          "train.log"
+
+early_stop:
+  enabled:             true
+  patience_evals:      10
+  min_delta:           1.0e-3
+
+guards:
+  nan_guard:
+    enabled:           true
+    max_consecutive:   3
