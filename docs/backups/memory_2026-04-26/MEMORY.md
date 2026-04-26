@@ -1,0 +1,1 @@
+- [Target chemistry is energetic materials only](project_target_chemistry.md) — never broaden the prior to inert chemistry; bias training toward energetic frames
