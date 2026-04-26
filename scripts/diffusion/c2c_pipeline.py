@@ -30,6 +30,7 @@ sys.path.insert(0, str(HERE))
 from model import ConditionalDenoiser, NoiseSchedule, EMA
 from limo_model import (LIMOVAE, SELFIESTokenizer, load_vocab,
                         build_limo_vocab, save_vocab, LIMO_MAX_LEN, find_limo_repo)
+from limo_factory import load_limo, LIMOInferenceWrapper
 from unimol_validator import UniMolValidator
 from feasibility_utils import real_sa, real_sc
 
@@ -186,9 +187,7 @@ def main():
     tok = SELFIESTokenizer(alphabet, max_len=LIMO_MAX_LEN)
     ckpt_limo = Path(lblob["meta"]["checkpoint"])
     if not ckpt_limo.is_absolute(): ckpt_limo = base / ckpt_limo
-    lb = torch.load(ckpt_limo, map_location=args.device, weights_only=False)
-    limo = LIMOVAE(); limo.load_state_dict(lb["model_state"])
-    limo.to(args.device).eval()
+    limo, _limo_ver = load_limo(base, str(ckpt_limo), args.device)
 
     val = UniMolValidator(model_dir=str(
         base / "data/raw/energetic_external/EMDP/Data/smoke_model"))

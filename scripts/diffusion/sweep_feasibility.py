@@ -26,6 +26,7 @@ sys.path.insert(0, str(HERE.parent / "vae"))
 from model import ConditionalDenoiser, NoiseSchedule, EMA, ddim_sample
 from limo_model import (LIMOVAE, SELFIESTokenizer, load_vocab,
                         build_limo_vocab, save_vocab, LIMO_MAX_LEN, find_limo_repo)
+from limo_factory import load_limo, LIMOInferenceWrapper
 from unimol_validator import UniMolValidator
 from feasibility_utils import (real_sa, real_sc, SA_DROP_ABOVE, SC_DROP_ABOVE,
                                 composite_feasibility_penalty,
@@ -72,9 +73,7 @@ def load_stack(exp, ckpt_name, base, device):
     tok = SELFIESTokenizer(alphabet, max_len=LIMO_MAX_LEN)
     ckpt_limo = Path(latents_blob["meta"]["checkpoint"])
     if not ckpt_limo.is_absolute(): ckpt_limo = base / ckpt_limo
-    limo_b = torch.load(ckpt_limo, map_location=device, weights_only=False)
-    limo = LIMOVAE(); limo.load_state_dict(limo_b["model_state"])
-    limo.to(device).eval()
+    limo, _limo_ver = load_limo(base, str(ckpt_limo), device)
 
     val = UniMolValidator(model_dir=str(
         base / "data/raw/energetic_external/EMDP/Data/smoke_model"))

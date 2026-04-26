@@ -23,6 +23,7 @@ sys.path.insert(0, str(HERE.parent / "vae"))
 from model import ConditionalDenoiser, NoiseSchedule, EMA
 from limo_model import (LIMOVAE, SELFIESTokenizer, load_vocab,
                         build_limo_vocab, save_vocab, LIMO_MAX_LEN, find_limo_repo)
+from limo_factory import load_limo, LIMOInferenceWrapper
 from evaluate import conditional_fidelity
 from unimol_validator import UniMolValidator
 
@@ -80,9 +81,7 @@ def main():
     ckpt_limo = Path(latents_blob["meta"]["checkpoint"])
     if not ckpt_limo.is_absolute(): ckpt_limo = base / ckpt_limo
     limo_blob = torch.load(ckpt_limo, map_location=args.device, weights_only=False)
-    limo = LIMOVAE()
-    limo.load_state_dict(limo_blob["model_state"])
-    limo.to(args.device).eval()
+    limo, _limo_ver = load_limo(base, str(ckpt_limo), args.device)
 
     print("Loading 3DCNN validator …")
     validator = UniMolValidator(model_dir=str(base / args.threedcnn_dir))

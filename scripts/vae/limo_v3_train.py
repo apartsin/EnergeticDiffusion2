@@ -21,6 +21,10 @@ from limo_model import (LIMOVAE, SELFIESTokenizer, LIMO_VOCAB_SIZE,
                           build_limo_vocab, save_vocab, load_vocab,
                           find_limo_repo)
 from limo_v3_model import LIMOVAEv3
+try:
+    from limo_v3_1_model import LIMOVAEv3_1
+except ImportError:
+    LIMOVAEv3_1 = None
 from limo_finetune import (build_energetic_subset, prepare_or_load_cache,
                               compute_loss)
 
@@ -104,7 +108,9 @@ def main():
     v1_state = v1_blob.get("model_state") or v1_blob.get("state_dict") or v1_blob
 
     arch = cfg["arch"]
-    model = LIMOVAEv3(
+    cls = LIMOVAEv3_1 if (arch.get("v3_1") and LIMOVAEv3_1) else LIMOVAEv3
+    log(f"using model class: {cls.__name__}")
+    common_kwargs = dict(
         v1_state_dict=v1_state,
         max_len=LIMO_MAX_LEN, vocab_len=LIMO_VOCAB_SIZE,
         latent_dim=arch.get("latent_dim", 1024),
@@ -116,7 +122,12 @@ def main():
         dropout=arch.get("dropout", 0.1),
         n_memory=arch.get("n_memory", 16),
         freeze_encoder=arch.get("freeze_encoder", True),
-    ).to(args.device)
+    )
+    if cls is LIMOVAEv3_1:
+        common_kwargs["skip_connection"] = arch.get("skip_connection", True)
+    else:
+        common_kwargs["skip_connection"] = arch.get("skip_connection", False)
+    model = cls(**common_kwargs).to(args.device)
     log(repr(model))
 
     # ── optimizer ────────────────────────────────────────────────────────
