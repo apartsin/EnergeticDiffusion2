@@ -1,10 +1,57 @@
 # All-attempts registry — for paper reporting
 
 Every model variant, denoiser config, sampling strategy, and integration
-attempt tried in this project. Status, key metrics, failure modes, and
-links to per-experiment artefacts. Updated as experiments complete.
+attempt tried in this project — past, current, planned. Local and remote
+runs. Successes and failures with reasons.
 
 Generated 2026-04-26. Maintain by appending; never delete rows.
+
+---
+
+## Section 0 — Status overview (past / current / future × local / remote)
+
+### Currently running
+
+| Run ID | Job | Where | Status |
+|---|---|---|---|
+| `bku05q2ol` | gpu2vast smoke test (skill validation) | vast.ai (RTX 4090) | provisioning instance (~3 min into image pull) |
+
+### Just-completed (this session)
+
+| Job | Where | Outcome | Verdict |
+|---|---|---|---|
+| LIMO v3 (parallel non-AR transformer decoder) | local RTX 2060 | val_acc 31.8 % (alkane collapse) | **failed** — non-AR was wrong |
+| LIMO v3.1 (causal AR + skip-connection) | local RTX 2060 | val_acc 89.3 %, **3/7 seeds exact roundtrip** (TNT, PETN, TATB) | **breakthrough** |
+| MolMIM v1.3 weights download (NGC) | local | 269 MB `.nemo`, extracted | ready for vast.ai job A |
+
+### Planned, scripts ready, not yet launched
+
+| Job | Where | Why |
+|---|---|---|
+| Vast.ai A: MolMIM hybrid (encode 382 k + denoiser retrain at 512-d) | A100 40 GB | Test pretrained-1B-SMILES VAE vs LIMO |
+| Vast.ai B: DiT-style denoiser (50 M-param transformer + AdaLN-Zero) | RTX 4090 | Address D10 broken-cond-signal; replaces FiLM-MLP |
+| Vast.ai C: Massive joint rerank pool=20 000 | RTX 4090 | Cheap shot at more breakthrough leads |
+| Vast.ai D: Latent normalisation retrofit | RTX 4090 | Independent test of L5 norm-mismatch finding |
+
+### Planned, not yet scripted
+
+| Job | Why |
+|---|---|
+| LIMO v3.2 (8-layer 512-d AR + EMA) | Bigger transformer if v3.1 plateaus. Would run on local or vast.ai |
+| MolMIM fine-tune on motif-aug (LoRA encoder + full decoder) | Closes any motif gap MolMIM has |
+| MoLFormer-XL hybrid (1.1 B SMILES pretrain) | Compares to MolMIM. Need to fix `transformers.onnx` import first |
+| Re-encode 382 k with v3.1 → retrain denoiser → c2c re-eval | Validates the v3.1 self-consistency gain pays off downstream |
+| C2c on TNT / PETN / TATB seeds with v3.1 | Direct test of c2c usefulness now that 3 seeds roundtrip exactly |
+
+### Explicitly dropped (will not run)
+
+| Item | Reason |
+|---|---|
+| Active-learning DFT loop (Psi4 cycles) | User decision |
+| Dedicated MolMIM-as-full-replacement (vs hybrid) | User decision; pursuing hybrid via vast.ai instead |
+| ChemFormer / CDDD / HierVAE swaps | User decision (drop all VAE swap plans except MolMIM hybrid) |
+
+---
 
 ---
 
@@ -18,8 +65,8 @@ Generated 2026-04-26. Maintain by appending; never delete rows.
 | V2.1 | LIMO v2.1 (motif-aug, retried) | same | + V1 init, lr 3e-5 | second cache bug; loaded old 326 k via cached file | self-cons regressed RDX 0.50 → 0.11 | **buggy, ignored** | `experiments/limo_ft_motif_rich_v2_1_20260426T054702Z/` |
 | V2.1b | LIMO v2.1b (motif-aug, fixed) | same | + V1 init, augmented_source flag | 1.08 M rows after token filter, 16 k steps | val_loss 1.23 (vs V1 ~0.96), motif AUCs unchanged vs V1, self-cons regressed slightly | **data-aug exhausted, architecture is bottleneck** | `experiments/limo_ft_motif_rich_v2_1_20260426T055459Z/` |
 | V3 | LIMO v3 (frozen V1 enc + non-AR transformer dec) | 4-layer transformer decoder, parallel decode, 23.9 M params (9.6 M trainable) | + V1 frozen | 1.08 M motif-aug, 32 904 steps | val_acc collapsed to **31.81 %** (= pad baseline); decodes to `CCCCCCC…` for any input | **catastrophic failure of non-AR decoder** | `experiments/limo_v3_transformer_20260426T062604Z/` |
-| V3.1 | LIMO v3.1 (frozen V1 enc + AR causal transformer dec + skip-conn) | 4-layer causal transformer decoder, teacher forcing, encoder-embed skip | + V1 frozen | same | **in flight (b g5rnl7s0)** | TBD | `experiments/limo_v3_1_AR_*/` |
-| V3.2 (planned) | LIMO v3.2 (8-layer 512-d AR + EMA) | larger v3.1 | – | – | not yet run | – | – |
+| **V3.1** | **LIMO v3.1 (frozen V1 enc + AR causal transformer dec + skip-conn)** | 4-layer causal transformer decoder, teacher forcing, encoder-embed skip | + V1 frozen | 1.08 M motif-aug, 32 904 steps | **val_acc 89.3 %**, val_loss 0.68. Self-consistency: TNT 0.13→**1.00**, PETN 0.46→**1.00**, TATB 0.13→**1.00**, RDX 0.50→0.57, FOX-7 0.04→0.17, HMX flat, CL-20 slight regression | **breakthrough** — 3/7 seeds exact roundtrip; AR + teacher forcing escaped alkane minimum | `experiments/limo_v3_1_AR_20260426T070423Z/` |
+| V3.2 (planned) | LIMO v3.2 (8-layer 512-d AR + EMA) | larger v3.1 | – | – | not yet run | hold pending v3.1 downstream eval | – |
 | **MolMIM v1.3** | NVIDIA pretrained MIM-VAE (Perceiver enc + transformer dec, 70 M params, 512-d Gaussian) | 1 B SMILES (ZINC15 + PubChem) | none | downloaded; encoder/decoder verified via state-dict inspection | – | **weights-on-disk; integration in vast.ai job A queued** | `models/molmim/extracted/` |
 | ChemBERTa-2 (planned) | DeepChem 77 M-param BERT encoder | 77 M SMILES | – | – | not run | shelved (MolMIM is more native) | – |
 | MoLFormer-XL (planned) | IBM 100 M-param encoder-only | 1.1 B SMILES | – | – | hit `transformers.onnx` import error on Python 3.14 | shelved pending fix | – |
