@@ -81,10 +81,29 @@ def load_config(path: str) -> dict:
 
 
 # ── data preparation ─────────────────────────────────────────────────────────
-def build_energetic_subset(base: Path) -> pd.DataFrame:
-    """Return DataFrame of unique canonical SMILES = labeled ∪ energetic-biased
-    unlabeled. See training_plan.html for the exact rule set.
+def build_energetic_subset(base: Path, cfg: dict | None = None) -> pd.DataFrame:
+    """Return DataFrame of canonical SMILES = labeled ∪ energetic-biased unlabeled.
+
+    If `cfg["data"]["augmented_source"]` is set, loads ONLY that file with
+    NO deduplication (so motif-oversampled duplicates are preserved).
     """
+    aug = (cfg or {}).get("data", {}).get("augmented_source")
+    if not aug:
+        # Look at paths.labeled_master/unlabeled_master too — if either points
+        # at a single augmented file, treat it as augmented.
+        paths = (cfg or {}).get("paths", {})
+        lm_path = paths.get("labeled_master", "data/training/master/labeled_master.csv")
+        um_path = paths.get("unlabeled_master", "data/training/master/unlabeled_master.csv")
+        if lm_path == um_path and "motif" in str(lm_path).lower():
+            aug = lm_path
+    if aug:
+        path = base / aug if not Path(aug).is_absolute() else Path(aug)
+        df = pd.read_csv(path, low_memory=False)
+        col = "smiles" if "smiles" in df.columns else df.columns[0]
+        out = df[[col]].rename(columns={col: "smiles"}).dropna()
+        # NO drop_duplicates: oversampled rows are intentional
+        return out
+
     lm = pd.read_csv(base / "data/training/master/labeled_master.csv",
                      low_memory=False, usecols=["smiles"])
     um = pd.read_csv(base / "data/training/master/unlabeled_master.csv",
@@ -93,8 +112,6 @@ def build_energetic_subset(base: Path) -> pd.DataFrame:
                               "has_azide", "energetic_proxy_score"])
     um["has_nitro"] = um["has_nitro"].astype(str).str.lower().isin(["true", "1"])
     um["has_azide"] = um["has_azide"].astype(str).str.lower().isin(["true", "1"])
-
-    # energetic-biased unlabeled mask
     mask = (
         (um["source_dataset"] == "rnnmgm_ds9") |
         (um["energetic_proxy_score"] >= 6) |
@@ -155,9 +172,9 @@ def prepare_or_load_cache(base: Path, cache_dir: Path, tok: SELFIESTokenizer,
     import hashlib
 
     logger.info("Building energetic-biased SMILES set …")
-    subset_df = build_energetic_subset(base)
-    smiles = sorted(subset_df["smiles"].tolist())
-    logger.info(f"  {len(smiles):,} unique canonical SMILES")
+    subset_df = build_energetic_subset(base, cfg)
+    smiles = subset_df["smiles"].tolist()    # NOT sorted, NOT deduped — preserves oversampling
+    logger.info(f"  {len(smiles):,} SMILES rows (incl. duplicates from oversampling)")
 
     # cache key
     h = hashlib.md5()

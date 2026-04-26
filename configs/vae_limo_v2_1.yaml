@@ -20,6 +20,7 @@ paths:
 
 data:
   subset:              "energetic_biased"
+  augmented_source:    "data/training/master/labeled_motif_aug.csv"
   max_rows:            null
   train_frac:          0.95
   val_frac:            0.025
