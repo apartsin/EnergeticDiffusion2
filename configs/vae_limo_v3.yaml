@@ -14,7 +14,7 @@ paths:
   limo_dir:            "external/LIMO"
   labeled_master:      "data/training/master/labeled_motif_aug.csv"
   unlabeled_master:    "data/training/master/labeled_motif_aug.csv"
-  cache_dir:           "data/training/vae_tokens_v3"
+  cache_dir:           "data/training/vae_tokens_v2_1"   # shared cache; same hash as v2.1b
   experiments_dir:     "experiments"
   init_from:           "experiments/limo_ft_energetic_20260424T150825Z/checkpoints/best.pt"
 

@@ -43,6 +43,9 @@ class LIMOVAEv3(nn.Module):
         dropout:       float = 0.1,
         n_memory:      int = 16,
         freeze_encoder: bool = True,
+        # NEW v3.1 options
+        skip_connection: bool = False,
+        skip_dim:        int = 64,
     ):
         super().__init__()
         self.max_len    = max_len
@@ -68,6 +71,15 @@ class LIMOVAEv3(nn.Module):
             for p in self.embedding.parameters(): p.requires_grad_(False)
             for p in self.encoder.parameters():   p.requires_grad_(False)
 
+        # ── v3.1 skip connection from encoder embeddings ─────────────────
+        # If on, the encoder's per-token embeddings (B, max_len, embedding_dim)
+        # are projected to d_model and concatenated to the memory tokens →
+        # decoder cross-attends to BOTH z-memory AND original token embeddings.
+        # Lets the decoder access motif info that the bottleneck z lost.
+        self.skip_connection = skip_connection
+        if skip_connection:
+            self.skip_proj = nn.Linear(embedding_dim, d_model)
+
         # ── new transformer decoder ────────────────────────────────────────
         # Project memory tokens 64 → d_model
         self.mem_proj = nn.Linear(self.d_mem, d_model)
@@ -92,33 +104,44 @@ class LIMOVAEv3(nn.Module):
         self._n_params_summary = f"total={n_total/1e6:.2f}M  trainable={n_train/1e6:.2f}M"
 
     # ── encoder = v1 (frozen) ────────────────────────────────────────────
-    def encode(self, x: torch.Tensor):
-        """x: (B, max_len) int → (z, mu, log_var)."""
+    def encode(self, x: torch.Tensor, return_emb: bool = False):
+        """x: (B, max_len) int → (z, mu, log_var) [, emb])."""
         B = x.shape[0]
-        e = self.embedding(x).view(B, -1)
+        emb = self.embedding(x)                                  # (B, L, emb_dim)
+        e = emb.view(B, -1)
         h = self.encoder(e).view(B, 2, self.latent_dim)
         mu, log_var = h[:, 0, :], h[:, 1, :]
         std = torch.exp(0.5 * log_var)
         eps = torch.randn_like(std)
-        return mu + eps * std, mu, log_var
+        z = mu + eps * std
+        if return_emb:
+            return z, mu, log_var, emb
+        return z, mu, log_var
 
     # ── decoder = new transformer ─────────────────────────────────────────
-    def decode(self, z: torch.Tensor) -> torch.Tensor:
-        """z: (B, latent_dim) → (B, max_len, vocab_len) log-softmax logits."""
+    def decode(self, z: torch.Tensor, emb: Optional[torch.Tensor] = None
+                ) -> torch.Tensor:
+        """z: (B, latent_dim).  emb: optional (B, max_len, embedding_dim)
+        for skip connection.
+        """
         B = z.shape[0]
-        # reshape z → memory tokens
-        mem = z.view(B, self.n_memory, self.d_mem)            # (B, 16, 64)
-        mem = self.mem_proj(mem)                              # (B, 16, d_model)
-        # position queries
-        q = self.pos_query.unsqueeze(0).expand(B, -1, -1)     # (B, max_len, d_model)
-        # transformer decoder: queries cross-attend to memory
-        out = self.decoder(q, mem)                             # (B, max_len, d_model)
-        logits = self.out_proj(out)                           # (B, max_len, vocab_len)
+        mem = z.view(B, self.n_memory, self.d_mem)
+        mem = self.mem_proj(mem)                                 # (B, 16, d_model)
+        if self.skip_connection and emb is not None:
+            skip = self.skip_proj(emb)                           # (B, max_len, d_model)
+            mem = torch.cat([mem, skip], dim=1)                  # (B, 16+L, d_model)
+        q = self.pos_query.unsqueeze(0).expand(B, -1, -1)
+        out = self.decoder(q, mem)
+        logits = self.out_proj(out)
         return F.log_softmax(logits, dim=2)
 
     def forward(self, x: torch.Tensor):
-        z, mu, log_var = self.encode(x)
-        logits = self.decode(z)
+        if self.skip_connection:
+            z, mu, log_var, emb = self.encode(x, return_emb=True)
+            logits = self.decode(z, emb)
+        else:
+            z, mu, log_var = self.encode(x)
+            logits = self.decode(z)
         return logits, z, mu, log_var
 
     # ── helpers expected by the rest of the codebase ─────────────────────
