@@ -1,13 +1,24 @@
 # Heavy artifacts (47+ GB total — never commit)
-data/
-!data/c2c/
-!data/c2c/**
+# Nested-directory negation pattern: must negate at every level
+/data/*
+!/data/c2c
+/data/c2c/*
+!/data/c2c/**
+!/data/training
+/data/training/*
+!/data/training/master
+/data/training/master/*
+!/data/training/master/labeled_master.csv
+!/data/training/master/labeled_motif_aug.csv
+!/data/training/master/unlabeled_master.csv.gz
+
 experiments/
 external/
 logs/
 *.pt
 *.ckpt
 *.pth
+*.bak
 
 # Reports / generated HTML (large, regeneratable)
 *.html
