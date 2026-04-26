@@ -1,0 +1,71 @@
+run:
+  name: mdd_fast_full
+  output_root: experiments
+  seed: 42
+  device: cuda
+
+data:
+  diffusion_train: data/training/diffusion_pretrain/train.csv
+  diffusion_validation: data/training/diffusion_pretrain/validation.csv
+  diffusion_test: data/training/diffusion_pretrain/test.csv
+  energetic_train: data/training/property_supervised_complete4/train.csv
+  energetic_validation: data/training/property_supervised_complete4/validation.csv
+  energetic_test: data/training/property_supervised_complete4/test.csv
+  split_manifest: data/training/metadata/data_split_manifest.csv
+  properties:
+    - density
+    - heat_of_formation
+    - detonation_velocity
+    - detonation_pressure
+  subsets:
+    vae_generic_train_max: 12000
+    vae_energetic_train_max: 6000
+    vae_generic_validation_max: 2000
+    vae_energetic_validation_max: 1000
+    latent_export_generic_max: 25000
+    latent_export_energetic_max: 12000
+
+vae:
+  embedding_dim: 96
+  hidden_dim: 192
+  latent_dim: 96
+  dropout: 0.1
+  batch_size: 256
+  epochs: 2
+  lr: 0.00035
+  beta_max: 0.08
+  max_len_cap: 140
+  num_workers: 0
+
+predictor:
+  ensemble_size: 2
+  hidden_layer_sizes: [128, 64]
+  max_iter: 55
+  random_seed_start: 300
+
+diffusion:
+  timesteps: 120
+  timestep_embed_dim: 32
+  hidden_dim: 256
+  batch_size: 256
+  lr: 0.0003
+  stage_a_steps: 260
+  stage_b_steps: 260
+  stage_c_steps: 180
+  p_drop_all_properties: 0.15
+  p_drop_each_property: 0.2
+  p_drop_source: 0.3
+
+generation:
+  num_candidates: 220
+  sampling_steps: 40
+  guidance_scale: 2.2
+  novelty_duplicate_threshold: 0.99
+  top_k: 80
+
+filtering:
+  min_heavy_atoms: 5
+  max_heavy_atoms: 80
+  allowed_atoms: [C, H, N, O, F, Cl, Br, S]
+  min_domain_score: 0.2
+

@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Expanded-conditioning denoiser training.
+#
+# Uses latents_expanded.pt which contains:
+#   - original Tier A+B property values where available (weight 1.0)
+#   - 3DCNN backfill for missing rows (weight 0.7)
+#   - optionally K-J-imputed D/P (weight 0.5)
+#
+# Expected conditioning coverage:
+#   density  ~100% of 382k
+#   HOF      ~100% of 382k (3DCNN fills all)
+#   D        ~100% of 382k (3DCNN or K-J imputed)
+#   P        ~100% of 382k
+# ─────────────────────────────────────────────────────────────────────────────
+
+run:
+  name:  "diffusion_subset_cond_expanded"
+  seed:  42
+  notes: "Re-train on Tier A+B + 3DCNN backfill + K-J imputation (~100% conditioning coverage)"
+
+paths:
+  base:             "E:/Projects/EnergeticDiffusion2"
+  experiments_dir:  "experiments"
+  latents_pt:       "data/training/diffusion/latents_expanded.pt"
+
+data:
+  val_frac: 0.05
+
+model:
+  hidden:       2048
+  n_blocks:     8
+  time_dim:     256
+  prop_emb_dim: 64
+  dropout:      0.0
+
+training:
+  batch_size:         128
+  grad_accum:         1
+  epochs:             10
+  total_time_minutes: 60
+  optimizer:          "adamw"
+  lr:                 1.0e-4
+  weight_decay:       1.0e-4
+  betas:              [0.9, 0.98]
+  grad_clip:          1.0
+  warmup_steps:       500
+  min_lr_ratio:       0.1
+
+  T:                  1000
+  ema_decay:          0.999
+
+  # Slightly different mixture: less unconditional because we now have
+  # dense conditioning data. More multi-property subsets.
+  subset_size_probs:
+    0: 0.10
+    1: 0.25
+    2: 0.30
+    3: 0.20
+    4: 0.15
+  cfg_dropout_rate:   0.05
+  precision:          "fp16"
+
+log:
+  keep_last_checkpoints:  3
+  keep_best_checkpoints:  2
+  ckpt_every_steps:       2000
+  log_every_steps:        100
+  val_every_steps:        500
+  jsonl_filename:         "train.jsonl"
+  text_filename:          "train.log"
+
+early_stop:
+  enabled:        true
+  patience_evals: 8
+  min_delta:      1.0e-4
+
+guards:
+  nan_guard:
+    enabled:         true
+    max_consecutive: 3

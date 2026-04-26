@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LIMO fine-tune configuration for EnergeticDiffusion2 energetic materials.
+# ─────────────────────────────────────────────────────────────────────────────
+
+run:
+  name:        "limo_ft_energetic"
+  seed:        42
+  notes:       "Fine-tune LIMO VAE on 220k energetic-biased subset, RTX 2060, 4h budget"
+
+paths:
+  base:                "E:/Projects/EnergeticDiffusion2"
+  limo_dir:            "external/LIMO"
+  labeled_master:      "data/training/master/labeled_master.csv"
+  unlabeled_master:    "data/training/master/unlabeled_master.csv"
+  cache_dir:           "data/training/vae_tokens"
+  experiments_dir:     "experiments"
+
+data:
+  # Stage-2 energetic-biased subset:
+  #   labeled_master (all)  +  rnnmgm_ds9 unlabeled
+  #   + unlabeled with energetic_proxy_score >= 6 OR has_nitro OR has_azide
+  subset:              "energetic_biased"
+  max_rows:            null               # null = all
+  train_frac:          0.90
+  val_frac:            0.05
+  test_frac:           0.05
+  # Drop SMILES containing OOV LIMO tokens (vs trying to replace with pad)
+  drop_oov:            true
+  drop_too_long:       true
+
+training:
+  batch_size:          64
+  grad_accum:          1                  # effective batch = batch * grad_accum
+  epochs:              6                  # may complete fewer if time budget hit
+  total_time_minutes:  220                # hard wall-clock cap (soft stop)
+  optimizer:           "adamw"
+  lr:                  3.0e-5             # low for fine-tune of pretrained
+  weight_decay:        0.01
+  betas:               [0.9, 0.98]
+  grad_clip:           1.0
+  warmup_steps:        200
+  min_lr_ratio:        0.1
+
+  # KL: since LIMO is already pretrained, use a small CONSTANT β to avoid
+  # destabilising the latent. No cyclical annealing for fine-tune.
+  kl:
+    schedule:          "constant"
+    beta:              0.01
+    free_bits:         0.0
+
+  # Mixed precision
+  precision:           "fp16"
+
+log:
+  keep_last_checkpoints:  3
+  keep_best_checkpoints:  2
+  ckpt_every_steps:       1000
+  log_every_steps:        25
+  val_every_steps:        500
+  jsonl_filename:         "train.jsonl"
+  text_filename:          "train.log"
+
+early_stop:
+  enabled:             true
+  patience_evals:      8
+  min_delta:           1.0e-3
+
+guards:
+  nan_guard:
+    enabled:           true
+    max_consecutive:   3

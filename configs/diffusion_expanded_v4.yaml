@@ -1,0 +1,85 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Denoiser v4.
+# Diffs vs v3:
+#   - latents: filtered to energetic motifs (228k vs 382k)
+#   - stats: recomputed against filtered Tier-A/B subset
+#   - oversample factor 5 → 10, quantile 0.10 → 0.05
+#   - per-row loss weighting (T2): trusted rows contribute more gradient
+#   - longer wall-clock budget (120 min)
+# ─────────────────────────────────────────────────────────────────────────────
+
+run:
+  name:  "diffusion_subset_cond_expanded_v4"
+  seed:  42
+  notes: "v4: energetic-motif filter + heavier high-tail oversample + per-row loss weighting"
+
+paths:
+  base:             "E:/Projects/EnergeticDiffusion2"
+  experiments_dir:  "experiments"
+  latents_pt:       "data/training/diffusion/latents_v4_filtered.pt"
+
+data:
+  val_frac: 0.05
+
+model:
+  hidden:       2048
+  n_blocks:     8
+  time_dim:     256
+  prop_emb_dim: 64
+  dropout:      0.0
+
+training:
+  batch_size:         128
+  grad_accum:         1
+  epochs:             30
+  total_time_minutes: 120
+  optimizer:          "adamw"
+  lr:                 1.0e-4
+  weight_decay:       1.0e-4
+  betas:              [0.9, 0.98]
+  grad_clip:          1.0
+  warmup_steps:       500
+  min_lr_ratio:       0.1
+
+  T:                  1000
+  ema_decay:          0.999
+
+  subset_size_probs:
+    0: 0.10
+    1: 0.25
+    2: 0.30
+    3: 0.20
+    4: 0.15
+  cfg_dropout_rate:        0.10
+  precision:               "fp16"
+
+  weighted_mask:                true
+  property_dropout:             0.30
+
+  oversample_extremes_factor:   10.0    # 5 → 10
+  oversample_extremes_quantile: 0.05    # 0.10 → 0.05 (top 5 %)
+  oversample_mode:              "high"
+  oversample_min_cond_weight:   0.9
+
+  # T2: per-row loss weighting. α=1.0 disables; α=0.5 means 50% weight floor
+  # for fully-uncond rows, scaling up to 1.0 for fully-Tier-A/B-conditioned rows.
+  loss_weight_alpha:            0.5
+
+log:
+  keep_last_checkpoints:  3
+  keep_best_checkpoints:  2
+  ckpt_every_steps:       2000
+  log_every_steps:        100
+  val_every_steps:        500
+  jsonl_filename:         "train.jsonl"
+  text_filename:          "train.log"
+
+early_stop:
+  enabled:        true
+  patience_evals: 12
+  min_delta:      1.0e-4
+
+guards:
+  nan_guard:
+    enabled:         true
+    max_consecutive: 3

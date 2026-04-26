@@ -1,0 +1,28 @@
+# Training config for SA + SC gradient-guidance predictors
+run:
+  name:  "guidance_sa_sc"
+  seed:  42
+  notes: "Feasibility-score predictors for classifier guidance in diffusion"
+
+paths:
+  base:                  "E:/Projects/EnergeticDiffusion2"
+  experiments_dir:       "experiments"
+  latents_with_scores:   "data/training/diffusion/latents_with_scores.pt"
+
+data:
+  val_frac: 0.05
+
+model:
+  hidden:  512
+  dropout: 0.1
+
+training:
+  batch_size:    256
+  epochs:        8
+  lr:            3.0e-4
+  weight_decay:  1.0e-5
+  warmup_steps:  200
+  precision:     "fp16"
+
+log:
+  log_every_steps: 100

@@ -1,0 +1,85 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Denoiser v4-B.
+# Same recipe as v4-nofilter (current best), but conditioning only fires on
+# Tier-A/B rows (cond_valid zeroed for Tier-D entries). Tier-D rows still
+# contribute to the unconditional prior via cfg_dropout + size=0 masks.
+#
+# Hypothesis: cleaner cond signal → better q50/q90 match, even though there
+# are far fewer cond examples.
+# ─────────────────────────────────────────────────────────────────────────────
+
+run:
+  name:  "diffusion_subset_cond_expanded_v4b"
+  seed:  42
+  notes: "v4-nofilter recipe + Tier-A/B-only conditioning"
+
+paths:
+  base:             "E:/Projects/EnergeticDiffusion2"
+  experiments_dir:  "experiments"
+  latents_pt:       "data/training/diffusion/latents_trustcond.pt"
+
+data:
+  val_frac: 0.05
+
+model:
+  hidden:       2048
+  n_blocks:     8
+  time_dim:     256
+  prop_emb_dim: 64
+  dropout:      0.0
+
+training:
+  batch_size:         128
+  grad_accum:         1
+  epochs:             20
+  total_time_minutes: 90
+  optimizer:          "adamw"
+  lr:                 1.0e-4
+  weight_decay:       1.0e-4
+  betas:              [0.9, 0.98]
+  grad_clip:          1.0
+  warmup_steps:       500
+  min_lr_ratio:       0.1
+
+  T:                  1000
+  ema_decay:          0.999
+
+  # With cond_valid=False on most rows, lift size=0 prob so the mask sampler
+  # still terminates quickly when nothing is eligible.
+  subset_size_probs:
+    0: 0.20
+    1: 0.30
+    2: 0.25
+    3: 0.15
+    4: 0.10
+  cfg_dropout_rate:        0.10
+  precision:               "fp16"
+
+  weighted_mask:                true
+  property_dropout:             0.30
+
+  oversample_extremes_factor:   10.0
+  oversample_extremes_quantile: 0.05
+  oversample_mode:              "high"
+  oversample_min_cond_weight:   0.9
+
+  loss_weight_alpha:            0.5
+
+log:
+  keep_last_checkpoints:  3
+  keep_best_checkpoints:  2
+  ckpt_every_steps:       2000
+  log_every_steps:        100
+  val_every_steps:        500
+  jsonl_filename:         "train.jsonl"
+  text_filename:          "train.log"
+
+early_stop:
+  enabled:        true
+  patience_evals: 12
+  min_delta:      1.0e-4
+
+guards:
+  nan_guard:
+    enabled:         true
+    max_consecutive: 3

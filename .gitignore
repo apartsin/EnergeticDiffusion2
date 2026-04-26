@@ -1,0 +1,40 @@
+# Heavy artifacts (47+ GB total — never commit)
+data/
+experiments/
+external/
+logs/
+*.pt
+*.ckpt
+*.pth
+
+# Reports / generated HTML (large, regeneratable)
+*.html
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Credentials / secrets
+.env
+.env.*
+*.key
+*.pem
+credentials*
+secrets*
+
+# Misc
+NUL.log
+*.tmp
+*.log
+timer.dat

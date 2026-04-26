@@ -1,0 +1,125 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# VAE training configuration for EnergeticDiffusion2
+#
+# Override per-run by passing a different YAML:
+#     python scripts/vae/train.py --config configs/vae_ft.yaml
+#
+# Or override individual keys:
+#     python scripts/vae/train.py --config configs/vae.yaml --set training.lr=1e-4
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Run identity
+run:
+  name:        "vae_gru_scratch"       # experiment short name
+  seed:        42
+  notes:       "4h RTX 2060 two-stage GRU VAE on SELFIES"
+
+# Data sources and preprocessing cache
+data:
+  labeled_master:     "data/training/master/labeled_master.csv"
+  unlabeled_master:   "data/training/master/unlabeled_master.csv"
+
+  # Pre-tokenized tensor cache (produced by prepare_data.py)
+  cache_dir:          "data/training/vae_tokens"
+
+  # Stage selection: which dataset each training stage uses
+  stages:
+    - name:           "pretrain_broad"
+      dataset:        "all_union"           # labeled ∪ unlabeled
+      max_rows:       null                  # null = all
+    - name:           "finetune_energetic"
+      dataset:        "energetic_biased"    # labeled + rnnmgm_ds9 + proxy>=6 + has_nitro/azide
+      max_rows:       null
+
+  # Tokenization
+  representation:     "selfies"             # "selfies" (recommended) | "smiles"
+  max_length:         96                    # covers 98th percentile
+  drop_longer:        true                  # drop sequences exceeding max_length
+  canonicalize:       true
+  dedup:              true                  # canonical-SMILES dedup before SELFIES conversion
+
+  # Data loader
+  train_frac:         0.90
+  val_frac:           0.05
+  test_frac:          0.05
+  shuffle:            true
+  num_workers:        2
+  pin_memory:         true
+  length_bucketed:    true                  # bucket sort by length (~20% speedup)
+
+# Model architecture
+model:
+  type:               "gru"                 # "gru" | "limo" (future)
+  vocab_size:         null                  # filled from prepared tokenizer
+  embed_dim:          192
+  hidden_dim:         384
+  n_layers:           4
+  latent_dim:         128
+  dropout:            0.1
+  bidirectional_enc:  true
+
+# Optimization
+training:
+  batch_size:         64
+  grad_accum:         1                     # effective batch = batch_size * grad_accum
+  epochs:
+    pretrain_broad:       3
+    finetune_energetic:   6
+  optimizer:          "adamw"
+  lr:
+    pretrain_broad:       3.0e-4
+    finetune_energetic:   3.0e-5
+  weight_decay:       0.01
+  betas:              [0.9, 0.98]
+  grad_clip:          1.0
+
+  # LR schedule (cosine with warmup)
+  warmup_steps:       500
+  min_lr_ratio:       0.1                   # cosine decays to lr * min_lr_ratio
+
+  # KL / β schedule (cyclical annealing)
+  kl:
+    schedule:         "cyclical"            # "cyclical" | "constant"
+    beta_max:         0.05
+    num_cycles:       3                     # total across all steps of current stage
+    free_bits:        1.0                   # nats/dim floor
+    # Fine-tune overrides
+    finetune:
+      schedule:       "constant"
+      beta_max:       0.01
+      free_bits:      0.0
+
+  # Mixed precision
+  precision:          "fp16"                # "fp16" | "bf16" | "fp32"
+
+# Checkpointing & logging
+log:
+  # Directory pattern for each run (timestamp appended)
+  base_dir:           "experiments"
+  keep_last_checkpoints: 3
+  keep_best_checkpoints: 2
+  ckpt_every_steps:   2000
+  log_every_steps:    50
+  val_every_steps:    500
+
+  # Structured log file (JSONL) + human log (txt)
+  jsonl_filename:     "train.jsonl"
+  text_filename:      "train.log"
+
+  tensorboard:        false                 # opt-in
+
+# Early stopping
+early_stop:
+  enabled:            true
+  patience_evals:     6                     # val events without improvement
+  min_delta:          1.0e-3                # minimum improvement in val recon loss
+
+# Monitoring gates — fail fast on pathological training
+guards:
+  kl_collapse:
+    enabled:          true
+    min_total_nats:   4.0                   # warning; won't stop unless sustained
+    sustained_evals: 4
+  nan_guard:
+    enabled:          true
+    max_consecutive:  3                     # consecutive NaN losses before abort
