@@ -45,6 +45,9 @@ Thumbs.db
 *.pem
 credentials*
 secrets*
+nvidia.key.txt
+nvidia*.txt
+ngc*.txt
 
 # Misc
 NUL.log
