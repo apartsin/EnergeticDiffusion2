@@ -1,0 +1,71 @@
+# Denoiser v9: trained on MolMIM 512-d latents (vs v4-B's 1024-d LIMO).
+# Hybrid path: pretrained-1B-SMILES encoder feeds the same conditional DDPM.
+run:
+  name:  "diffusion_subset_cond_expanded_v9_molmim"
+  seed:  42
+  notes: "v4b recipe at 512-d on MolMIM latents"
+
+paths:
+  base:             "/workspace/data"
+  experiments_dir:  "experiments"
+  latents_pt:       "latents_molmim.pt"
+
+data:
+  val_frac: 0.05
+
+model:
+  hidden:       1024
+  n_blocks:     8
+  time_dim:     256
+  prop_emb_dim: 64
+  dropout:      0.0
+  latent_dim:   512
+
+training:
+  batch_size:         256
+  grad_accum:         1
+  epochs:             20
+  total_time_minutes: 75
+  optimizer:          "adamw"
+  lr:                 1.0e-4
+  weight_decay:       1.0e-4
+  betas:              [0.9, 0.98]
+  grad_clip:          1.0
+  warmup_steps:       500
+  min_lr_ratio:       0.1
+  T:                  1000
+  ema_decay:          0.999
+  subset_size_probs:
+    0: 0.20
+    1: 0.30
+    2: 0.25
+    3: 0.15
+    4: 0.10
+  cfg_dropout_rate:        0.10
+  precision:               "fp16"
+  weighted_mask:                true
+  property_dropout:             0.30
+  oversample_extremes_factor:   10.0
+  oversample_extremes_quantile: 0.05
+  oversample_mode:              "high"
+  oversample_min_cond_weight:   0.9
+  loss_weight_alpha:            0.5
+
+log:
+  keep_last_checkpoints:  3
+  keep_best_checkpoints:  2
+  ckpt_every_steps:       2000
+  log_every_steps:        100
+  val_every_steps:        500
+  jsonl_filename:         "train.jsonl"
+  text_filename:          "train.log"
+
+early_stop:
+  enabled:        true
+  patience_evals: 12
+  min_delta:      1.0e-4
+
+guards:
+  nan_guard:
+    enabled:         true
+    max_consecutive: 3

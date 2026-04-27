@@ -1,0 +1,84 @@
+# LIMO v3.3 — diffusion-aware decoder.
+# Same architecture as v3.2 (no skip, 6-layer 512-d) plus noise-augmentation
+# during training: z_train = z + sigma*eps where sigma ~ Uniform(0, sigma_max).
+# Bridges the train/sample distribution gap that broke v3.1 and v3.2.
+
+run:
+  name:        "limo_v3_3_diff_aware_AR"
+  seed:        47
+  notes:       "v3.2 arch + noise-aug curriculum on z; init from v3.2 best.pt"
+
+paths:
+  base:                "E:/Projects/EnergeticDiffusion2"
+  limo_dir:            "external/LIMO"
+  labeled_master:      "data/training/master/labeled_motif_aug.csv"
+  unlabeled_master:    "data/training/master/labeled_motif_aug.csv"
+  cache_dir:           "data/training/vae_tokens_v2_1"
+  experiments_dir:     "experiments"
+  init_from:           "experiments/limo_ft_energetic_20260424T150825Z/checkpoints/best.pt"
+
+data:
+  subset:              "energetic_biased"
+  augmented_source:    "data/training/master/labeled_motif_aug.csv"
+  max_rows:            null
+  train_frac:          0.95
+  val_frac:            0.025
+  test_frac:           0.025
+  drop_oov:            true
+  drop_too_long:       true
+
+arch:
+  v3_3: true
+  latent_dim:          1024
+  embedding_dim:       64
+  d_model:             512
+  n_heads:             8
+  n_layers:            6
+  ff_mult:             4
+  dropout:             0.1
+  n_memory:            32
+  freeze_encoder:      true
+  skip_connection:     false
+  noise_aug:
+    sigma_max:    1.5
+    prob:         1.0
+    z_only:       true
+    curriculum:   "linear"
+    warmup_steps: 1500
+
+training:
+  batch_size:          48
+  grad_accum:          1
+  epochs:              2
+  total_time_minutes:  150
+  optimizer:           "adamw"
+  lr:                  1.5e-4
+  weight_decay:        0.01
+  betas:               [0.9, 0.98]
+  grad_clip:           1.0
+  warmup_steps:        500
+  min_lr_ratio:        0.1
+  kl:
+    schedule:          "constant"
+    beta:              0.01
+    free_bits:         0.0
+  precision:           "fp16"
+
+log:
+  keep_last_checkpoints:  3
+  keep_best_checkpoints:  2
+  ckpt_every_steps:       2000
+  log_every_steps:        100
+  val_every_steps:        1000
+  jsonl_filename:         "train.jsonl"
+  text_filename:          "train.log"
+
+early_stop:
+  enabled:             true
+  patience_evals:      15
+  min_delta:           1.0e-3
+
+guards:
+  nan_guard:
+    enabled:           true
+    max_consecutive:   3

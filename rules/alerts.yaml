@@ -1,0 +1,198 @@
+# Energetic-materials chemistry alerts.
+#
+# Demerit scale (Bruns & Watson 2012, J Med Chem):
+#   100 ≈ reject-equivalent contribution (paired with reject_threshold below)
+#    60 ≈ strong soft penalty
+#    30 ≈ medium soft penalty
+#    15 ≈ mild soft penalty
+#
+# A molecule is HARD-REJECTED if any of:
+#   1. it triggers a rule with type: reject
+#   2. its summed demerits >= reject_threshold
+#   3. a feature gate (mw, charge, atoms, OB) is violated
+#
+# A molecule is SOFT-PENALIZED by the sum of its triggered demerits.
+#
+# Each rule has:
+#   name        — unique identifier (used in the output `alerts` list)
+#   demerit     — integer; 0 = reject; positive = soft penalty contribution
+#   type        — smarts | descriptor_threshold | feature_threshold | reject_smarts
+#   ... type-specific fields
+#   reason      — short human-readable explanation
+#   reference   — optional citation / origin
+
+reject_threshold: 150          # sum of demerits at which the mol is rejected
+soft_normalisation: 100        # demerit_score = sum / soft_normalisation (clamped to [0,1])
+
+allowed_atoms: [C, H, N, O, F]
+
+# ─── Layer 1a: descriptor-based hard rejects ──────────────────────────────
+descriptor_rejects:
+  - { name: rdkit_invalid,           when: "mol is None" }
+  - { name: net_charge_nonzero,      when: "formal_charge != 0" }
+  - { name: disallowed_atoms,        when: "atoms - allowed_atoms != {}" }
+  - { name: mw_too_low,              when: "MolWt < 130" }
+  - { name: mw_too_high,             when: "MolWt > 600" }
+  - { name: nitro_density_too_high,  when: "n_nitro / n_heavy > 0.42" }
+  - { name: oxygen_balance_too_high, when: "OB > 25" }
+  - { name: oxygen_balance_too_low,  when: "OB < -120" }
+  - { name: small_carbon_polynitro_reject,
+      when: "n_C <= 2 and n_nitro >= 3",
+      reason: "polynitro on C1/C2 skeleton ≈ model cheat" }
+
+# ─── Layer 1b: SMARTS-based hard rejects (status=reject) ──────────────────
+reject_smarts:
+  - { name: gemtetranitro,           smarts: "[CX4]([N+](=O)[O-])([N+](=O)[O-])([N+](=O)[O-])[N+](=O)[O-]" }
+  - { name: peroxide,                smarts: "[O][O]" }
+
+# ─── Layer 2a: SMARTS-based soft alerts (Bruns-Watson demerits) ──────────
+smarts_alerts:
+  - { name: trinitromethyl_aliphatic,
+      smarts: "[CX4]([N+](=O)[O-])([N+](=O)[O-])[N+](=O)[O-]",
+      demerit: 60 }
+  - { name: gemdinitro_in_3ring,
+      smarts: "[C;r3]([N+](=O)[O-])([N+](=O)[O-])",
+      demerit: 60,
+      reason: "gem-dinitro on a 3-membered ring carbon → highly strained + sensitive" }
+  - { name: gemdinitro_in_4ring,
+      smarts: "[C;r4]([N+](=O)[O-])([N+](=O)[O-])",
+      demerit: 60 }
+  - { name: nitrohydrazone,
+      smarts: "[#6]=[#7;!R][#7;!R][N+](=O)[O-]",
+      demerit: 60,
+      reason: "C=N–N–NO2 motif: weak N–N, tautomeric, sensitivity-prone" }
+  - { name: nitroalkene_hydrazone,
+      smarts: "[N+](=O)[O-][#6]=[#6][#6]=[#7][#7][N+](=O)[O-]",
+      demerit: 60 }
+  - { name: open_chain_NNN,
+      smarts: "[#7;!R]=[#7;!R][#7;!R]",
+      demerit: 60,
+      reason: "open-chain N=N–N: fragile chain" }
+  - { name: diazo_chain_with_nitro,
+      smarts: "[#7]=[#7][#7]=[#7][N+](=O)[O-]",
+      demerit: 60 }
+  - { name: nitro_on_carbene_like,
+      smarts: "[C]=[C]=[N][N+](=O)[O-]",
+      demerit: 60 }
+  - { name: open_chain_polynitroamide,
+      smarts: "[NX3]([N+](=O)[O-])([N+](=O)[O-])[NX3]([N+](=O)[O-])[N+](=O)[O-]",
+      demerit: 60 }
+  - { name: polynitro_strained_ring,
+      smarts: "[C]1([N+](=O)[O-])[C]([N+](=O)[O-])[C]1[N+](=O)[O-]",
+      demerit: 60 }
+  - { name: nn_in_3ring,
+      smarts: "[#7;r3][#7;r3]",
+      demerit: 60 }
+  - { name: geminal_diazo,
+      smarts: "[#6]=[N+]=[N-][#6]",
+      demerit: 60 }
+  - { name: nitroalkene_open,
+      smarts: "[#6;!R]=[#6;!R][N+](=O)[O-]",
+      demerit: 30 }
+  - { name: open_chain_NN_NO2,
+      smarts: "[#7;!R][#7;!R][N+](=O)[O-]",
+      demerit: 30 }
+  - { name: small_ring_polynitro,
+      smarts: "[r3,r4][N+](=O)[O-]",
+      demerit: 30 }
+  - { name: nn_in_4ring,
+      smarts: "[#7;r4][#7;r4]",
+      demerit: 30 }
+  - { name: n_oxide_adjacent_n_oxide,
+      smarts: "[#7]([O-])[#7;+]=O",
+      demerit: 30 }
+  - { name: polynitro_cyclopropene,
+      smarts: "[C]1[C]=[C]1",
+      demerit: 30 }
+  - { name: n_nitro_adjacent_imine,
+      smarts: "[#7]([N+](=O)[O-])[N]=[#6]",
+      demerit: 30 }
+  - { name: n_nitro_adjacent_hydrazone,
+      smarts: "[#7]=[#7][N+](=O)[O-]",
+      demerit: 30 }
+  - { name: oxetane_polynitro,
+      smarts: "[O]1[C]([N+](=O)[O-])[C]([N+](=O)[O-])[C]1",
+      demerit: 30 }
+  - { name: hydroxylamine,
+      smarts: "[N][O][H]",
+      demerit: 15 }
+  - { name: cyanate,
+      smarts: "[N]=[C]=[O]",
+      demerit: 15 }
+  - { name: diazo,
+      smarts: "[C]=[N+]=[N-]",
+      demerit: 15 }
+  - { name: azido_carbene,
+      smarts: "[N-]=[N+]=[N][C]=[C]",
+      demerit: 15 }
+
+# ─── Layer 2b: feature-based soft alerts (descriptors / counts) ──────────
+# Each rule fires when its `when` predicate is true. Predicates can use:
+#   MolWt, n_C, n_N, n_O, n_H, n_heavy, n_nitro, n_nitramine, n_nitrate,
+#   n_azide, n_explosophore, explosophore_density, OB, longest_n_chain,
+#   has_aromatic, n_aromatic_het_rings, frac_n_in_ring, h_per_heavy,
+#   n_nitrohydrazone, n_rings, min_ring_size
+feature_alerts:
+  - { name: ob_high_soft,
+      when: "OB > 15",
+      demerit: 30,
+      reason: "OB above +15% — over-oxidised even if not over the hard cap" }
+  - { name: small_carbon_polynitro_soft,
+      when: "n_C <= 2 and n_nitro >= 2",
+      demerit: 30 }
+  - { name: open_chain_polynitro,
+      when: "frac_n_in_ring == 0 and n_nitro >= 3",
+      demerit: 30 }
+  - { name: low_HC_ratio_polynitro,
+      when: "h_per_C < 1.0 and n_nitro >= 2",
+      demerit: 30 }
+  - { name: small_mw_multi_nitro,
+      when: "MolWt < 200 and n_nitro >= 2",
+      demerit: 15 }
+  - { name: strained_ring_multi_nitro,
+      when: "min_ring_size <= 4 and n_nitro >= 2",
+      demerit: 30 }
+  - { name: nonaromatic_polynitro,
+      when: "has_aromatic == False and n_nitro >= 3",
+      demerit: 15 }
+  - { name: n_chain_len_3,
+      when: "longest_n_chain == 3",
+      demerit: 30 }
+  - { name: n_chain_len_4plus,
+      when: "longest_n_chain >= 4",
+      demerit: 60 }
+  - { name: explosophore_density_high,
+      when: "explosophore_density > 0.35",
+      demerit: 30 }
+  - { name: explosophore_density_very_high,
+      when: "explosophore_density > 0.45",
+      demerit: 60 }
+  - { name: low_H_density,
+      when: "MolWt < 220 and h_per_heavy < 0.25",
+      demerit: 30 }
+  - { name: very_low_H_with_multi_expl,
+      when: "h_per_heavy < 0.20 and n_explosophore >= 3",
+      demerit: 30 }
+  - { name: small_multi_explosophore_OOD,
+      when: "MolWt < 200 and n_explosophore >= 3",
+      demerit: 15 }
+  - { name: small_unsaturated_polynitro_no_arom,
+      when: "MolWt < 220 and has_aromatic == False and n_nitro >= 3",
+      demerit: 30 }
+  - { name: multi_nitrohydrazone,
+      when: "n_nitrohydrazone >= 2",
+      demerit: 60 }
+  - { name: nitrohydrazone_1,
+      when: "n_nitrohydrazone == 1",
+      demerit: 30 }
+
+# ─── High-risk motif tags (used for sensitivity-floor enforcement) ───────
+# When any of these alerts fires, the heuristic sensitivity score is
+# clamped to a minimum value; this prevents sens_pred=0 on flagged molecules.
+sensitivity_floors:
+  very_high: 0.65   # n_chain_len_4plus, explosophore_density_very_high
+  high:      0.50   # nitrohydrazone, open_chain_NNN, diazo_chain_with_nitro,
+                    # nitroalkene_hydrazone, multi_nitrohydrazone, nitrohydrazone_1,
+                    # small_unsaturated_polynitro_no_arom
+  medium:    0.30   # open_chain_NN_NO2, nitroalkene_open, n_chain_len_3,
+                    # explosophore_density_high

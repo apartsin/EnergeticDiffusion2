@@ -41,6 +41,7 @@ print("[train] Running massive joint rerank (pool=20000) …"); sys.stdout.flush
 writer.add_text("phase", "training_start: pool=20000", 0)
 writer.flush()
 ret = subprocess.run([sys.executable, "scripts/diffusion/joint_rerank.py",
+                       "--base", os.getcwd(),
                        "--exp_v4b", "experiments/v4b",
                        "--exp_v3",  "experiments/v3",
                        "--cfg", "7", "--n_pool_each", "20000", "--n_keep", "200",

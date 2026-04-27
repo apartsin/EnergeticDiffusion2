@@ -30,16 +30,23 @@ writer = SummaryWriter(log_dir="runs")
 writer.add_text("phase", "model_download: starting MolMIM hybrid job", 0)
 writer.flush()
 
-# ── Phase 0: install NeMo if needed ─────────────────────────────────────
+os.makedirs("results", exist_ok=True)
+
 print("[train] Checking NeMo …"); sys.stdout.flush()
 try:
     import nemo
     print(f"[train] NeMo {nemo.__version__} present"); sys.stdout.flush()
 except ImportError:
-    print("[train] Installing NeMo (this takes ~5 min) …"); sys.stdout.flush()
+    print("[train] NeMo missing. Pre-installing build deps…"); sys.stdout.flush()
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--upgrade",
+                    "pip", "setuptools", "wheel"], check=True)
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q",
+                    "Cython>=0.29", "numpy<2.0", "packaging"], check=True)
+    print("[train] Installing NeMo (~7 min) …"); sys.stdout.flush()
     subprocess.run([sys.executable, "-m", "pip", "install", "-q",
                     "nemo-toolkit[nlp]==1.23.0"], check=True)
     import nemo
+print(f"[train] NeMo OK"); sys.stdout.flush()
 
 writer.add_text("phase", "nemo_ready", 0)
 
@@ -99,9 +106,9 @@ writer.add_text("phase", f"encode_complete: {N} samples", 0)
 print("[train] Phase 2: train denoiser at 512-d …"); sys.stdout.flush()
 writer.add_text("phase", "denoiser_train_start: 512-d", 0)
 # Dispatch to existing trainer (uploaded as denoiser_train.py)
-ret = subprocess.run([sys.executable, "denoiser_train.py",
-                       "--config", "diffusion_expanded_v9_512d.yaml"],
-                      env={**os.environ, "LATENTS_OVERRIDE": "results/latents_molmim.pt"})
+shutil.copy("results/latents_molmim.pt", "latents_molmim.pt")
+ret = subprocess.run([sys.executable, "train.py",
+                       "--config", "diffusion_expanded_v9_512d.yaml"])
 if ret.returncode != 0:
     print(f"[train] denoiser train failed (exit {ret.returncode})"); sys.stdout.flush()
     sys.exit(ret.returncode)

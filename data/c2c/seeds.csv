@@ -1,0 +1,11 @@
+name,smiles
+TNT,Cc1c([N+](=O)[O-])cc([N+](=O)[O-])cc1[N+](=O)[O-]
+RDX,O=[N+]([O-])N1CN([N+](=O)[O-])CN([N+](=O)[O-])C1
+HMX,O=[N+]([O-])N1CN([N+](=O)[O-])CN([N+](=O)[O-])CN1[N+](=O)[O-]
+PETN,O=[N+]([O-])OCC(CO[N+](=O)[O-])(CO[N+](=O)[O-])CO[N+](=O)[O-]
+NTO,O=C1N=C(N([N+](=O)[O-])C1)
+TATB,Nc1c([N+](=O)[O-])c(N)c([N+](=O)[O-])c(N)c1[N+](=O)[O-]
+CL-20,O=[N+]([O-])N1[C@H]2[C@@H]3N([N+](=O)[O-])[C@@H]4[C@H](N2[N+](=O)[O-])N([N+](=O)[O-])[C@H]([C@H]1N3[N+](=O)[O-])N4[N+](=O)[O-]
+FOX-7,NC(=C([N+](=O)[O-])[N+](=O)[O-])N
+LLM-105,Nc1nc(=O)c2c([nH]1)nonc2N
+DAAF,O=[N+]([O-])c1nonc1N=Nc1nonc1[N+](=O)[O-]

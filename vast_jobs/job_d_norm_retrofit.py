@@ -42,12 +42,15 @@ writer.add_text("phase", "training_start", 0)
 writer.flush()
 
 # Replace the latents path in the config to point at our normalised file.
-config = open("diffusion_expanded_v4b_norm.yaml").read()
+config = open("diffusion_expanded_v4b.yaml").read()
 config = config.replace("latents_trustcond.pt", "latents_trustcond_norm.pt")
+config = config.replace("E:/Projects/EnergeticDiffusion2", "/workspace/data")
+config = config.replace("data/training/diffusion/latents_trustcond_norm.pt",
+                          "latents_trustcond_norm.pt")
 with open("config_run.yaml", "w") as f:
     f.write(config)
 
-ret = subprocess.run([sys.executable, "denoiser_train.py",
+ret = subprocess.run([sys.executable, "train.py",
                        "--config", "config_run.yaml"])
 if ret.returncode != 0:
     print(f"[train] denoiser train failed"); sys.exit(ret.returncode)

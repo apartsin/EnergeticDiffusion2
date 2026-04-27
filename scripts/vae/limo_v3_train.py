@@ -25,6 +25,10 @@ try:
     from limo_v3_1_model import LIMOVAEv3_1
 except ImportError:
     LIMOVAEv3_1 = None
+try:
+    from limo_v3_3_model import LIMOVAEv3_3
+except ImportError:
+    LIMOVAEv3_3 = None
 from limo_finetune import (build_energetic_subset, prepare_or_load_cache,
                               compute_loss)
 
@@ -108,7 +112,12 @@ def main():
     v1_state = v1_blob.get("model_state") or v1_blob.get("state_dict") or v1_blob
 
     arch = cfg["arch"]
-    cls = LIMOVAEv3_1 if (arch.get("v3_1") and LIMOVAEv3_1) else LIMOVAEv3
+    if arch.get("v3_3") and LIMOVAEv3_3:
+        cls = LIMOVAEv3_3
+    elif arch.get("v3_1") and LIMOVAEv3_1:
+        cls = LIMOVAEv3_1
+    else:
+        cls = LIMOVAEv3
     log(f"using model class: {cls.__name__}")
     common_kwargs = dict(
         v1_state_dict=v1_state,
@@ -123,10 +132,17 @@ def main():
         n_memory=arch.get("n_memory", 16),
         freeze_encoder=arch.get("freeze_encoder", True),
     )
-    if cls is LIMOVAEv3_1:
+    if cls in (LIMOVAEv3_1, LIMOVAEv3_3):
         common_kwargs["skip_connection"] = arch.get("skip_connection", True)
     else:
         common_kwargs["skip_connection"] = arch.get("skip_connection", False)
+    if cls is LIMOVAEv3_3:
+        na = arch.get("noise_aug", {}) or {}
+        common_kwargs["noise_aug_sigma_max"]  = na.get("sigma_max", 1.5)
+        common_kwargs["noise_aug_prob"]       = na.get("prob", 1.0)
+        common_kwargs["noise_aug_z_only"]     = na.get("z_only", True)
+        common_kwargs["noise_aug_curriculum"] = na.get("curriculum", "linear")
+        common_kwargs["noise_aug_warmup_steps"] = na.get("warmup_steps", 1500)
     model = cls(**common_kwargs).to(args.device)
     log(repr(model))
 

@@ -78,13 +78,21 @@ def load_denoiser_pack(exp_dir, ckpt_name, device, base):
 
 
 def generate_pool(denoiser, schedule, limo, tok, n_pool, target_z, n_props,
-                    cfg_g, n_steps, device):
+                    cfg_g, n_steps, device,
+                    score_model=None, guidance_scales=None):
+    """Standard DDIM-CFG, or DDIM-CFG + classifier guidance if score_model given."""
     mask = torch.ones(n_pool, n_props, device=device)
     vals = torch.full((n_pool, n_props), 0.0, device=device)
     for j in range(target_z.shape[0]):
         vals[:, j] = target_z[j]
-    z = ddim_sample(denoiser, schedule, vals, mask,
-                     n_steps=n_steps, guidance_scale=cfg_g, device=device)
+    if score_model is not None:
+        from guided_v2_sampler import ddim_sample_guided_v2
+        z = ddim_sample_guided_v2(denoiser, schedule, vals, mask, score_model,
+                                    n_steps=n_steps, cfg_scale=cfg_g,
+                                    guidance_scales=guidance_scales, device=device)
+    else:
+        z = ddim_sample(denoiser, schedule, vals, mask,
+                         n_steps=n_steps, guidance_scale=cfg_g, device=device)
     with torch.no_grad():
         logits = limo.decode(z)
     toks = logits.argmax(-1).cpu().tolist()
@@ -95,6 +103,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--exp_v4b", required=True)
     ap.add_argument("--exp_v3",  required=True)
+    ap.add_argument("--exp_extra", default=None,
+                    help="Optional 3rd denoiser dir (e.g. v5). Pool tagged 'extra'.")
+    ap.add_argument("--extra_label", default="v5",
+                    help="Provenance tag for the optional extra denoiser.")
+    ap.add_argument("--score_model", default=None,
+                    help="Path to multi-head score model (.pt) for classifier guidance")
+    ap.add_argument("--guide_viab", type=float, default=1.5)
+    ap.add_argument("--guide_sens", type=float, default=0.5)
+    ap.add_argument("--guide_sa",   type=float, default=0.0)
+    ap.add_argument("--guide_sc",   type=float, default=0.0)
     ap.add_argument("--ckpt", default="best.pt")
     ap.add_argument("--base", default="E:/Projects/EnergeticDiffusion2")
     ap.add_argument("--cfg",  type=float, default=7.0)
@@ -161,14 +179,35 @@ def main():
     print("Targets:", target_raw)
 
     # Pools
+    score_model = None; gscales = None
+    if args.score_model:
+        sys.path.insert(0, "scripts/diffusion")
+        from guided_v2_sampler import load_score_model
+        score_model, _ = load_score_model(args.score_model, device=args.device)
+        gscales = {"viab": args.guide_viab, "sens": args.guide_sens,
+                    "sa": args.guide_sa, "sc": args.guide_sc}
+        print(f"Classifier guidance enabled: {gscales}")
+
     print(f"Generating v4-B pool (n={args.n_pool_each}) …")
     smis_v4b = generate_pool(d_v4b, sch_v4b, limo, tok, args.n_pool_each,
-                                target_z, n_props, args.cfg, args.n_steps, args.device)
+                                target_z, n_props, args.cfg, args.n_steps, args.device,
+                                score_model=score_model, guidance_scales=gscales)
     print(f"Generating v3 pool (n={args.n_pool_each}) …")
     smis_v3  = generate_pool(d_v3,  sch_v3,  limo, tok, args.n_pool_each,
-                                target_z, n_props, args.cfg, args.n_steps, args.device)
+                                target_z, n_props, args.cfg, args.n_steps, args.device,
+                                score_model=score_model, guidance_scales=gscales)
     # tag provenance
     pool = [(s, "v4b") for s in smis_v4b] + [(s, "v3") for s in smis_v3]
+
+    # Optional third denoiser
+    if args.exp_extra:
+        exp_x = Path(args.exp_extra)
+        if not exp_x.is_absolute(): exp_x = base / exp_x
+        d_x, sch_x, l_x, _, _ = load_denoiser_pack(exp_x, args.ckpt, args.device, base)
+        print(f"Generating {args.extra_label} pool (n={args.n_pool_each}) ...")
+        smis_x = generate_pool(d_x, sch_x, limo, tok, args.n_pool_each,
+                               target_z, n_props, args.cfg, args.n_steps, args.device)
+        pool += [(s, args.extra_label) for s in smis_x]
     canons = [(canon(s), src) for s, src in pool]
     canons = [(c, src) for c, src in canons if c]
     print(f"valid: {len(canons)} / {2*args.n_pool_each}")

@@ -25,14 +25,17 @@ V3_1_DEFAULT = "experiments/limo_v3_1_AR_20260426T070423Z/checkpoints/best.pt"
 class LIMOInferenceWrapper:
     """Drop-in for v1 LIMOVAE. `.decode(z)` routes to v3.1 AR generation
     when version == 'v3_1', else parallel decode."""
-    def __init__(self, model, version: str):
+    def __init__(self, model, version: str, sample: bool = True):
         self._m = model
         self.version = version
+        self.sample = sample  # for v3_1: True = multinomial decoding (diverse);
+                              # False = greedy argmax (collapses on prior z)
 
     def decode(self, z):
         with torch.no_grad():
             if self.version == "v3_1":
-                return self._m._generate_autoregressive(z, emb=None)
+                return self._m._generate_autoregressive(z, emb=None,
+                                                          sample=self.sample)
             return self._m.decode(z)
 
     def encode(self, x):
@@ -88,7 +91,13 @@ def load_limo(base: Path,
             ckpt_path = base / ckpt_path
         from limo_v3_1_model import LIMOVAEv3_1
         cb = torch.load(ckpt_path, map_location=device, weights_only=False)
-        m = LIMOVAEv3_1()
+        cfg = (cb.get("config") or {}).get("arch", {}) if isinstance(cb, dict) else {}
+        kwargs = {k: cfg[k] for k in (
+            "embedding_dim", "d_model", "n_heads", "n_layers",
+            "ff_mult", "dropout", "n_memory", "freeze_encoder",
+            "skip_connection",
+        ) if k in cfg}
+        m = LIMOVAEv3_1(**kwargs)
         m.load_state_dict(cb.get("model_state") or cb)
         m.to(device).eval()
         return LIMOInferenceWrapper(m, "v3_1"), "v3_1"
