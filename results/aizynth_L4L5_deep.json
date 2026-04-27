@@ -1,0 +1,38 @@
+[
+  {
+    "id": "L4",
+    "smiles": "O=[N+]([O-])C1=NCN=NN1[N+](=O)[O-]",
+    "name": "tetrazoline-N-nitramine",
+    "n_routes_found": 1,
+    "search_time_s": 0.752131462097168,
+    "top_route_state_score": {
+      "state score": 0.049100689501895424
+    },
+    "top_route_n_reactions": 0,
+    "top_route_tree": {
+      "type": "mol",
+      "hide": false,
+      "smiles": "O=[N+]([O-])C1=NCN=NN1[N+](=O)[O-]",
+      "is_chemical": true,
+      "in_stock": false
+    }
+  },
+  {
+    "id": "L5",
+    "smiles": "O=C(C=NO[N+](=O)[O-])[N+](=O)[O-]",
+    "name": "acyl oxime nitrate",
+    "n_routes_found": 1,
+    "search_time_s": 0.07909250259399414,
+    "top_route_state_score": {
+      "state score": 0.049100689501895424
+    },
+    "top_route_n_reactions": 0,
+    "top_route_tree": {
+      "type": "mol",
+      "hide": false,
+      "smiles": "O=C(C=NO[N+](=O)[O-])[N+](=O)[O-]",
+      "is_chemical": true,
+      "in_stock": false
+    }
+  }
+]

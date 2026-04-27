@@ -1,0 +1,15 @@
+{
+  "comment": "L4+L5 deep retry, 1000 iter / 1800s",
+  "leads": [
+    {
+      "id": "L4",
+      "name": "tetrazoline-N-nitramine",
+      "smiles": "O=[N+]([O-])C1=NCN=NN1[N+](=O)[O-]"
+    },
+    {
+      "id": "L5",
+      "name": "acyl oxime nitrate",
+      "smiles": "O=C(C=NO[N+](=O)[O-])[N+](=O)[O-]"
+    }
+  ]
+}
