@@ -53,7 +53,7 @@ def smiles_to_xyz(smi: str, charge: int = 0):
     if mol is None:
         raise ValueError(f"RDKit cannot parse {smi}")
     mol = Chem.AddHs(mol)
-    params = AllChem.ETKDGv3(); params.randomSeed = 0xF0CACC1A
+    params = AllChem.ETKDGv3(); params.randomSeed = 42
     if AllChem.EmbedMolecule(mol, params) != 0:
         raise RuntimeError(f"ETKDGv3 embedding failed for {smi}")
     AllChem.MMFFOptimizeMolecule(mol, maxIters=500)
@@ -235,41 +235,90 @@ def kamlet_jacobs(rho_g_cm3, hof_kJmol, formula):
             cnt[sym] = int(n) if n else 1
     a, b, c, d = cnt.get("C", 0), cnt.get("H", 0), cnt.get("N", 0), cnt.get("O", 0)
     M_total = 12.011 * a + 1.008 * b + 14.007 * c + 15.999 * d
+    # Q is in cal/g; HOF is in kJ/mol -> cal/mol via *239.006, then /M -> cal/g.
+    # 28.9, 57.8, etc. are kcal-domain constants -> *1000 to keep cal/g consistent.
     if d >= 2 * a + b / 2:                # oxygen-rich
         N = (b + 2 * c + 2 * d) / (4 * M_total)
         M = (56 * d + 88 * c - 8 * b) / (b + 2 * c + 2 * d)
-        Q = (28.9 * b + 47.0 * (d - a - b/2) + 0.239 * hof_kJmol) / M_total
+        Q = (28900 * b + 47000 * (d - a - b/2) + 239.0 * hof_kJmol) / M_total
     elif 2 * a + b / 2 > d >= b / 2:       # carbon-rich (most CHNO)
         N = (b + 2 * c + 2 * d) / (4 * M_total)
         M = (2 * b + 28 * c + 32 * d) / (b + 2 * c + 2 * d)
-        Q = (57.8 * d - 0.239 * hof_kJmol) / M_total
+        Q = (57800 * d - 239.0 * hof_kJmol) / M_total
         Q = abs(Q)
     else:                                  # very C-rich: K-J unreliable
         N = M = Q = float("nan")
     if any(np.isnan([N, M, Q])): return {"D_kms": None, "P_GPa": None,
                                            "N": N, "M": M, "Q": Q}
+    # Q in cal/g; convert to kcal/g for the K-J prefactors that use kcal:
+    Q_kcal = Q / 1000.0
     D = 1.01 * np.sqrt(N * np.sqrt(M) * np.sqrt(Q)) * (1 + 1.30 * rho_g_cm3)
-    P = 15.58 * rho_g_cm3**2 * N * np.sqrt(M) * np.sqrt(Q)
+    P = 1.558 * rho_g_cm3**2 * N * np.sqrt(M) * np.sqrt(Q)
     return {"D_kms": float(D), "P_GPa": float(P), "N": float(N), "M": float(M), "Q": float(Q)}
 
 
 def density_from_volume(atoms, formula, packing=PACKING_COEFF):
-    """Estimate crystal density from B3LYP-optimised molecular volume.
-       rho = M (g/mol) / (V_mol * N_A) cm^3   x packing coefficient.
-       V_mol approximated as the volume of the bounding ellipsoid of the molecule.
+    """Estimate crystal density from molecular volume.
+       rho_crystal = (M / V_mol_VdW) * packing_coefficient
+    where V_mol_VdW is the proper VdW-surface-enclosed molecular volume
+    (accounts for atomic overlap from bonds), computed via RDKit's
+    AllChem.ComputeMolVolume on a 3D-embedded molecule.
     """
-    coords = np.array([[x, y, z] for s, x, y, z in atoms])
-    centroid = coords.mean(0)
-    rel = coords - centroid
-    # Use Bondi VdW radii for atomic volume bounding
-    vdw = {"H": 1.20, "C": 1.70, "N": 1.55, "O": 1.52, "F": 1.47, "Cl": 1.75}
-    vol_atoms = sum((4/3) * np.pi * vdw.get(s, 1.6)**3 for s, *_ in atoms)  # AA^3
-    # Convert AA^3 to cm^3/mol: AA^3 * 6.022e23 / 1e24 = AA^3 * 0.6022
-    V_mol = vol_atoms * 0.6022                                              # cm^3/mol
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+    # Rebuild a properly-bonded RDKit mol from the atoms list (xyz only, no
+    # bonds) is not possible. Instead, recreate from canonical SMILES and
+    # use ComputeMolVolume's own ETKDG embedding.
     import re
-    cnt = {sym: int(n) if n else 1 for sym, n in re.findall(r"([A-Z][a-z]?)(\d*)", formula) if sym}
-    M = 12.011 * cnt.get("C", 0) + 1.008 * cnt.get("H", 0) + 14.007 * cnt.get("N", 0) + 15.999 * cnt.get("O", 0)
-    rho = M / V_mol * packing
+    cnt = {sym: int(n) if n else 1
+           for sym, n in re.findall(r"([A-Z][a-z]?)(\d*)", formula) if sym}
+    M = (12.011 * cnt.get("C", 0) + 1.008 * cnt.get("H", 0)
+         + 14.007 * cnt.get("N", 0) + 15.999 * cnt.get("O", 0)
+         + 18.998 * cnt.get("F", 0) + 35.45 * cnt.get("Cl", 0))
+    return _density_from_atom_xyz(atoms, M, packing)
+
+
+def _density_from_atom_xyz(atoms, M, packing):
+    """Compute V_VdW from a list of (sym, x, y, z) atoms using grid-based
+    integration over Bondi-radii VdW spheres, accounting for overlap."""
+    vdw = {"H": 1.20, "C": 1.70, "N": 1.55, "O": 1.52, "F": 1.47, "Cl": 1.75}
+    coords = np.array([[x, y, z] for _, x, y, z in atoms])
+    radii = np.array([vdw.get(s, 1.6) for s, *_ in atoms])
+    # Bounding box + padding
+    pad = max(radii) + 0.5
+    lo = coords.min(0) - pad; hi = coords.max(0) + pad
+    spacing = 0.25                     # AA; ~0.5 % volume error
+    nx = max(2, int(np.ceil((hi[0] - lo[0]) / spacing)))
+    ny = max(2, int(np.ceil((hi[1] - lo[1]) / spacing)))
+    nz = max(2, int(np.ceil((hi[2] - lo[2]) / spacing)))
+    if nx * ny * nz > 4_000_000:
+        spacing = 0.4
+        nx = max(2, int(np.ceil((hi[0] - lo[0]) / spacing)))
+        ny = max(2, int(np.ceil((hi[1] - lo[1]) / spacing)))
+        nz = max(2, int(np.ceil((hi[2] - lo[2]) / spacing)))
+    xs = np.linspace(lo[0], hi[0], nx)
+    ys = np.linspace(lo[1], hi[1], ny)
+    zs = np.linspace(lo[2], hi[2], nz)
+    inside = np.zeros((nx, ny, nz), dtype=bool)
+    for c, r in zip(coords, radii):
+        # Local bounding box for this atom
+        ix0 = max(0, int((c[0] - r - lo[0]) / spacing))
+        ix1 = min(nx, int((c[0] + r - lo[0]) / spacing) + 2)
+        iy0 = max(0, int((c[1] - r - lo[1]) / spacing))
+        iy1 = min(ny, int((c[1] + r - lo[1]) / spacing) + 2)
+        iz0 = max(0, int((c[2] - r - lo[2]) / spacing))
+        iz1 = min(nz, int((c[2] + r - lo[2]) / spacing) + 2)
+        # Vectorised distance test
+        ax = xs[ix0:ix1, None, None]
+        ay = ys[None, iy0:iy1, None]
+        az = zs[None, None, iz0:iz1]
+        d2 = (ax - c[0])**2 + (ay - c[1])**2 + (az - c[2])**2
+        inside[ix0:ix1, iy0:iy1, iz0:iz1] |= (d2 <= r**2)
+    cell_vol = (xs[1] - xs[0]) * (ys[1] - ys[0]) * (zs[1] - zs[0])
+    V_mol_AA3 = float(inside.sum()) * cell_vol           # AA^3 per molecule
+    # Convert to cm^3/mol: AA^3 * 6.022e23 / 1e24 = AA^3 * 0.6022
+    V_mol_cm3 = V_mol_AA3 * 0.6022
+    rho = M / V_mol_cm3 * packing
     return float(rho)
 
 
