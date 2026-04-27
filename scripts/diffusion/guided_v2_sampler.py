@@ -23,10 +23,31 @@ import torch.nn.functional as F
 def load_score_model(path, device="cuda"):
     sys.path.insert(0, "scripts/viability")
     from train_multihead_latent import MultiHeadScoreModel
+    import torch.nn as nn
     blob = torch.load(path, weights_only=False, map_location=device)
     cfg = blob["config"]
+    sd = blob["state_dict"]
     model = MultiHeadScoreModel(latent_dim=cfg["latent_dim"]).to(device)
-    model.load_state_dict(blob["state_dict"])
+    # Detect optional hazard head (v3f+) and add it dynamically
+    has_hazard = any(k.startswith("head_hazard.") for k in sd.keys())
+    if has_hazard:
+        hidden = model.input_proj.out_features
+        model.head_hazard = nn.Sequential(
+            nn.Linear(hidden, 256), nn.SiLU(),
+            nn.Linear(256, 1),
+        ).to(device)
+        # Patch forward to also output hazard_logit
+        _orig = model.forward
+        def forward_with_hazard(z, sigma, _orig=_orig, _model=model):
+            out = _orig(z, sigma)
+            s = _model.sig_emb(sigma.view(-1, 1).float())
+            h = _model.input_proj(z)
+            for b in _model.blocks:
+                h = b(h, s)
+            out["hazard_logit"] = _model.head_hazard(h).squeeze(-1)
+            return out
+        model.forward = forward_with_hazard
+    model.load_state_dict(sd, strict=True)
     model.eval()
     for p in model.parameters(): p.requires_grad_(False)
     return model, cfg
@@ -34,8 +55,8 @@ def load_score_model(path, device="cuda"):
 
 @torch.enable_grad()
 def _guidance_grad(score_model, z_t, sigma_t, scales: Dict[str, float],
-                   sigma_max_for_anneal: float = 2.0,
-                   max_grad_norm: float = 5.0):
+                   sigma_max_for_anneal: float = 0.0,           # 0 disables anneal (was 2.0; anneal was killing gradient at high sigma)
+                   max_grad_norm: float = 50.0):                # raised from 5 (was clamping legitimate signal)
     """Compute -∇_z [- s_v log P(viab) + s_s * sens_norm - s_perf*perf_satisfy + s_sa * sa]
     with per-head clamping and alpha-anneal."""
     z_t = z_t.detach().requires_grad_(True)
@@ -55,10 +76,28 @@ def _guidance_grad(score_model, z_t, sigma_t, scales: Dict[str, float],
     if scales.get("sc", 0) > 0:
         # SC z-score: lower is better
         losses["sc"] = scales["sc"] * out["sc"].sum()
+    if scales.get("hazard", 0) > 0 and "hazard_logit" in out:
+        # Descend hazard probability: minimize log P(hazard) = -softplus(-logit)
+        # Equivalently: minimize sigmoid(logit). Use softplus(logit) =
+        # -log(1-sigmoid(logit)) so that high-hazard latents get high loss
+        # and gradient flows AWAY from hazardous regions.
+        losses["hazard"] = scales["hazard"] * F.softplus(out["hazard_logit"]).sum()
     if not losses:
         return torch.zeros_like(z_t)
-    total = sum(losses.values())
-    grad = torch.autograd.grad(total, z_t, create_graph=False)[0]
+    # S4 per-head gradient-norm rebalancing: compute each head's gradient
+    # independently, normalise to unit per-row norm, then sum.
+    use_unit_norm = scales.get("_unit_norm", True)
+    if use_unit_norm and len(losses) > 1:
+        z_t.grad = None
+        per_head_grads = []
+        for name, loss in losses.items():
+            g = torch.autograd.grad(loss, z_t, create_graph=False, retain_graph=True)[0]
+            unit = g.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            per_head_grads.append(g / unit)
+        grad = torch.stack(per_head_grads, dim=0).sum(dim=0)
+    else:
+        total = sum(losses.values())
+        grad = torch.autograd.grad(total, z_t, create_graph=False)[0]
     # per-row clamp norm
     norms = grad.norm(dim=-1, keepdim=True).clamp(min=1e-8)
     scale_factor = torch.where(norms > max_grad_norm, max_grad_norm / norms,

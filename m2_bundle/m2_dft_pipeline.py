@@ -147,20 +147,28 @@ def freq_b3lyp_6_31gss(atoms, charge=0, use_gpu=True):
     mol = _build_mol(atoms, "6-31g*", charge=charge)
     mf, backend = _get_mf(mol, "b3lyp", use_gpu=use_gpu)
     mf.kernel()
-    if backend == "gpu":
-        from gpu4pyscf import hessian as gpu_hessian
-        hess = gpu_hessian.RKS(mf)
-    else:
-        from pyscf import hessian
-        hess = hessian.RKS(mf)
+    # Modern PySCF/gpu4pyscf: use mf.Hessian() polymorphic API.
+    # Falls through to GPU path automatically when mf is a gpu4pyscf RKS.
+    hess = mf.Hessian()
+    hess.verbose = 0
     h = hess.kernel()
     freq_info = thermo.harmonic_analysis(mf.mol, h)
+    # ZPE: compute manually from real frequencies (PySCF doesn't expose 'ZPE'
+    # directly under that key; freq_au is in atomic units of energy).
+    freq_wn = np.asarray(freq_info.get("freq_wavenumber", []))
+    if "freq_au" in freq_info:
+        freqs_au = np.asarray(freq_info["freq_au"])
+    else:
+        # Convert wavenumbers to hartree: 1 cm-1 = 4.55634e-6 hartree
+        freqs_au = freq_wn * 4.55634e-6
+    real_mask = freq_wn > 0
+    zpe_hartree = float(0.5 * freqs_au[real_mask].sum())
     return {
-        "freqs_cm1": [float(x) for x in freq_info["freq_au"]],
-        "freqs_wavenumber": [float(x) for x in freq_info["freq_wavenumber"]],
-        "ZPE_kJmol": float(freq_info["ZPE"] * HARTREE_TO_KJMOL),
-        "n_imag": int((np.asarray(freq_info["freq_wavenumber"]) < 0).sum()),
-        "min_real_freq_cm1": float(np.asarray(freq_info["freq_wavenumber"]).min()),
+        "freqs_cm1": [float(x) for x in freqs_au],
+        "freqs_wavenumber": [float(x) for x in freq_wn],
+        "ZPE_kJmol": zpe_hartree * HARTREE_TO_KJMOL,
+        "n_imag": int((freq_wn < 0).sum()),
+        "min_real_freq_cm1": float(freq_wn.min()) if len(freq_wn) else float("nan"),
         "backend": backend,
     }
 

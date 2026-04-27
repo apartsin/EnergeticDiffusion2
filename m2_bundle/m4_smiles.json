@@ -1,0 +1,33 @@
+{
+  "comment": "E4 DFT on chemist-audit REJECTED leads. Demonstrates that the SMARTS-based rejection corresponds to actual electronic-structure instability or dangerous frontier orbitals.",
+  "leads": [
+    {
+      "id": "R2",
+      "rank": 2,
+      "name": "merged-rank2 N-nitroimine (chemist-rejected)",
+      "smiles": "O=[N+]([O-])N=C1NC(O)ON=C1[N+](=O)[O-]",
+      "predicted": {"rho": 1.87, "HOF": -51, "D": 8.96, "P": 34.01, "MW": 205, "comp": 0.769},
+      "reject_reason": "alert:n_nitroimine"
+    },
+    {
+      "id": "R3",
+      "rank": 3,
+      "name": "merged-rank3 polyazene chain (chemist-rejected)",
+      "smiles": "O=[N+]([O-])N=NNC=NN[N+](=O)[O-]",
+      "predicted": {"rho": 1.90, "HOF": 129, "D": 9.28, "P": 37.18, "MW": 177, "comp": 0.761},
+      "reject_reason": "alert:azo_nitro_terminal"
+    },
+    {
+      "id": "R14",
+      "rank": 14,
+      "name": "merged-rank14 azo-amino-nitrate (chemist-rejected)",
+      "smiles": "O=[N+]([O-])C=CN(C[N+](=O)[O-])N=NN[N+](=O)[O-]",
+      "predicted": {"rho": 1.86, "HOF": 93, "D": 8.79, "P": 33.59, "MW": 235, "comp": 0.714},
+      "reject_reason": "alert:azo_amino_nitro"
+    }
+  ],
+  "anchors": [
+    {"id": "RDX", "name": "RDX", "smiles": "[O-][N+](=O)N1CN([N+](=O)[O-])CN([N+](=O)[O-])C1"},
+    {"id": "TATB", "name": "TATB", "smiles": "Nc1c([N+](=O)[O-])c(N)c([N+](=O)[O-])c(N)c1[N+](=O)[O-]"}
+  ]
+}

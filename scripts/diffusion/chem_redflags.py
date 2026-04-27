@@ -78,6 +78,26 @@ ALERTS = {
         ("[#6]1=[#6]=[#6]1", "reject"),
     "allene_in_3ring":
         ("[#6;r3]=[#6;r3]=[#6;r3]", "reject"),
+    # added 2026-04-27 from chemist audit (F1, F2):
+    # F1: N-nitroimine motif (N=N(NO2)C, much more sensitive than nitramine)
+    "n_nitroimine":
+        ("[N+](=O)([O-])[#7]=[#6]", "reject"),
+    # F2: open-chain polyazene with terminal NO2 on either end — multiple variants
+    # Terminal azo-nitro (NO2-N=N), one of the most shock-sensitive motifs known
+    "azo_nitro_terminal":
+        ("[N+](=O)([O-])[#7;!R]=[#7;!R]", "reject"),
+    # Alternating tetraazene chain
+    "tetraazene_open":
+        ("[#7;!R]=[#7;!R][#7;!R]=[#7;!R]", "reject"),
+    # 4+ contiguous open-chain N atoms (any bond order)
+    "open_chain_4N":
+        ("[#7;!R][#7;!R][#7;!R][#7;!R]", "strong"),
+    # 5+ open-chain N's even with one C interrupting (L3-style cheat)
+    "n_n_c_n_n_chain":
+        ("[#7;!R][#7;!R][#6;!R][#7;!R][#7;!R]", "strong"),
+    # Azo + amino + terminal NO2 (rank14-style: ...N=N-N-NO2)
+    "azo_amino_nitro":
+        ("[#7;!R]=[#7;!R][#7;!R][N+](=O)[O-]", "reject"),
 }
 
 # Compiled SMARTS (lazy)
