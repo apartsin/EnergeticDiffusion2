@@ -612,35 +612,66 @@ where \(S_{\text{perf}}^{\text{band}}\) is a saturating banded ramp on each prop
 
 <p><strong>D.5 Per-lead DFT-recomputed property table.</strong> Full per-lead B3LYP/6-31G(d) optimisation + \(\omega\)B97X-D3BJ/def2-TZVP single-point results for the chem-pass leads and the two anchors (RDX, TATB):</p>
 
-<table>
-  <caption><strong>Table D.1.</strong> Per-lead B3LYP/6-31G(d) optimisation + \(\omega\)B97X-D3BJ/def2-TZVP single-point results for the chem-pass leads and two anchors (RDX, TATB), <em>after</em> the ZPE unit-bug fix (commit&nbsp;<code>4abe43d</code>). Columns: compound; molecular formula; atom count; number of imaginary frequencies (0 = real local minimum); minimum real frequency; zero-point vibrational energy; raw DFT density and anchor-calibrated density (\(\rho_{\text{cal}}=4.275\,\rho_{\text{DFT}}-5.172\)); raw 0-K atomization-energy heat of formation and anchor-calibrated HOF (HOF\(_{\text{cal}}\)=HOF\(_{\text{DFT}}-205.7\)&nbsp;kJ/mol). Per-lead numbers are taken from <code>m2_summary.json</code> and <code>m2_lead_*.json</code>. <em>h<sub>50</sub> impact-sensitivity columns</em>: chemotype label (RDKit-SMARTS classification of the weakest X&ndash;NO<sub>2</sub> bond); BDE (kcal/mol) using the Politzer&ndash;Murray 2014 chemotype-class typical values (Ar&ndash;NO<sub>2</sub> 70, R<sub>2</sub>N&ndash;NO<sub>2</sub> 47, R-CH-NO<sub>2</sub> 55, R-O-NO<sub>2</sub> 40); h<sub>50,BDE</sub> via Politzer&ndash;Murray linear fit h<sub>50</sub>=1.93&middot;BDE&minus;52.4; h<sub>50,model</sub> from <code>score_model_v3e_h50</code> (Huang and Massa <a class="cite" href="#ref-huang2021applying">[huang2021]</a>). Anchor sanity check: RDX model 26.3 vs lit 25&ndash;30; TATB model 89.2 (BDE 82.7) vs lit 140&ndash;490 (both routes underpredict TATB; H-bond cushioning is not in the BDE-only class scheme).</caption>
-  <thead><tr><th>Compound</th><th>formula</th><th>n_atoms</th><th>\(n_{\text{imag}}\)</th><th>min real freq (cm<sup>&minus;1</sup>)</th><th>ZPE (kJ/mol)</th><th>\(\rho_{\text{DFT}}\) (g/cm<sup>3</sup>)</th><th>\(\rho_{\text{cal}}\) (g/cm<sup>3</sup>)</th><th>HOF\(_{\text{DFT}}\) (kJ/mol)</th><th>HOF\(_{\text{cal}}\) (kJ/mol)</th><th>chemotype</th><th>h<sub>50,model</sub> (cm)</th><th>h<sub>50,BDE</sub> (cm)</th></tr></thead>
+<table style="font-size:0.92em">
+  <caption><strong>Table D.1.</strong> Per-lead B3LYP/6-31G(d) optimisation + &omega;B97X-D3BJ/def2-TZVP single-point <em>structural</em> validation for the 12 chem-pass leads and the two anchors (RDX, TATB), after the ZPE unit-bug fix (commit <code>4abe43d</code>). Columns: lead ID; molecular formula; atom count; number of imaginary frequencies (0 = real local minimum); minimum real-mode wavenumber; zero-point vibrational energy. Per-lead numbers from <code>m2_summary.json</code> and <code>m2_lead_*.json</code>. DFT densities, HOFs, and h<sub>50</sub> predictions are in Table D.1c.</caption>
+  <thead><tr><th>ID</th><th>Formula</th><th>n_atoms</th><th>n_imag</th><th>&nu;_min (cm<sup>&minus;1</sup>)</th><th>ZPE (kJ/mol)</th></tr></thead>
   <tbody>
-    <tr><td><strong>RDX</strong> (anchor)</td><td>C<sub>3</sub>H<sub>6</sub>N<sub>6</sub>O<sub>6</sub></td><td>21</td><td>0</td><td>40</td><td>375</td><td>1.63</td><td>1.81</td><td>+240.4</td><td>+34.7</td><td>nitramine</td><td>26.3</td><td>38.3</td></tr>
-    <tr><td><strong>TATB</strong> (anchor)</td><td>C<sub>6</sub>H<sub>6</sub>N<sub>6</sub>O<sub>6</sub></td><td>24</td><td>0</td><td>7</td><td>419</td><td>1.66</td><td>1.94</td><td>+82.9</td><td>&minus;122.7</td><td>nitroaromatic</td><td>89.2</td><td>82.7</td></tr>
-    <tr><td>L1 trinitro-isoxazole</td><td>C<sub>3</sub>N<sub>4</sub>O<sub>7</sub></td><td>14</td><td>0</td><td>13</td><td>170</td><td>1.80</td><td>2.53</td><td>+229.5</td><td>+23.9</td><td>nitroaromatic</td><td>30.3</td><td>82.7</td></tr>
-    <tr><td>L2 oxime-nitrate-imidazoline</td><td>C<sub>3</sub>H<sub>3</sub>N<sub>5</sub>O<sub>6</sub></td><td>17</td><td>0</td><td>47</td><td>263</td><td>1.70</td><td>2.09</td><td>+117.3</td><td>&minus;88.4</td><td>unknown</td><td>33.5</td><td>53.8</td></tr>
-    <tr><td>L3 oxadiazinone-N-nitramine</td><td>C<sub>3</sub>H<sub>2</sub>N<sub>6</sub>O<sub>6</sub></td><td>17</td><td>0</td><td>36</td><td>245</td><td>1.73</td><td>2.23</td><td>+322.0</td><td>+116.4</td><td>nitramine</td><td>82.6</td><td>38.3</td></tr>
-    <tr><td>L4 5-ring tetrazoline-N-nitramine</td><td>C<sub>2</sub>H<sub>2</sub>N<sub>6</sub>O<sub>4</sub></td><td>14</td><td>0</td><td>52</td><td>205</td><td>1.69</td><td>2.06</td><td>+498.8</td><td>+293.1</td><td>nitramine</td><td>27.8</td><td>38.3</td></tr>
-    <tr><td>L5 acyl oxime nitrate</td><td>C<sub>2</sub>H<sub>1</sub>N<sub>3</sub>O<sub>6</sub></td><td>12</td><td>0</td><td>24</td><td>153</td><td>1.69</td><td>2.07</td><td>+53.6</td><td>&minus;152.1</td><td>nitrate_ester</td><td>33.4</td><td>24.8</td></tr>
-    <tr><td>L9 hydrazinyl tetranitramine</td><td>C<sub>3</sub>H<sub>5</sub>N<sub>9</sub>O<sub>8</sub></td><td>25</td><td>0</td><td>0</td><td>396</td><td>1.67</td><td>1.96</td><td>+536.5</td><td>+330.8</td><td>nitramine</td><td>21.9</td><td>38.3</td></tr>
-    <tr><td>L11 acyl-nitramide nitrate-imine</td><td>C<sub>3</sub>H<sub>3</sub>N<sub>5</sub>O<sub>7</sub></td><td>18</td><td>0</td><td>9</td><td>271</td><td>1.66</td><td>1.94</td><td>+47.6</td><td>&minus;158.1</td><td>nitramine</td><td>26.5</td><td>38.3</td></tr>
-    <tr><td>L13 oxadiazoline</td><td>C<sub>2</sub>H<sub>3</sub>N<sub>5</sub>O<sub>5</sub></td><td>15</td><td>0</td><td>25</td><td>232</td><td>1.63</td><td>1.81</td><td>+321.8</td><td>+116.1</td><td>nitramine</td><td>31.0</td><td>38.3</td></tr>
-    <tr><td>L16 oxadiazinone-N-nitramine (alt SMILES)</td><td>C<sub>3</sub>H<sub>2</sub>N<sub>6</sub>O<sub>6</sub></td><td>17</td><td>0</td><td>36</td><td>245</td><td>1.73</td><td>2.23</td><td>+322.0</td><td>+116.4</td><td>nitramine</td><td>82.6</td><td>38.3</td></tr>
-    <tr><td>L18 vinyl azo-amino nitrate</td><td>C<sub>3</sub>H<sub>4</sub>N<sub>6</sub>O<sub>6</sub></td><td>19</td><td>0</td><td>13</td><td>303</td><td>1.62</td><td>1.75</td><td>+388.7</td><td>+183.1</td><td>nitramine</td><td>38.6</td><td>38.3</td></tr>
-    <tr><td>L19 acyl C-OH nitramine</td><td>C<sub>2</sub>H<sub>2</sub>N<sub>2</sub>O<sub>6</sub></td><td>12</td><td>0</td><td>48</td><td>173</td><td>1.67</td><td>1.95</td><td>&minus;166.7</td><td>&minus;372.3</td><td>nitrate_ester</td><td>45.5</td><td>24.8</td></tr>
-    <tr><td>L20 \(\alpha\)-NO<sub>2</sub> acyl-N-nitramine</td><td>C<sub>3</sub>H<sub>1</sub>N<sub>5</sub>O<sub>5</sub></td><td>14</td><td>0</td><td>0</td><td>191</td><td>1.72</td><td>2.19</td><td>+194.7</td><td>&minus;11.0</td><td>nitramine</td><td>74.1</td><td>38.3</td></tr>
+    <tr><td>L1</td><td>C<sub>3</sub>N<sub>4</sub>O<sub>7</sub></td><td>14</td><td>0</td><td>13.4</td><td>169.7</td></tr>
+    <tr><td>L2</td><td>C<sub>3</sub>H<sub>3</sub>N<sub>5</sub>O<sub>6</sub></td><td>17</td><td>0</td><td>47.1</td><td>263.1</td></tr>
+    <tr><td>L3</td><td>C<sub>3</sub>H<sub>2</sub>N<sub>6</sub>O<sub>6</sub></td><td>17</td><td>0</td><td>35.9</td><td>244.7</td></tr>
+    <tr><td>L4</td><td>C<sub>2</sub>H<sub>2</sub>N<sub>6</sub>O<sub>4</sub></td><td>14</td><td>0</td><td>52.0</td><td>205.5</td></tr>
+    <tr><td>L5</td><td>C<sub>2</sub>H<sub>1</sub>N<sub>3</sub>O<sub>6</sub></td><td>12</td><td>0</td><td>23.8</td><td>153.0</td></tr>
+    <tr><td>L9</td><td>C<sub>3</sub>H<sub>5</sub>N<sub>9</sub>O<sub>8</sub></td><td>25</td><td>0</td><td>0.0</td><td>396.4</td></tr>
+    <tr><td>L11</td><td>C<sub>3</sub>H<sub>3</sub>N<sub>5</sub>O<sub>7</sub></td><td>18</td><td>0</td><td>9.1</td><td>271.4</td></tr>
+    <tr><td>L13</td><td>C<sub>2</sub>H<sub>3</sub>N<sub>5</sub>O<sub>5</sub></td><td>15</td><td>0</td><td>24.8</td><td>232.1</td></tr>
+    <tr><td>L16</td><td>C<sub>3</sub>H<sub>2</sub>N<sub>6</sub>O<sub>6</sub></td><td>17</td><td>0</td><td>35.9</td><td>244.7</td></tr>
+    <tr><td>L18</td><td>C<sub>3</sub>H<sub>4</sub>N<sub>6</sub>O<sub>6</sub></td><td>19</td><td>0</td><td>12.9</td><td>303.0</td></tr>
+    <tr><td>L19</td><td>C<sub>2</sub>H<sub>2</sub>N<sub>2</sub>O<sub>6</sub></td><td>12</td><td>0</td><td>47.6</td><td>172.8</td></tr>
+    <tr><td>L20</td><td>C<sub>3</sub>H<sub>1</sub>N<sub>5</sub>O<sub>5</sub></td><td>14</td><td>0</td><td>0.0</td><td>190.6</td></tr>
+    <tr><td>RDX</td><td>C<sub>3</sub>H<sub>6</sub>N<sub>6</sub>O<sub>6</sub></td><td>21</td><td>0</td><td>40.3</td><td>375.0</td></tr>
+    <tr><td>TATB</td><td>C<sub>6</sub>H<sub>6</sub>N<sub>6</sub>O<sub>6</sub></td><td>24</td><td>0</td><td>6.8</td><td>419.1</td></tr>
+  </tbody>
+</table>
+
+<table style="font-size:0.92em">
+  <caption><strong>Table D.1c.</strong> DFT-derived <em>properties</em> for the 12 chem-pass leads and the two anchors. &rho;<sub>cal</sub> = 4.275&middot;&rho;<sub>DFT</sub> &minus; 5.172; HOF<sub>cal</sub> = HOF<sub>DFT</sub> &minus; 205.7 kJ/mol (2-anchor RDX/TATB fit, LOO residual &plusmn;62.5 kJ/mol). h<sub>50,model</sub> from <code>score_model_v3e_h50</code> (Huang and Massa <a class="cite" href="#ref-huang2021applying">[huang2021]</a>); h<sub>50,BDE</sub> via Politzer&ndash;Murray 2014 chemotype-class linear fit h<sub>50</sub>=1.93&middot;BDE&minus;52.4 (BDE class typicals: Ar&ndash;NO<sub>2</sub> 70, R<sub>2</sub>N&ndash;NO<sub>2</sub> 47, R-CH-NO<sub>2</sub> 55, R-O-NO<sub>2</sub> 40 kcal/mol). Anchor sanity check: RDX h<sub>50,model</sub>=26.3 cm vs literature 25&ndash;30; TATB 89.2 vs literature 140&ndash;490 (both routes underpredict TATB; H-bond cushioning is not in the BDE-only class scheme).</caption>
+  <thead><tr><th>ID</th><th>&rho;<sub>DFT</sub> (g/cm<sup>3</sup>)</th><th>&rho;<sub>cal</sub> (g/cm<sup>3</sup>)</th><th>HOF<sub>DFT</sub> (kJ/mol)</th><th>HOF<sub>cal</sub> (kJ/mol)</th><th>h<sub>50,model</sub> (cm)</th><th>h<sub>50,BDE</sub> (cm)</th></tr></thead>
+  <tbody>
+    <tr><td>L1</td><td>1.801</td><td>2.529</td><td>+229.5</td><td>+23.9</td><td>30.3</td><td>82.7</td></tr>
+    <tr><td>L2</td><td>1.699</td><td>2.089</td><td>+117.3</td><td>-88.4</td><td>33.5</td><td>53.8</td></tr>
+    <tr><td>L3</td><td>1.731</td><td>2.229</td><td>+322.0</td><td>+116.4</td><td>82.6</td><td>38.3</td></tr>
+    <tr><td>L4</td><td>1.692</td><td>2.063</td><td>+498.8</td><td>+293.1</td><td>27.8</td><td>38.3</td></tr>
+    <tr><td>L5</td><td>1.693</td><td>2.067</td><td>+53.6</td><td>-152.1</td><td>33.4</td><td>24.8</td></tr>
+    <tr><td>L9</td><td>1.669</td><td>1.965</td><td>+536.5</td><td>+330.8</td><td>21.9</td><td>38.3</td></tr>
+    <tr><td>L11</td><td>1.663</td><td>1.938</td><td>+47.6</td><td>-158.1</td><td>26.5</td><td>38.3</td></tr>
+    <tr><td>L13</td><td>1.634</td><td>1.813</td><td>+321.8</td><td>+116.1</td><td>31.0</td><td>38.3</td></tr>
+    <tr><td>L16</td><td>1.731</td><td>2.229</td><td>+322.0</td><td>+116.4</td><td>82.6</td><td>38.3</td></tr>
+    <tr><td>L18</td><td>1.619</td><td>1.751</td><td>+388.7</td><td>+183.1</td><td>38.6</td><td>38.3</td></tr>
+    <tr><td>L19</td><td>1.666</td><td>1.952</td><td>-166.7</td><td>-372.3</td><td>45.5</td><td>24.8</td></tr>
+    <tr><td>L20</td><td>1.723</td><td>2.192</td><td>+194.7</td><td>-11.0</td><td>74.1</td><td>38.3</td></tr>
+    <tr><td>RDX</td><td>1.632</td><td>1.806</td><td>+240.4</td><td>+34.7</td><td>26.3</td><td>38.3</td></tr>
+    <tr><td>TATB</td><td>1.663</td><td>1.937</td><td>+82.9</td><td>-122.7</td><td>89.2</td><td>82.7</td></tr>
   </tbody>
 </table>
 
 <p><strong>Reference-class scaffolds.</strong> Three reference-class compounds (R2, R3, R14) flagged by the strengthened SMARTS chemistry filter of §5.3.1 were optimised with the same protocol; they are <em>not</em> chem-pass leads and are reported here for completeness:</p>
-<table>
-  <caption><strong>Table D.1b.</strong> Reference-class (chem-rejected) scaffolds optimised with the same B3LYP/6-31G(d) + \(\omega\)B97X-D3BJ/def2-TZVP protocol. R2 is an N-nitroimine (the original merged-rank-2 from the un-strengthened SMARTS filter; same scaffold class as L2), R3 a polyazene chain (original rank-3), R14 an azo-amino-nitrate. Reported here so that the hazard-flagged scaffolds appear under the same DFT methodology as the chem-pass set.</caption>
-  <thead><tr><th>Compound</th><th>formula</th><th>n_atoms</th><th>\(n_{\text{imag}}\)</th><th>min real freq (cm<sup>&minus;1</sup>)</th><th>ZPE (kJ/mol)</th><th>\(\rho_{\text{DFT}}\) (g/cm<sup>3</sup>)</th><th>HOF \(\omega\)B97X-D (kJ/mol)</th></tr></thead>
+<table style="font-size:0.92em">
+  <caption><strong>Table D.1b.</strong> Reference-class (chem-rejected) scaffolds optimised with the same B3LYP/6-31G(d) + &omega;B97X-D3BJ/def2-TZVP protocol. R2 is an N-nitroimine, R3 a polyazene chain, R14 an azo-amino-nitrate. DFT-derived properties for these compounds are in Table D.1d.</caption>
+  <thead><tr><th>ID</th><th>Formula</th><th>n_atoms</th><th>n_imag</th><th>&nu;_min (cm<sup>&minus;1</sup>)</th><th>ZPE (kJ/mol)</th></tr></thead>
   <tbody>
-    <tr><td>R2 N-nitroimine (chem-rejected)</td><td>C<sub>3</sub>H<sub>3</sub>N<sub>5</sub>O<sub>6</sub></td><td>17</td><td>0</td><td>47</td><td>263</td><td>1.70</td><td>+117.3</td></tr>
-    <tr><td>R3 polyazene chain (chem-rejected)</td><td>C<sub>1</sub>H<sub>3</sub>N<sub>7</sub>O<sub>4</sub></td><td>15</td><td>0</td><td>33</td><td>234</td><td>1.64</td><td>+521.7</td></tr>
-    <tr><td>R14 azo-amino-nitrate (chem-rejected)</td><td>C<sub>3</sub>H<sub>5</sub>N<sub>7</sub>O<sub>6</sub></td><td>21</td><td>0</td><td>37</td><td>349</td><td>1.60</td><td>+437.4</td></tr>
+    <tr><td>R2</td><td>C<sub>3</sub>H<sub>3</sub>N<sub>5</sub>O<sub>6</sub></td><td>17</td><td>0</td><td>47.1</td><td>263.1</td></tr>
+    <tr><td>R3</td><td>C<sub>1</sub>H<sub>3</sub>N<sub>7</sub>O<sub>4</sub></td><td>15</td><td>0</td><td>33.3</td><td>234.3</td></tr>
+    <tr><td>R14</td><td>C<sub>3</sub>H<sub>5</sub>N<sub>7</sub>O<sub>6</sub></td><td>21</td><td>0</td><td>36.9</td><td>348.6</td></tr>
+  </tbody>
+</table>
+
+<table style="font-size:0.92em">
+  <caption><strong>Table D.1d.</strong> DFT-derived properties for the three reference-class scaffolds. Calibration as Table D.1c. h<sub>50</sub> not reported because the score-model training set does not include reference-class chemotypes at sufficient density.</caption>
+  <thead><tr><th>ID</th><th>&rho;<sub>DFT</sub> (g/cm<sup>3</sup>)</th><th>&rho;<sub>cal</sub> (g/cm<sup>3</sup>)</th><th>HOF<sub>DFT</sub> (kJ/mol)</th><th>HOF<sub>cal</sub> (kJ/mol)</th></tr></thead>
+  <tbody>
+    <tr><td>R2</td><td>1.699</td><td>2.089</td><td>+117.3</td><td>-88.4</td></tr>
+    <tr><td>R3</td><td>1.642</td><td>1.847</td><td>+521.7</td><td>+316.1</td></tr>
+    <tr><td>R14</td><td>1.604</td><td>1.684</td><td>+437.4</td><td>+231.7</td></tr>
   </tbody>
 </table>
 
