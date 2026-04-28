@@ -306,12 +306,15 @@ def fig_guided_vs_unguided():
     ax.set_xlabel("composite v2 score (higher = better)")
     ax.set_ylabel("# candidates")
     ax.set_title("Multi-head classifier guidance vs unguided baseline (pool=10k matched compute)")
-    ax.legend(loc="upper right", framealpha=0.95)
+    # Place legend top-left so it doesn't obscure the right tail of the
+    # distribution (which is where the headline guided-shift evidence lives).
+    ax.legend(loc="upper left", framealpha=0.95)
     ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout()
     fig.savefig(OUT / "fig7_guided_vs_unguided.svg")
+    fig.savefig(OUT / "fig7_guided_vs_unguided.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
-    print(f"  fig7: {OUT / 'fig7_guided_vs_unguided.svg'}")
+    print(f"  fig7: {OUT / 'fig7_guided_vs_unguided.svg'} (+ .png)")
 
 
 def fig_head_sweep():
