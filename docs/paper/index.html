@@ -115,7 +115,9 @@ figcaption{font-size:.85rem;color:var(--muted);margin-top:.4rem;text-align:left;
 
 <figure>
   <object data="figs/fig3_leads_dp_plane.svg" type="image/svg+xml" aria-label="Top leads in the (D,P) plane"></object>
-  <figcaption><strong>Figure 2.</strong> Top-200 generated leads from the pool=40k joint rerank in the (\(D\), \(P\)) plane, plotted twice with two complementary colour encodings. <strong>Panel A</strong> colours each point by predicted density \(\rho\) (viridis); <strong>panel B</strong> colours by novelty (1 minus max Morgan-FP-2 Tanimoto to the 65&nbsp;980-row labelled master, plasma 0&ndash;1). Anchors (TNT, RDX, HMX, PETN, CL-20, TATB) and the target lines \(D\!=\!9.5\) km/s, \(P\!=\!40\) GPa appear in both panels. Of the top-200 leads, 41 clear the full HMX-class triple (\(ho \ge 1.85\) g/cm\(^3\), \(D \ge 9\) km/s, \(P \ge 35\) GPa) AND have novelty \(\ge 0.45\) (Tanimoto \(\le 0.55\) to labelled master); 100 clear \(ho \ge 1.85\) AND novelty \(\ge 0.45\) on the two-axis cut. The high-density-and-high-novelty corner is the productive-quadrant region the chemistry-credibility gate is designed to reach. <em><strong>Takeaway:</strong> separating density and novelty into two panels makes the productive-quadrant trade-off visible; most generated leads are novel but at moderate density, with only a handful clearing both the HMX-class triple and the novelty threshold simultaneously.</em></figcaption>
+  <figcaption><strong>Figure 2.</strong> Top-200 generated leads from the pool=40k joint rerank in the (\(D\), \(P\)) plane, plotted twice with two complementary colour encodings. <strong>Panel A</strong> colours each point by predicted density \(\rho\) (viridis); <strong>panel B</strong> colours by novelty (1 minus max Morgan-FP-2 Tanimoto to the 65&nbsp;980-row labelled master, plasma 0&ndash;1). Anchors (TNT, RDX, HMX, PETN, CL-20, TATB) and the target lines \(D\!=\!9.5\) km/s, \(P\!=\!40\) GPa appear in both panels. Of the top-200 leads, 41 clear the full HMX-class triple (\(
+ho \ge 1.85\) g/cm\(^3\), \(D \ge 9\) km/s, \(P \ge 35\) GPa) AND have novelty \(\ge 0.45\) (Tanimoto \(\le 0.55\) to labelled master); 100 clear \(
+ho \ge 1.85\) AND novelty \(\ge 0.45\) on the two-axis cut. The high-density-and-high-novelty corner is the productive-quadrant region the chemistry-credibility gate is designed to reach. <em><strong>Takeaway:</strong> separating density and novelty into two panels makes the productive-quadrant trade-off visible; most generated leads are novel but at moderate density, with only a handful clearing both the HMX-class triple and the novelty threshold simultaneously.</em></figcaption>
 </figure>
 
 <!-- ─────────────────────────── 2. Related work ─────────────────────────── -->
@@ -164,7 +166,7 @@ Classifier-free guidance avoids the separately-trained property predictor requir
 <!-- ─────────────────────────── 3. Dataset ─────────────────────────── -->
 <h2 id="sec-data">3.&nbsp;Dataset</h2>
 
-<p>We assemble the training data by collecting molecules from several public sources that differ in both reliability and chemical scope. A small experimental core carries detonation properties measured in the laboratory; a larger DFT-quality slice carries energies and densities from first-principles simulation; a wider Kamlet&ndash;Jacobs-derived layer carries closed-form estimates from quoted density and heat of formation; and a model-derived majority carries surrogate predictions from a 3D-CNN ensemble trained on the union of the higher tiers. Some sources are restricted to energetic CHNO and CHNOClF chemistry (a <strong>labelled master</strong> of \(\sim 66\)&nbsp;k canonical SMILES with at least one measured property and a <strong>motif-augmented expansion</strong> that systematically substitutes nitro / nitramine / azide / tetrazole groups onto labelled scaffolds); others draw from broader chemistry corpora (an <strong>unlabelled energetic SMILES dump</strong> of \(\sim 380\)&nbsp;k from the same chemical domain) that the diffusion model uses only to learn the unconditional prior. Every row is canonicalised to a single RDKit canonical SMILES, deduplicated across sources, and tagged with a trust tier; each property label is then used according to its reliability via the conditioning-mask recipe of §3.1. After cross-source deduplication and token-length filtering, the merged pretraining pool comprises \(\sim 694\)&nbsp;k unique molecules, of which \(\sim 66\)&nbsp;k carry at least one property label. The complete source provenance (per-source row counts, citations, license terms, role in the four-tier hierarchy), the canonicalisation and tokenisation pipeline, and the high-tail oversampling ratios used during training are documented in Appendix&nbsp;A.1 / D. Joint property distributions, per-property histograms, and label-tier composition over the labelled corpus are shown in Fig&nbsp;3(a), Fig&nbsp;3(b), and Fig&nbsp;3(c) respectively; atom-composition statistics over a 30k subsample are shown in Fig&nbsp;A.1.</p>
+<p>We assemble the training data by collecting molecules from several public sources that differ in both reliability and chemical scope. A small experimental core carries detonation properties measured in the laboratory; a larger DFT-quality slice carries energies and densities from first-principles simulation; a wider Kamlet&ndash;Jacobs-derived layer carries closed-form estimates from quoted density and heat of formation; and a model-derived majority carries surrogate predictions from a 3D-CNN ensemble trained on the union of the higher tiers. Some sources are restricted to energetic CHNO and CHNOClF chemistry (a <strong>labelled master</strong> of \(\sim 66\)&nbsp;k canonical SMILES with at least one measured property and a <strong>motif-augmented expansion</strong> that systematically substitutes nitro / nitramine / azide / tetrazole groups onto labelled scaffolds); others draw from broader chemistry corpora (an <strong>unlabelled energetic SMILES dump</strong> of \(\sim 380\)&nbsp;k from the same chemical domain) that the diffusion model uses only to learn the unconditional prior. Every row is canonicalised to a single RDKit canonical SMILES, deduplicated across sources, and tagged with a trust tier; each property label is then used according to its reliability via the conditioning-mask recipe of §3.1. After cross-source deduplication and token-length filtering, the merged pretraining pool comprises \(\sim 694\)&nbsp;k unique molecules, of which \(\sim 66\)&nbsp;k carry at least one property label. The complete source provenance (per-source row counts, citations, license terms, role in the four-tier hierarchy), the canonicalisation and tokenisation pipeline, and the high-tail oversampling ratios used during training are documented in Appendix&nbsp;A.1 / D. Joint property distributions and per-property histograms over the labelled corpus are shown in Fig&nbsp;3(a) and Fig&nbsp;3(b); the label-tier composition (Fig&nbsp;3(c)) sits alongside the four-tier table in §3.1; atom-composition statistics over a 30k subsample are shown in Fig&nbsp;A.1.</p>
 
 <figure>
   <object data="figs/fig_eda_density_vs_velocity.svg" type="image/svg+xml" aria-label="Density vs detonation velocity scatter"></object>
@@ -176,23 +178,27 @@ Classifier-free guidance avoids the separately-trained property predictor requir
   <figcaption><strong>(b)</strong> Per-property histograms over the labelled corpus. Density and detonation velocity are sharply peaked; HOF has a heavy tail that the high-tail-oversampling recipe (§3.3) is designed to amplify during conditioning.</figcaption>
 </figure>
 
-<figure>
-  <object data="figs/fig_eda_tier_composition.svg" type="image/svg+xml" aria-label="Tier composition pies"></object>
-  <figcaption><strong>(c)</strong> Label-tier composition by property. Tiers&nbsp;A and&nbsp;B (experimental and DFT-derived, used for conditioning) make up a small minority of all available rows for every property; the C and D tiers (Kamlet&ndash;Jacobs derived and 3D-CNN surrogate) dominate by volume but are masked out of the conditional signal during training. <em><strong>Takeaway:</strong> generation must extrapolate into a high-tail that contains only a handful of trustworthy training labels.</em></figcaption>
-</figure>
-
 <h3>3.1&nbsp;Four-tier label hierarchy</h3>
 <p>Available property labels in the energetic-materials literature span four orders of reliability, from a small core of experimental measurements to a large majority of model-derived estimates. A naive concatenation would let the noisiest tier dominate the conditional gradient and degrade calibration in the high-property tail; discarding the noisier tiers would throw away most of the training signal. We resolve this by annotating each property label with a trust tier and gating the conditional gradient accordingly: only Tier-A and Tier-B rows participate in the conditional signal, while Tier-C and Tier-D rows train the unconditional prior via classifier-free-guidance dropout (§4.2). Each label per row carries one of the following tiers:</p>
 
-<table>
-  <thead><tr><th>Tier</th><th>Source</th><th>~ rows</th><th>Trusted for conditioning?</th></tr></thead>
-  <tbody>
-    <tr><td>A</td><td>Experimental measurement (literature)</td><td>~3&nbsp;000</td><td>yes</td></tr>
-    <tr><td>B</td><td>DFT-derived (B3LYP/6-31G* heat of formation; experimentally-anchored density)</td><td>~9&nbsp;000</td><td>yes</td></tr>
-    <tr><td>C</td><td>Kamlet&ndash;Jacobs derived from quoted density &amp; HOF (regime-limited: reliable for carbon-deficient CHNO with \(2a + b/2 \ge d \ge b/2\); under-predicts \(D\) for high-N low-H compounds where the assumed gas-product distribution is wrong)</td><td>~25&nbsp;000</td><td>no (mask out)</td></tr>
-    <tr><td>D</td><td>3D-CNN smoke-model surrogate</td><td>~30&nbsp;000</td><td>no (mask out)</td></tr>
-  </tbody>
-</table>
+<div style="display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1em 0;">
+  <figure style="flex:1 1 320px; min-width:280px; max-width:520px; margin:0;">
+    <object data="figs/fig_eda_tier_composition.svg" type="image/svg+xml" aria-label="Tier composition pies"></object>
+    <figcaption><strong>Figure 3(c).</strong> Label-tier composition by property. Tiers&nbsp;A and&nbsp;B (experimental and DFT-derived, used for conditioning) make up a small minority of all available rows for every property; the C and D tiers (Kamlet&ndash;Jacobs derived and 3D-CNN surrogate) dominate by volume but are masked out of the conditional signal during training. <em><strong>Takeaway:</strong> generation must extrapolate into a high-tail that contains only a handful of trustworthy training labels.</em></figcaption>
+  </figure>
+  <div style="flex:1 1 360px; min-width:320px;">
+    <table style="margin-top:0;">
+      <caption><strong>Table 3.1.</strong> The four-tier label hierarchy: trust tier, source, approximate row count over the labelled corpus, and whether the tier is trusted to drive the conditional gradient.</caption>
+      <thead><tr><th>Tier</th><th>Source</th><th>~ rows</th><th>Trusted for conditioning?</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td>Experimental measurement (literature)</td><td>~3&nbsp;000</td><td>yes</td></tr>
+        <tr><td>B</td><td>DFT-derived (B3LYP/6-31G* heat of formation; experimentally-anchored density)</td><td>~9&nbsp;000</td><td>yes</td></tr>
+        <tr><td>C</td><td>Kamlet&ndash;Jacobs derived from quoted density &amp; HOF (regime-limited: reliable for carbon-deficient CHNO with \(2a + b/2 \ge d \ge b/2\); under-predicts \(D\) for high-N low-H compounds where the assumed gas-product distribution is wrong)</td><td>~25&nbsp;000</td><td>no (mask out)</td></tr>
+        <tr><td>D</td><td>3D-CNN smoke-model surrogate</td><td>~30&nbsp;000</td><td>no (mask out)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <p>The denoiser conditional gradient fires only on Tier-A and Tier-B rows; Tier-C and Tier-D rows train the unconditional prior via classifier-free-guidance dropout (§4.2). This recipe lets the full corpus shape the marginal density of the generative model without letting noisy labels contaminate the conditional gradient.</p>
 
