@@ -1070,10 +1070,6 @@ def fig4e2_score_training():
             r"1024-d hidden;  inputs $(z_t, \sigma_t)$",
             ha="center", va="center", fontsize=10.0, fontstyle="italic",
             color="#dde6e9", family="serif", zorder=3)
-    ax.text(trunk_x_c, trunk_y_c - 0.85,
-            "* frozen at sample time *",
-            ha="center", va="center", fontsize=8.8,
-            color="#cdd6da", family="serif", zorder=3)
 
     add_arrow(ax, 12.0, y_in - 1.1,
               trunk_x_c - 3.0, trunk_y_c + trunk_h / 2 + 0.05,
@@ -1236,10 +1232,6 @@ def fig4e2_score_training():
             r"$\to$ 4(c)",
             ha="left", va="center", fontsize=10.0, fontweight="bold",
             color=GOLD, family="serif", zorder=3)
-    ax.text(hn_x + 0.4, handoff_y - 0.65,
-            "frozen at sample time",
-            ha="left", va="center", fontsize=8.2, fontstyle="italic",
-            color=TEXT_SLATE, family="serif", zorder=3)
 
     add_label(ax, 0.6, loss_y_c + 1.05,
               r"per-row labels  $y_k$  from 4(e1)",
