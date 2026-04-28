@@ -170,12 +170,13 @@ def freq_b3lyp_6_31gss(atoms, charge=0, use_gpu=True):
         freqs_au = freq_wn * 4.55634e-6
     real_mask = freq_wn > 0
     zpe_hartree = float(0.5 * freqs_au[real_mask].sum())
+    real_freqs = freq_wn[real_mask] if len(freq_wn) else np.array([])
     return {
-        "freqs_cm1": [float(x) for x in freqs_au],
-        "freqs_wavenumber": [float(x) for x in freq_wn],
+        "freqs_cm1": [float(x) for x in freq_wn],
+        "freqs_au": [float(x) for x in freqs_au],
         "ZPE_kJmol": zpe_hartree * HARTREE_TO_KJMOL,
         "n_imag": int((freq_wn < 0).sum()),
-        "min_real_freq_cm1": float(freq_wn.min()) if len(freq_wn) else float("nan"),
+        "min_real_freq_cm1": float(real_freqs.min()) if len(real_freqs) else float("nan"),
         "backend": backend,
     }
 
@@ -338,13 +339,33 @@ def _density_from_atom_xyz(atoms, M, packing):
 
 
 # ── Driver ─────────────────────────────────────────────────────────────────
-def run_lead(lead, atomic_refs_b3lyp, atomic_refs_wb97xd, results_dir, use_gpu=True):
+def run_lead(lead, atomic_refs_b3lyp, atomic_refs_wb97xd, results_dir, use_gpu=True,
+             timeout_s=7200):
     smi = lead["smiles"]
     lead_id = lead["id"]
+    out_path = Path(results_dir) / f"m2_lead_{lead_id}.json"
+    # Fix #4: resume-from-cache. Skip if a complete result is already on disk.
+    if out_path.exists():
+        try:
+            cached = json.loads(out_path.read_text())
+            if cached.get("HOF_kJmol_wb97xd") is not None and not cached.get("errors"):
+                print(f"[train] {lead_id} cached, skipping ({out_path})"); sys.stdout.flush()
+                return cached
+        except Exception:
+            pass  # cache unreadable → recompute
     print(f"\n[train] === {lead_id} {lead.get('name', '')} ==="); sys.stdout.flush()
     print(f"[train] SMILES: {smi}"); sys.stdout.flush()
     out = {"id": lead_id, "smiles": smi, "name": lead.get("name"),
            "predicted": lead.get("predicted"), "errors": []}
+    # Fix #5: per-molecule wall-clock guard (POSIX only — Linux pods).
+    _alarm_set = False
+    if hasattr(__import__('signal'), 'SIGALRM'):
+        import signal
+        def _watchdog(signum, frame):
+            raise TimeoutError(f"per-molecule timeout {timeout_s}s exceeded")
+        signal.signal(signal.SIGALRM, _watchdog)
+        signal.alarm(int(timeout_s))
+        _alarm_set = True
     try:
         atoms0, charge, n_atoms = smiles_to_xyz(smi)
         formula = molecular_formula(atoms0)
@@ -396,8 +417,11 @@ def run_lead(lead, atomic_refs_b3lyp, atomic_refs_wb97xd, results_dir, use_gpu=T
         out["errors"].append(str(e))
         out["traceback"] = traceback.format_exc()
         print(f"[train] ERROR on {lead_id}: {e}"); sys.stdout.flush()
+    finally:
+        if _alarm_set:
+            import signal
+            signal.alarm(0)
 
-    out_path = Path(results_dir) / f"m2_lead_{lead_id}.json"
     out_path.write_text(json.dumps(out, indent=2, default=str))
     print(f"[train] -> {out_path}"); sys.stdout.flush()
     return out
@@ -477,6 +501,54 @@ def main():
                         "n_imag": out.get("freq", {}).get("n_imag")})
 
     (results_dir / "m2_summary.json").write_text(json.dumps(summary, indent=2))
+
+    # Fix #6: anchor-calibrated rho and HOF.
+    # Fit rho_cal = a*rho_DFT + b and HOF_cal = HOF_DFT + c on RDX/TATB
+    # (literature reference values), apply to all leads, and write a small
+    # m2_calibration.json alongside the summary.
+    LIT = {
+        "RDX":  {"rho_lit": 1.806, "HOF_lit_kJmol":  +66.0},
+        "TATB": {"rho_lit": 1.937, "HOF_lit_kJmol": -154.0},
+    }
+    anchors_seen = [s for s in summary if s["id"] in LIT
+                    and s.get("rho_dft") and s.get("HOF_kJmol_wb97xd") is not None]
+    if len(anchors_seen) >= 2:
+        # Two-point linear fit on rho; constant offset on HOF.
+        rho_x = np.array([s["rho_dft"] for s in anchors_seen])
+        rho_y = np.array([LIT[s["id"]]["rho_lit"] for s in anchors_seen])
+        hof_x = np.array([s["HOF_kJmol_wb97xd"] for s in anchors_seen])
+        hof_y = np.array([LIT[s["id"]]["HOF_lit_kJmol"] for s in anchors_seen])
+        # rho: linear y = a*x + b (least squares on 2+ anchors)
+        A = np.vstack([rho_x, np.ones_like(rho_x)]).T
+        a_rho, b_rho = np.linalg.lstsq(A, rho_y, rcond=None)[0]
+        # HOF: constant additive offset (mean residual) — bias-only correction.
+        c_hof = float(np.mean(hof_y - hof_x))
+        cal = {"a_rho": float(a_rho), "b_rho": float(b_rho), "c_hof_kJmol": c_hof,
+               "anchors_used": [s["id"] for s in anchors_seen]}
+        # Apply to all rows in summary (and re-K-J with calibrated rho+HOF).
+        for s in summary:
+            if s.get("rho_dft") is None or s.get("HOF_kJmol_wb97xd") is None:
+                continue
+            s["rho_cal"] = float(a_rho * s["rho_dft"] + b_rho)
+            s["HOF_kJmol_wb97xd_cal"] = float(s["HOF_kJmol_wb97xd"] + c_hof)
+            # K-J recompute on calibrated inputs (need formula → load per-lead JSON)
+            try:
+                lead_path = results_dir / f"m2_lead_{s['id']}.json"
+                lead_full = json.loads(lead_path.read_text()) if lead_path.exists() else {}
+                formula = lead_full.get("formula")
+                if formula:
+                    s["kj_dft_cal"] = kamlet_jacobs(s["rho_cal"],
+                                                    s["HOF_kJmol_wb97xd_cal"], formula)
+            except Exception as e:
+                s["kj_dft_cal"] = None
+                cal.setdefault("warnings", []).append(f"{s['id']}: {e}")
+        (results_dir / "m2_calibration.json").write_text(json.dumps(cal, indent=2))
+        (results_dir / "m2_summary.json").write_text(json.dumps(summary, indent=2))
+        print(f"[train] anchor calibration: rho_cal = {a_rho:.4f}*rho_DFT + {b_rho:+.4f};"
+              f" HOF_cal = HOF_DFT {c_hof:+.1f} kJ/mol  (anchors: {','.join(s['id'] for s in anchors_seen)})")
+    else:
+        print(f"[train] anchor calibration skipped (need ≥2 of {list(LIT)}; got {[s['id'] for s in anchors_seen]})")
+
     print(f"\n[train] === DONE === ({len(targets)} compounds)"); sys.stdout.flush()
 
 
