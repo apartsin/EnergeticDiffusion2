@@ -1181,7 +1181,7 @@ def fig4e2_score_training():
         linewidth=2.0, facecolor=PALE_RED, edgecolor=RED, zorder=2,
     ))
     ax.text(sum_x_c, sum_y_c + 0.20,
-            r"$\mathcal{L}_{\mathrm{score}} = \sum_k m_k \, w_k \, \mathcal{L}_k$",
+            r"$\mathcal{L}_{\mathrm{score}} = \sum_k a_k \, w_k \, \mathcal{L}_k$",
             ha="center", va="center", fontsize=12.0, fontweight="bold",
             color=TEXT_NAVY, family="serif", zorder=3)
     ax.text(sum_x_c, sum_y_c - 0.40,
