@@ -642,59 +642,60 @@ def fig4c_sampling_guidance():
 # 4d  Post-sampling: decode + chem filter + reranker, with D sparkline
 # ──────────────────────────────────────────────────────────────────────────
 def fig4d_decode_rerank():
-    # Single-panel pipeline (histogram intentionally dropped per user spec).
-    # Canvas height tightened: the figure-coords subtitle was dropped because
-    # the banner above the boxes already frames the funnel, and two competing
-    # top labels read as crowded. The HTML figcaption carries the full caption.
-    fig, ax = plt.subplots(figsize=(15.0, 4.4), dpi=300)
-    setup_axes(ax, xmax=36.0, ymax=7.6)
+    # Full inference pipeline: decode + ALL FOUR STAGES of the credibility funnel.
+    # Stage 1 SMARTS gate (rules), Stage 2 Pareto reranker, Stage 3 semi-empirical
+    # triage (xTB), Stage 4 first-principles audit (DFT).
+    fig, ax = plt.subplots(figsize=(18.5, 4.8), dpi=300)
+    setup_axes(ax, xmax=46.0, ymax=8.2)
 
-    y = 3.4
+    y = 3.6
 
-    # Six boxes with PROGRESSIVELY DECREASING HEIGHTS to mirror the
-    # candidate-funnel narrowing (40k -> 30k -> 12k -> 8k -> 100). Widths are
-    # uniform so the row reads as a clean horizontal pipeline; box-height
-    # encodes the survivor count.
-    # Six box centres on a 36-wide canvas, with ~6.0 unit centre-to-centre
-    # spacing and 4.4-unit-wide boxes -> 1.6-unit gap between adjacent boxes
-    # leaves clear room for arrow + count annotation.
-    centres = [3.2, 9.4, 15.6, 21.8, 28.0, 33.6]
-    widths  = [4.4, 4.4, 4.4, 4.4, 4.4, 4.0]
-    # Heights drop from 3.0 to 1.4 in proportion to log10(count) of survivors.
-    heights = [3.00, 2.85, 2.45, 2.10, 1.75, 1.40]
+    # Eight boxes spanning the canvas, with PROGRESSIVELY DECREASING HEIGHTS
+    # to mirror the candidate-funnel narrowing (40k -> ... -> ~12 leads).
+    # Box-height encodes survivor count on a log10 scale.
+    centres = [2.8, 8.4, 14.0, 19.6, 25.2, 30.8, 36.4, 42.6]
+    widths  = [4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 3.8]
+    heights = [3.20, 3.05, 2.70, 2.40, 2.05, 1.75, 1.45, 1.20]
 
     # Role-coded box fills:
     #   PALE_GOLD  = data state (latent / SMILES / final leads)
     #   PALE_GREY  = transform (decoder)
-    #   PALE_RED   = filter / gate
-    #   PALE_GREEN = ranker / score
+    #   PALE_RED   = filter / gate              (Stage 1 SMARTS gate)
+    #   PALE_GREEN = ranker / score             (Stage 2 Pareto reranker)
+    #   PALE_PURPLE = semi-empirical physics    (Stage 3 xTB)
+    #   PALE_PURPLE deeper edge = ab-initio     (Stage 4 DFT)
     box_specs = [
-        (PALE_GOLD,  GOLD, r"$z_0$",
+        (PALE_GOLD,   GOLD,   r"$z_0$",
          "denoised latent (1024-d)"),
-        (PALE_GREY,  NAVY, "LIMO decoder",
+        (PALE_GREY,   NAVY,   "LIMO decoder",
          r"frozen NAR (latent $\to$ SMILES)"),
-        (PALE_GOLD,  GOLD, "SMILES",
+        (PALE_GOLD,   GOLD,   "SMILES",
          "RDKit canonical + valence"),
-        (PALE_RED,   RED,  "SMARTS gate",
+        (PALE_RED,    RED,    "SMARTS gate",
          r"Stage 1: rules + red-flags"),
-        (PALE_GREEN, GREEN, "Pareto reranker",
+        (PALE_GREEN,  GREEN,  "Pareto reranker",
          r"Stage 2: composite score"),
-        (PALE_GOLD,  GOLD, r"top-$K$ leads",
-         r"to xTB + DFT audit"),
+        (PALE_PURPLE, PURPLE, "xTB triage",
+         r"Stage 3: GFN2 + gap $\geq$ 1.5 eV"),
+        (PALE_PURPLE, NAVY,   "DFT audit",
+         r"Stage 4: B3LYP + $\omega$B97X-D"),
+        (PALE_GOLD,   GOLD,   "validated leads",
+         r"6-anchor cal. (Tab D.2)"),
     ]
     for cx, w, h, (fill, edge, t, sub) in zip(centres, widths, heights,
                                               box_specs):
         add_box(ax, cx, w, h, y, fill, edge, t, sub,
-                title_size=10.8, sub_size=8.2)
+                title_size=10.4, sub_size=7.9)
 
     # Connectors: arrow tail/head shrunk to each box's actual half-width.
     counts = ["40,000\nsamples",
               "30,000\nparse-valid",
               "12,000\nSMILES",
               "8,000\nchem-pass",
-              "100\nleads"]
-    # Uniform y for all count annotations: clears the tallest box (heights[0])
-    # so every label sits at one common baseline above the pipeline.
+              "100\nleads",
+              "85\nxTB-pass",
+              "12\nDFT-validated"]
+    # Uniform y for count labels above the tallest box.
     count_y = y + heights[0] / 2 + 0.55
     for i in range(len(centres) - 1):
         x0 = centres[i]     + widths[i]     / 2
@@ -702,12 +703,12 @@ def fig4d_decode_rerank():
         add_arrow(ax, x0, y, x1, y, lw=1.6)
         ax.text((x0 + x1) / 2, count_y, counts[i],
                 ha="center", va="center",
-                fontsize=8.2, color=TEXT_SLATE, family="serif",
+                fontsize=7.8, color=TEXT_SLATE, family="serif",
                 fontstyle="italic", linespacing=1.05, zorder=3)
 
-    # Banner: explicit funnel framing so the reader knows what the counts mean.
+    # Banner: explicit funnel framing.
     add_label(ax, 0.3, y + heights[0] / 2 + 1.30,
-              "candidates surviving each stage  (illustrative scale)",
+              "candidates surviving each stage of the four-stage pipeline  (illustrative scale)",
               color=TEXT_SLATE, size=8.8, italic=True, bold=True)
 
     # Color legend intentionally omitted per user spec.
@@ -720,215 +721,270 @@ def fig4d_decode_rerank():
 # 4e  Multi-head classifier training: four independent models
 # ──────────────────────────────────────────────────────────────────────────
 def fig4e_head_training():
-    """Four heterogeneous heads, each with its own architecture, inputs,
-    training labels, and validation metric. Bottom row shows them feeding
-    into the sample-time guidance bus referenced by 4(c)."""
-    fig, ax = plt.subplots(figsize=(15.0, 7.6), dpi=300)
-    setup_axes(ax, xmax=36.0, ymax=18.0)
+    """ONE shared 4-block FiLM-MLP trunk takes (z, sigma); four heads branch
+    off and produce viability / sensitivity / hazard / performance outputs.
 
-    # Four columns, one per head. Each column is a vertical stack:
-    #   [arch badge]  [head title]  [input box]  [training-data box]
-    #   [validation metric]  -> bus
-    centres   = [4.8, 13.2, 21.6, 30.0]
-    head_names = ["Viability", "Sensitivity", "Hazard", "Performance"]
-    arch_badges = [
-        "Random Forest",
-        "MLP score model",
-        "MLP head",
-        "3D-CNN ensemble",
-    ]
-    # Each head uses a different border-color tint to communicate heterogeneity
-    edge_cols  = [GREEN,      GOLD,       RED,       PURPLE]
-    fill_cols  = [PALE_GREEN, PALE_GOLD,  PALE_RED,  PALE_PURPLE]
+    The four EXTERNAL label sources (RF, Politzer-Murray, SMARTS+Bruns-Watson,
+    3D-CNN ensemble) live in a separate lower zone and supply training labels
+    only; they are NOT consumed at sample time. At sample time, every head
+    takes (z, sigma) through the shared trunk; gradients combine on the
+    guidance bus consumed by 4(c)."""
+    fig, ax = plt.subplots(figsize=(16.0, 9.6), dpi=300)
+    setup_axes(ax, xmax=40.0, ymax=24.0)
 
-    # Per-head input descriptors (top input box)
-    inputs = [
-        ("input", "Morgan FP-2-2048\n+ RDKit descriptors"),
-        ("input", "cached LIMO latent  $z$"),
-        ("input", "cached LIMO latent  $z$"),
-        ("input", "3D conformer voxel grid"),
-    ]
-    # Per-head training-data descriptors (training-labels box)
-    labels = [
-        ("labels",
-         "66k energetic (+) vs\n80k ZINC drug-like ($-$)"),
-        ("labels",
-         r"$h_{50} = 1.93\!\cdot\!\mathrm{BDE} - 52.4$"
-         "\nPolitzer-Murray fit"),
-        ("labels",
-         "SMARTS hazard catalog\n+ Bruns-Watson demerits"),
-        ("labels",
-         r"$\rho, D, P, T, E, V, $HOF, BDE"
-         "\n5-fold CV"),
-    ]
-    # Per-head outputs (small italic sub-line under head title)
-    outputs = [
-        r"output:  $P(\mathrm{energetic})$",
-        r"output:  predicted $h_{50}$ (cm)",
-        r"output:  $P(\mathrm{hazardous\ motif})$",
-        r"output:  8 properties",
-    ]
-    # Validation metrics (bold, prominent)
-    metrics = [
-        "val AUC = 0.9986",
-        r"val $R^2 \approx 0.78$",
-        r"val AUC $\approx 0.93$",
-        r"val $R^2 = 0.84{-}0.92$",
-    ]
+    # ── Zone divider (subtle horizontal rule) ──────────────────────────────
+    ax.plot([0.6, 39.4], [9.8, 9.8], color=TEXT_LIGHT, lw=0.8,
+            linestyle=(0, (2, 3)), zorder=1)
 
-    # Layout y-coordinates
-    y_title  = 16.4   # head name
-    y_arch   = 15.4   # arch badge (architecture pill)
-    y_output = 14.5   # output sub-line (italic)
-    y_input  = 12.4   # input box centre
-    y_labels = 9.2    # training-labels box centre
-    y_metric = 6.7    # validation metric line
-    y_bus    = 4.2    # guidance bus line
-    y_foot   = 2.0    # 4(c) reference box centre
+    # Zone banners
+    add_label(ax, 0.6, 23.0,
+              "Zone 1  -  Score model (sample time + training)",
+              color=TEXT_NAVY, size=10.6, italic=True, bold=True)
+    add_label(ax, 0.6, 9.3,
+              "Zone 2  -  Label sources (offline; training only)",
+              color=TEXT_SLATE, size=10.2, italic=True, bold=True)
 
-    box_w_input  = 6.4
-    box_h_input  = 1.7
-    box_w_lab    = 6.4
-    box_h_lab    = 2.0
+    # ──────────────────────────────────────────────────────────────────────
+    # ZONE 1: SHARED TRUNK + 4 HEADS
+    # ──────────────────────────────────────────────────────────────────────
+    # Inputs (z, sigma) feeding into the trunk
+    y_inputs = 20.6
+    add_box(ax, 3.4, 2.4, 1.3, y_inputs, CREAM, NAVY,
+            r"$z$", "cached LIMO latent",
+            title_size=12.0, sub_size=8.4)
+    add_box(ax, 6.8, 2.4, 1.3, y_inputs, PALE_PURPLE, PURPLE,
+            r"$\sigma$", "noise level",
+            title_size=12.0, sub_size=8.4)
 
-    # Per-column rendering
-    for i, cx in enumerate(centres):
-        edge = edge_cols[i]
-        fill = fill_cols[i]
-
-        # Head title (bold, large)
-        ax.text(cx, y_title, head_names[i], ha="center", va="center",
-                fontsize=13.2, fontweight="bold", color=TEXT_NAVY,
-                family="serif", zorder=3)
-        # Output sub-line BELOW the badge (clear of overlap)
-        ax.text(cx, y_output, outputs[i], ha="center", va="center",
-                fontsize=8.8, fontstyle="italic", color=TEXT_SLATE,
-                family="serif", zorder=3)
-
-        # Architecture badge: pill-shaped box with edge-color border
-        badge_w = 4.6
-        badge_h = 0.78
-        bx = cx - badge_w / 2
-        by = y_arch - badge_h / 2
-        ax.add_patch(FancyBboxPatch(
-            (bx + 0.04, by - 0.04), badge_w, badge_h,
-            boxstyle="round,pad=0.02,rounding_size=0.30",
-            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
-        ))
-        ax.add_patch(FancyBboxPatch(
-            (bx, by), badge_w, badge_h,
-            boxstyle="round,pad=0.02,rounding_size=0.30",
-            linewidth=1.6, facecolor="white", edgecolor=edge, zorder=2,
-        ))
-        ax.text(cx, y_arch, arch_badges[i], ha="center", va="center",
-                fontsize=9.6, fontweight="bold", color=edge,
-                family="serif", zorder=3)
-
-        # Input box (caption "input" placed to the LEFT of the box at column 0
-        # for the leftmost head; for clarity inside each box the input text
-        # is self-describing, so per-column caption omitted).
-        in_label, in_text = inputs[i]
-        # box: white fill, head-tinted border
-        x = cx - box_w_input / 2
-        yb = y_input - box_h_input / 2
-        ax.add_patch(FancyBboxPatch(
-            (x + 0.04, yb - 0.04), box_w_input, box_h_input,
-            boxstyle="round,pad=0.02,rounding_size=0.18",
-            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
-        ))
-        ax.add_patch(FancyBboxPatch(
-            (x, yb), box_w_input, box_h_input,
-            boxstyle="round,pad=0.02,rounding_size=0.18",
-            linewidth=1.4, facecolor=CREAM, edgecolor=edge, zorder=2,
-        ))
-        ax.text(cx, y_input, in_text, ha="center", va="center",
-                fontsize=9.4, color=TEXT_NAVY, family="serif",
-                linespacing=1.18, zorder=3)
-
-        # Training-labels box (caption omitted; left-edge row label provides
-        # the row identity).
-        lab_label, lab_text = labels[i]
-        x = cx - box_w_lab / 2
-        yb = y_labels - box_h_lab / 2
-        ax.add_patch(FancyBboxPatch(
-            (x + 0.04, yb - 0.04), box_w_lab, box_h_lab,
-            boxstyle="round,pad=0.02,rounding_size=0.18",
-            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
-        ))
-        ax.add_patch(FancyBboxPatch(
-            (x, yb), box_w_lab, box_h_lab,
-            boxstyle="round,pad=0.02,rounding_size=0.18",
-            linewidth=1.4, facecolor=fill, edgecolor=edge, zorder=2,
-        ))
-        ax.text(cx, y_labels, lab_text, ha="center", va="center",
-                fontsize=9.4, color=TEXT_NAVY, family="serif",
-                linespacing=1.18, zorder=3)
-
-        # Arrow: input -> labels (training). Italic "trains on" label sits to
-        # the right of the arrow.
-        add_arrow(ax,
-                  cx, y_input - box_h_input / 2 - 0.05,
-                  cx, y_labels + box_h_lab / 2 + 0.05,
-                  color=edge, lw=1.6)
-        ax.text(cx + 0.30,
-                (y_input - box_h_input / 2 + y_labels + box_h_lab / 2) / 2,
-                "trains on", ha="left", va="center",
-                fontsize=8.0, fontstyle="italic", color=edge,
-                family="serif", zorder=3)
-
-        # Validation metric (bold, head-tinted)
-        ax.text(cx, y_metric, metrics[i], ha="center", va="center",
-                fontsize=10.2, fontweight="bold", color=edge,
-                family="serif", zorder=3)
-
-        # Drop from metric down to the guidance bus
-        ax.plot([cx, cx], [y_metric - 0.40, y_bus + 0.02],
-                color=GOLD, lw=1.4, linestyle=(0, (4, 3)), zorder=4)
-        ax.plot([cx], [y_bus], marker="o", markersize=4.2,
-                markerfacecolor=GOLD, markeredgecolor=GOLD, zorder=5)
-
-    # Guidance bus: horizontal gold line spanning all four heads
-    bus_x_l = centres[0]
-    bus_x_r = centres[-1]
-    ax.plot([bus_x_l, bus_x_r], [y_bus, y_bus],
-            color=GOLD, lw=2.0, zorder=4)
-
-    # Bus label (left side, above the bus line so it does not collide with markers)
-    add_label(ax, bus_x_l - 3.8, y_bus,
-              "guidance bus", color=GOLD, size=9.6, italic=True, bold=True)
-
-    # 4(c) footer reference: a long pale box with arrow from bus midpoint
-    foot_cx = (bus_x_l + bus_x_r) / 2
-    foot_w  = 18.0
-    foot_h  = 1.3
-    fx = foot_cx - foot_w / 2
-    fy = y_foot - foot_h / 2
+    # Shared trunk: ONE big rectangle. Navy fill, white text.
+    trunk_x_c = 14.4
+    trunk_y_c = 17.8
+    trunk_w   = 11.2
+    trunk_h   = 2.8
+    tx = trunk_x_c - trunk_w / 2
+    ty = trunk_y_c - trunk_h / 2
     ax.add_patch(FancyBboxPatch(
-        (fx + 0.04, fy - 0.04), foot_w, foot_h,
-        boxstyle="round,pad=0.02,rounding_size=0.18",
+        (tx + 0.04, ty - 0.04), trunk_w, trunk_h,
+        boxstyle="round,pad=0.02,rounding_size=0.20",
         linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
     ))
     ax.add_patch(FancyBboxPatch(
-        (fx, fy), foot_w, foot_h,
-        boxstyle="round,pad=0.02,rounding_size=0.18",
-        linewidth=1.6, facecolor=PALE_GOLD, edgecolor=GOLD, zorder=2,
+        (tx, ty), trunk_w, trunk_h,
+        boxstyle="round,pad=0.02,rounding_size=0.20",
+        linewidth=1.8, facecolor=NAVY, edgecolor=NAVY, zorder=2,
     ))
-    ax.text(foot_cx, y_foot,
-            r"used at sample time as classifier guidance "
-            r"$g_t = \sum_h s_h\,\nabla_{z_t}\log p_h(c\!\mid\!z_t)$  "
-            r"[see Fig. 4(c)]",
-            ha="center", va="center", fontsize=9.6, color=TEXT_NAVY,
+    ax.text(trunk_x_c, trunk_y_c + 0.55,
+            "Shared trunk", ha="center", va="center",
+            fontsize=13.2, fontweight="bold", color="white",
             family="serif", zorder=3)
+    ax.text(trunk_x_c, trunk_y_c - 0.10,
+            "4-block FiLM-MLP, 1024-d hidden",
+            ha="center", va="center", fontsize=10.0, fontstyle="italic",
+            color="#dde6e9", family="serif", zorder=3)
+    ax.text(trunk_x_c, trunk_y_c - 0.80,
+            r"input  $(z, \sigma)$  shared by ALL heads at sample time",
+            ha="center", va="center", fontsize=8.8,
+            color="#cdd6da", family="serif", zorder=3)
 
-    # Arrow from bus into footer
-    add_arrow(ax, foot_cx, y_bus - 0.10, foot_cx, y_foot + foot_h / 2 + 0.05,
-              color=GOLD, dashed=True, lw=1.8)
+    # Arrows: (z, sigma) into trunk
+    add_arrow(ax, 3.4, y_inputs - 0.70,
+              trunk_x_c - trunk_w / 2 + 1.0, trunk_y_c + trunk_h / 2 + 0.05,
+              color=NAVY, lw=1.8)
+    add_arrow(ax, 6.8, y_inputs - 0.70,
+              trunk_x_c - trunk_w / 2 + 2.6, trunk_y_c + trunk_h / 2 + 0.05,
+              color=PURPLE, lw=1.8)
 
-    # Top-row banner: four-models heterogeneity callout
-    add_label(ax, 0.3, 17.5,
-              "four independent models, each with its own architecture, "
-              "inputs, and training labels",
-              color=TEXT_SLATE, size=9.4, italic=True, bold=True)
+    # Trunk feature label between trunk and heads
+    feat_y = trunk_y_c - trunk_h / 2 - 0.55
+    add_label(ax, trunk_x_c, feat_y, "1024-d trunk features",
+              color=TEXT_SLATE, size=9.0, italic=True, ha="center")
+
+    # Four head boxes branching off the trunk
+    head_y_c = 13.0
+    head_w   = 5.2
+    head_h   = 2.2
+    head_centres = [5.4, 12.6, 19.8, 27.0]
+    head_names = ["Viability", "Sensitivity", "Hazard", "Performance"]
+    head_arches = [
+        r"Linear(1024 $\to$ 1) + sigmoid",
+        r"Linear(1024 $\to$ 1)",
+        r"Linear(1024 $\to$ 1) + sigmoid",
+        r"Linear(1024 $\to$ 4)",
+    ]
+    head_outputs = [
+        r"$P(\mathrm{energetic})$",
+        r"predicted $h_{50}$",
+        r"$P(\mathrm{hazardous})$",
+        r"$\rho,\ D,\ P,\ \mathrm{HOF}$",
+    ]
+    edge_cols = [GREEN,      GOLD,       RED,       PURPLE]
+    fill_cols = [PALE_GREEN, PALE_GOLD,  PALE_RED,  PALE_PURPLE]
+
+    # Single big arrow trunk -> heads (fanout): a horizontal feature bus + drops
+    fan_y = trunk_y_c - trunk_h / 2 - 1.05
+    fan_x_l = head_centres[0]
+    fan_x_r = head_centres[-1]
+    # Vertical stem from trunk centre
+    ax.plot([trunk_x_c, trunk_x_c],
+            [trunk_y_c - trunk_h / 2 - 0.05, fan_y],
+            color=NAVY, lw=2.4, zorder=4)
+    # Horizontal bus
+    ax.plot([fan_x_l, fan_x_r], [fan_y, fan_y],
+            color=NAVY, lw=2.4, zorder=4)
+
+    for i, cx in enumerate(head_centres):
+        edge = edge_cols[i]
+        fill = fill_cols[i]
+        # Branch arrow down into head
+        add_arrow(ax, cx, fan_y, cx, head_y_c + head_h / 2 + 0.05,
+                  color=NAVY, lw=1.8)
+        # Head box
+        x = cx - head_w / 2
+        yb = head_y_c - head_h / 2
+        ax.add_patch(FancyBboxPatch(
+            (x + 0.04, yb - 0.04), head_w, head_h,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), head_w, head_h,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=1.8, facecolor=fill, edgecolor=edge, zorder=2,
+        ))
+        ax.text(cx, head_y_c + 0.55, head_names[i] + " head",
+                ha="center", va="center", fontsize=11.4,
+                fontweight="bold", color=TEXT_NAVY, family="serif", zorder=3)
+        ax.text(cx, head_y_c - 0.05, head_arches[i],
+                ha="center", va="center", fontsize=8.6,
+                color=TEXT_SLATE, family="serif", zorder=3)
+        ax.text(cx, head_y_c - 0.60, head_outputs[i],
+                ha="center", va="center", fontsize=9.2,
+                fontstyle="italic", color=edge, family="serif", zorder=3)
+
+    # ── Sample-time guidance bus annotation (right of zone 1) ──────────────
+    # Each head emits a gold-dashed gradient down to a small bus that arrows
+    # toward Fig 4(c).
+    sg_bus_y = 11.0
+    for cx in head_centres:
+        ax.plot([cx, cx], [head_y_c - head_h / 2 - 0.05, sg_bus_y + 0.02],
+                color=GOLD, lw=1.3, linestyle=(0, (4, 3)), zorder=4)
+        ax.plot([cx], [sg_bus_y], marker="o", markersize=3.6,
+                markerfacecolor=GOLD, markeredgecolor=GOLD, zorder=5)
+    ax.plot([head_centres[0], head_centres[-1]], [sg_bus_y, sg_bus_y],
+            color=GOLD, lw=2.0, zorder=4)
+    # Bus -> Fig 4(c) arrow (rightward)
+    add_arrow(ax, head_centres[-1] + 0.05, sg_bus_y,
+              35.6, sg_bus_y, color=GOLD, dashed=True, lw=1.8)
+    ax.text(37.6, sg_bus_y + 0.55,
+            "guidance bus", ha="center", va="center",
+            fontsize=9.6, fontweight="bold", color=GOLD,
+            family="serif", zorder=3)
+    ax.text(37.6, sg_bus_y - 0.55,
+            r"$\to$ Fig. 4(c)", ha="center", va="center",
+            fontsize=9.8, fontweight="bold", color=GOLD,
+            family="serif", zorder=3)
+    # Sample-time annotation, centred between Viability and Sensitivity drops
+    # at a y just above the bus so it does not clash with the Zone 2 banner.
+    sg_label_x = (head_centres[0] + head_centres[1]) / 2
+    ax.text(sg_label_x, sg_bus_y + 0.50,
+            r"sample time:  $\nabla_z h_k(z, \sigma)$ from each head",
+            ha="center", va="center", fontsize=9.0,
+            fontstyle="italic", fontweight="bold",
+            color=GOLD, family="serif", zorder=5,
+            bbox=dict(boxstyle="round,pad=0.20", facecolor="white",
+                      edgecolor="none", alpha=0.85))
+
+    # ──────────────────────────────────────────────────────────────────────
+    # ZONE 2: EXTERNAL LABEL SOURCES
+    # ──────────────────────────────────────────────────────────────────────
+    src_y_c = 5.0
+    src_w   = 6.8
+    src_h   = 3.6
+    src_centres = head_centres  # vertical alignment with heads above
+
+    src_titles = [
+        "Random Forest",
+        "Politzer-Murray BDE fit",
+        "SMARTS + Bruns-Watson",
+        "3D-CNN smoke ensemble",
+    ]
+    src_inputs = [
+        "input: Morgan FP\n+ RDKit descriptors of SMILES",
+        "input: chemotype class\n(Ar-NO$_2$, R$_2$N-NO$_2$, ...)",
+        "input: SMILES pattern\nmatches",
+        "input: 3D conformer\nvoxel grid (Uni-Mol v1)",
+    ]
+    src_metrics = [
+        "AUC = 0.9986",
+        r"$h_{50} = 1.93\!\cdot\!\mathrm{BDE} - 52.4$",
+        "demerit catalog",
+        r"5-fold CV $R^2 = 0.84{-}0.92$",
+    ]
+
+    for i, cx in enumerate(src_centres):
+        edge = edge_cols[i]
+        fill = fill_cols[i]
+        x  = cx - src_w / 2
+        yb = src_y_c - src_h / 2
+        ax.add_patch(FancyBboxPatch(
+            (x + 0.04, yb - 0.04), src_w, src_h,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), src_w, src_h,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=1.6, facecolor=fill, edgecolor=edge, zorder=2,
+        ))
+        ax.text(cx, src_y_c + 1.15, src_titles[i],
+                ha="center", va="center", fontsize=10.0,
+                fontweight="bold", color=edge, family="serif", zorder=3)
+        ax.text(cx, src_y_c + 0.10, src_inputs[i],
+                ha="center", va="center", fontsize=8.6,
+                color=TEXT_NAVY, family="serif",
+                linespacing=1.20, zorder=3)
+        ax.text(cx, src_y_c - 1.20, src_metrics[i],
+                ha="center", va="center", fontsize=8.8,
+                fontstyle="italic", color=TEXT_SLATE, family="serif",
+                zorder=3)
+
+        # Red dashed "training labels" arrow up into the corresponding head
+        add_arrow(ax, cx, src_y_c + src_h / 2 + 0.05,
+                  cx, head_y_c - head_h / 2 - 0.05,
+                  color=RED, dashed=True, lw=1.6)
+        # "training labels" italic tag, placed just above the source-box top,
+        # within Zone 2 so it does not collide with the sample-time bus.
+        ax.text(cx + 0.65, src_y_c + src_h / 2 + 0.45,
+                "training labels",
+                ha="left", va="center", fontsize=8.0,
+                fontstyle="italic", fontweight="bold",
+                color=RED, family="serif", zorder=3)
+
+    # ── "offline only" callout (lower-right, prominent gold-bordered note) ─
+    note_x_c = 33.2
+    note_y_c = 1.6
+    note_w   = 11.6
+    note_h   = 1.8
+    nx = note_x_c - note_w / 2
+    ny = note_y_c - note_h / 2
+    ax.add_patch(FancyBboxPatch(
+        (nx + 0.04, ny - 0.04), note_w, note_h,
+        boxstyle="round,pad=0.04,rounding_size=0.20",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+    ))
+    ax.add_patch(FancyBboxPatch(
+        (nx, ny), note_w, note_h,
+        boxstyle="round,pad=0.04,rounding_size=0.20",
+        linewidth=2.2, facecolor=PALE_RED, edgecolor=RED, zorder=2,
+    ))
+    ax.text(note_x_c, note_y_c + 0.32,
+            "label sources run ONCE offline",
+            ha="center", va="center", fontsize=11.2,
+            fontweight="bold", color=RED, family="serif", zorder=3)
+    ax.text(note_x_c, note_y_c - 0.34,
+            "not used at sample time",
+            ha="center", va="center", fontsize=9.6,
+            fontstyle="italic", color=TEXT_NAVY, family="serif", zorder=3)
 
     base = os.path.join(OUT_DIR, "fig4e_head_training")
     save(fig, base)
