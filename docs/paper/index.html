@@ -369,7 +369,7 @@ where \(S_{\text{perf}}^{\text{band}}\) is a saturating banded ramp on each prop
 
 <figure>
   <img src="figs/fig6_pareto_v2.png" alt="Pareto front of the gated reranker" loading="lazy" style="max-width:100%; height:auto;">
-  <figcaption><strong>Figure 8.</strong> Filtered candidates (post hard-gate) plotted by saturating-performance score (x) vs. viability classifier output (y), colour-coded by sensitivity proxy. Stars mark the Pareto front. The high-performance, high-viability, low-sensitivity corner is sparsely populated, which is the expected shape of a credible top-of-funnel. <em><strong>Takeaway:</strong> the Pareto front is narrow, and a credible top-of-funnel keeps it that way.</em></figcaption>
+  <figcaption><strong>Figure 8.</strong> Filtered candidates (post hard-gate) plotted by saturating-performance score (x) vs. viability classifier output (y), colour-coded by sensitivity proxy. Stars mark the Pareto front. The high-performance, high-viability, low-sensitivity corner is sparsely populated, which is the expected shape when three weakly-correlated axes are independently gated. <em><strong>Takeaway:</strong> the Pareto front is narrow because each gate independently rejects most of the pool, so only a small fraction clears all three.</em></figcaption>
 </figure>
 
 <figure>
