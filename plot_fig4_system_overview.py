@@ -143,51 +143,219 @@ def add_color_legend(ax, x, y, items):
 # 4a  Training Phase 1: data preparation
 # ──────────────────────────────────────────────────────────────────────────
 def fig4a_data_prep():
-    fig, ax = plt.subplots(figsize=(11.5, 4.4), dpi=300)
-    setup_axes(ax, xmax=22.5, ymax=8.8)
+    # NEW 4(a): the LIMO SELFIES-VAE FINE-TUNING LOOP itself.
+    # Reader question that drove the rewrite: "do properties enter LIMO
+    # fine-tuning?" Answer: no. Diagram makes that visually unmissable.
+    fig, ax = plt.subplots(figsize=(13.5, 7.2), dpi=300)
+    setup_axes(ax, xmax=27.0, ymax=14.4)
 
-    fig.suptitle("Figure 4(a). Training Phase 1: data preparation (run once)",
-                 fontsize=12, fontweight="bold", y=0.99, color=TEXT_NAVY)
+    # Title intentionally omitted; the HTML figcaption carries the label.
 
-    y = 5.4
+    # Main forward chain along y = y_main (left to right):
+    # SMILES->SELFIES  ->  Encoder  ->  (mu, sigma)  ->  z=mu+sigma*eps  ->  Decoder  ->  predicted SELFIES
+    y_main = 9.4
 
-    # Single-row data flow: 5 boxes.
-    add_box(ax, 2.2, 3.0, 1.6, y, CREAM,     NAVY,
-            "Labelled SMILES",
-            "energetics corpus, 326k")
-    add_box(ax, 6.4, 3.0, 1.6, y, PALE_GREY, NAVY,
-            "LIMO encoder",
-            "frozen, fine-tuned")
-    add_box(ax, 10.6, 3.0, 1.6, y, PALE_GOLD, GOLD,
-            r"latent $z_0$",
-            r"deterministic $\mu \in \mathbb{R}^{1024}$")
-    add_box(ax, 14.8, 3.0, 1.8, y, PALE_GOLD, GOLD,
-            r"properties $p$ + mask $m$",
-            r"$\rho, \mathrm{HOF}, D, P$;  Tier-A/B = 1")
-    add_box(ax, 19.7, 3.0, 1.8, y, LIGHT_GREY, NAVY,
-            r"cache $\mathcal{D}_\mathrm{cache}$",
-            r"$\{(z_0, p, m)\}$ on disk")
+    # ── Input box: SMILES -> SELFIES tokens ─────────────────────────────
+    add_box(ax, 1.9, 3.0, 1.8, y_main, CREAM, NAVY,
+            "SMILES",
+            r"$\to$ SELFIES tokens",
+            title_size=10.6, sub_size=8.4)
 
-    add_arrow(ax, 3.7,  y, 4.9,  y)
-    add_arrow(ax, 7.9,  y, 9.1,  y)
-    add_arrow(ax, 12.1, y, 13.3, y)
-    add_arrow(ax, 16.3, y, 18.2, y)
+    # ── Encoder (transformer, trainable, navy fill) ─────────────────────
+    # Drop shadow + navy box drawn directly (we want WHITE text, which
+    # add_box does not support).
+    ax.add_patch(FancyBboxPatch(
+        (5.9 - 1.9 + 0.04, y_main - 1.1 - 0.04), 3.8, 2.2,
+        boxstyle="round,pad=0.02,rounding_size=0.16",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+    ))
+    ax.add_patch(FancyBboxPatch(
+        (5.9 - 1.9, y_main - 1.1), 3.8, 2.2,
+        boxstyle="round,pad=0.02,rounding_size=0.16",
+        linewidth=1.5, facecolor=NAVY, edgecolor=NAVY, zorder=2,
+    ))
+    ax.text(5.9, y_main + 0.40, "Encoder", ha="center", va="center",
+            fontsize=11.5, fontweight=600, color="white",
+            family="serif", zorder=3)
+    ax.text(5.9, y_main - 0.24, "transformer (trainable)",
+            ha="center", va="center", fontsize=8.4, fontstyle="italic",
+            color="#dde6e9", family="serif", zorder=3)
 
-    # Side annotation under the encoder
-    add_label(ax, 6.4, y - 1.8,
-              "encoder posterior variance discarded",
-              color=TEXT_LIGHT, size=8.6, italic=True, ha="center")
-    add_label(ax, 14.8, y - 1.8,
-              "z-scored properties; mask gates the conditional gradient",
-              color=TEXT_LIGHT, size=8.6, italic=True, ha="center")
+    # ── Latent posterior: mu, sigma split ───────────────────────────────
+    # Two stacked narrow boxes for mu (top) and sigma (bottom)
+    add_box(ax, 10.2, 2.6, 0.9, y_main + 0.55, PALE_GOLD, GOLD,
+            r"$\mu$", "", title_size=11.0)
+    add_box(ax, 10.2, 2.6, 0.9, y_main - 0.55, PALE_PURPLE, PURPLE,
+            r"$\sigma$", "", title_size=11.0)
+    ax.text(10.2, y_main + 1.40, "posterior  q(z | x)",
+            ha="center", va="center", fontsize=8.8, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
 
-    # Color legend (placed once, here, since 4a is the entry panel).
-    add_color_legend(ax, 0.4, 1.6, [
-        (NAVY,   False, "data flow"),
-        (GOLD,   True,  "conditioning / guidance"),
-        (PURPLE, True,  "stochastic sampling"),
-        (RED,    False, "loss / gradient"),
-    ])
+    # ── Reparametrise: z = mu + sigma*eps  (purple stochastic) ──────────
+    add_box(ax, 14.4, 3.0, 1.7, y_main, PALE_PURPLE, PURPLE,
+            "Reparametrise",
+            r"$z = \mu + \sigma\!\cdot\!\varepsilon$",
+            title_size=10.8, sub_size=9.0)
+    # epsilon source as a small purple dashed bubble above
+    ax.text(14.4, y_main + 1.55, r"$\varepsilon \sim \mathcal{N}(0, I)$",
+            ha="center", va="center", fontsize=9.0, fontstyle="italic",
+            color=PURPLE, family="serif", zorder=3)
+    add_arrow(ax, 14.4, y_main + 1.30, 14.4, y_main + 0.86,
+              color=PURPLE, dashed=True, lw=1.2)
+
+    # ── Decoder (transformer, trainable, navy fill) ─────────────────────
+    # drop shadow first (lower zorder)
+    ax.add_patch(FancyBboxPatch(
+        (18.6 - 1.9 + 0.04, y_main - 1.1 - 0.04), 3.8, 2.2,
+        boxstyle="round,pad=0.02,rounding_size=0.16",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+    ))
+    ax.add_patch(FancyBboxPatch(
+        (18.6 - 1.9, y_main - 1.1), 3.8, 2.2,
+        boxstyle="round,pad=0.02,rounding_size=0.16",
+        linewidth=1.5, facecolor=NAVY, edgecolor=NAVY, zorder=2,
+    ))
+    ax.text(18.6, y_main + 0.40, "Decoder", ha="center", va="center",
+            fontsize=11.5, fontweight=600, color="white",
+            family="serif", zorder=3)
+    ax.text(18.6, y_main - 0.24, "transformer (trainable)",
+            ha="center", va="center", fontsize=8.4, fontstyle="italic",
+            color="#dde6e9", family="serif", zorder=3)
+
+    # ── Output: predicted SELFIES tokens ────────────────────────────────
+    add_box(ax, 23.2, 3.0, 1.8, y_main, CREAM, NAVY,
+            "predicted",
+            "SELFIES tokens",
+            title_size=10.6, sub_size=8.4)
+
+    # ── Forward arrows along main row ───────────────────────────────────
+    add_arrow(ax, 3.4,  y_main, 4.3,  y_main, lw=1.8)
+    add_arrow(ax, 7.5,  y_main, 8.9,  y_main, lw=1.8)
+    # encoder output splits to mu and sigma — show as a tiny fan
+    # (already implied by the two side-by-side box positions); add labels above
+    # mu / sigma -> reparam
+    add_arrow(ax, 11.5, y_main + 0.55, 12.9, y_main + 0.20,
+              color=GOLD, lw=1.6)
+    add_arrow(ax, 11.5, y_main - 0.55, 12.9, y_main - 0.20,
+              color=PURPLE, lw=1.6)
+    # reparam -> decoder
+    add_arrow(ax, 15.9, y_main, 17.0, y_main, lw=1.8)
+    add_label(ax, 16.45, y_main + 0.42, r"$z$",
+              color=TEXT_NAVY, size=10.5, italic=True, ha="center")
+    # decoder -> predicted tokens
+    add_arrow(ax, 20.2, y_main, 21.7, y_main, lw=1.8)
+
+    # ─────────────────────────────────────────────────────────────────────
+    # LOSS BLOCK (lower portion of the canvas)
+    # Reconstruction loss compares input SELFIES to predicted SELFIES;
+    # KL loss attaches to (mu, sigma).  Both feed into total loss L.
+    # ─────────────────────────────────────────────────────────────────────
+    y_loss = 4.4
+
+    # Reconstruction loss (red), positioned under the decoder/output area.
+    # Subtitle makes the comparison-against-input explicit so we do not
+    # need a long diagonal arrow from the SMILES input.
+    add_box(ax, 21.0, 5.0, 1.8, y_loss, PALE_RED, RED,
+            r"$\mathcal{L}_{\mathrm{recon}}$",
+            "token cross-entropy  (predicted vs input x, teacher-forced)",
+            title_size=11.4, sub_size=8.0)
+
+    # KL loss (red), positioned under the latent posterior
+    add_box(ax, 10.2, 5.6, 1.8, y_loss, PALE_RED, RED,
+            r"$\mathcal{L}_{\mathrm{KL}} = \mathrm{KL}\!\left(q(z|x)\,\Vert\,\mathcal{N}(0, I)\right)$",
+            r"penalises  $\Vert\mu\Vert,\ \Vert\sigma^2 - 1\Vert$",
+            title_size=10.4, sub_size=8.4)
+
+    # Total loss (red, central, slightly larger), sits between the two
+    add_box(ax, 15.6, 4.6, 2.0, y_loss - 2.4, PALE_RED, RED,
+            r"$\mathcal{L} = \mathcal{L}_{\mathrm{recon}} + 0.01\,\mathcal{L}_{\mathrm{KL}}$",
+            r"$\beta = 0.01$,  free-bits disabled",
+            title_size=11.6, sub_size=8.6)
+
+    # Dashed red arrow from predicted SELFIES into recon loss.
+    # (Comparison against input x is described in the recon-loss subtitle
+    # rather than drawn as a long diagonal arrow that would cut the canvas.)
+    add_arrow(ax, 23.2, y_main - 0.9, 21.5, y_loss + 0.9,
+              color=RED, dashed=True, lw=1.4)
+
+    # Dashed red arrows from mu and sigma into KL loss
+    add_arrow(ax, 10.2, y_main - 1.05, 10.2, y_loss + 0.9,
+              color=RED, dashed=True, lw=1.4)
+
+    # Recon and KL feed into total loss
+    add_arrow(ax, 18.5, y_loss - 0.9, 16.6, y_loss - 1.6,
+              color=RED, lw=1.6)
+    add_arrow(ax, 11.9, y_loss - 0.9, 14.6, y_loss - 1.6,
+              color=RED, lw=1.6)
+
+    # Backprop arrow from total loss back up to encoder + decoder
+    # (single curved-style: dashed red horizontal at very bottom returning up)
+    ax.plot([15.6, 5.9], [y_loss - 2.4 - 1.05, y_loss - 2.4 - 1.05],
+            color=RED, lw=1.2, linestyle=(0, (4, 3)), zorder=4)
+    ax.plot([15.6, 18.6], [y_loss - 2.4 - 1.05, y_loss - 2.4 - 1.05],
+            color=RED, lw=1.2, linestyle=(0, (4, 3)), zorder=4)
+    add_arrow(ax, 5.9,  y_loss - 2.4 - 1.05, 5.9,  y_main - 1.15,
+              color=RED, dashed=True, lw=1.2)
+    add_arrow(ax, 18.6, y_loss - 2.4 - 1.05, 18.6, y_main - 1.15,
+              color=RED, dashed=True, lw=1.2)
+    add_label(ax, 12.2, y_loss - 2.4 - 1.45,
+              r"backprop  $\nabla_\theta\mathcal{L}$  (encoder + decoder updated)",
+              color=RED, size=9.0, italic=True, bold=True, ha="center")
+
+    # ─────────────────────────────────────────────────────────────────────
+    # PROPERTY-AGNOSTIC CALLOUT (upper-right; bold, prominent)
+    # ─────────────────────────────────────────────────────────────────────
+    callout_x_c = 22.3
+    callout_y_c = 13.1
+    callout_w   = 8.6
+    callout_h   = 1.9
+    sh = FancyBboxPatch(
+        (callout_x_c - callout_w / 2 + 0.04,
+         callout_y_c - callout_h / 2 - 0.04),
+        callout_w, callout_h,
+        boxstyle="round,pad=0.04,rounding_size=0.20",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+    )
+    ax.add_patch(sh)
+    callout = FancyBboxPatch(
+        (callout_x_c - callout_w / 2, callout_y_c - callout_h / 2),
+        callout_w, callout_h,
+        boxstyle="round,pad=0.04,rounding_size=0.20",
+        linewidth=2.2, facecolor=PALE_GOLD, edgecolor=GOLD, zorder=2,
+    )
+    ax.add_patch(callout)
+    ax.text(callout_x_c, callout_y_c + 0.32,
+            "LIMO is property-agnostic",
+            ha="center", va="center", fontsize=14.0, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(callout_x_c, callout_y_c - 0.34,
+            "no property labels enter this loss",
+            ha="center", va="center", fontsize=10.2, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Free-floating annotations (no boxes)
+    # ─────────────────────────────────────────────────────────────────────
+    # Corpus annotation, above the input box
+    ax.text(1.9, y_main + 1.85,
+            "326k energetic corpus\nSELFIES tokens",
+            ha="center", va="center", fontsize=8.6, color=TEXT_SLATE,
+            family="serif", fontstyle="italic", linespacing=1.15, zorder=3)
+
+    # Validation accuracy + frozen-after, sitting to the right of decoder
+    # (above the predicted SELFIES box)
+    ax.text(23.2, y_main + 1.85,
+            "validation token-acc 64.5%\n* frozen after fine-tune *",
+            ha="center", va="center", fontsize=8.6, color=TEXT_SLATE,
+            family="serif", fontstyle="italic", linespacing=1.15, zorder=3)
+
+    # latent-posterior caveat under mu/sigma (placed BELOW the loss block
+    # so it does not collide with the posterior label).
+    ax.text(15.6, y_loss - 2.4 - 2.1,
+            r"latent posterior concentrated:  $\Vert\mu\Vert \approx 8$  "
+            r"(see Section 6 limitations)",
+            ha="center", va="center", fontsize=8.4, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
 
     base = os.path.join(OUT_DIR, "fig4a_data_prep")
     save(fig, base)
@@ -204,8 +372,7 @@ def fig4b_train_loop():
     fig, ax = plt.subplots(figsize=(13.5, 6.8), dpi=300)
     setup_axes(ax, xmax=28.0, ymax=12.0)
 
-    fig.suptitle("Figure 4(b). Training Phase 2: per-step denoiser update loop",
-                 fontsize=12, fontweight="bold", y=0.99, color=TEXT_NAVY)
+    # Title intentionally omitted; the HTML figcaption carries the label.
 
     # Layout columns - wide enough that 3.4-unit boxes don't collide
     # (centres need to be at least ~4.0 apart with 0.6 unit gap).
@@ -347,64 +514,121 @@ def fig4c_sampling_guidance():
     fig, ax = plt.subplots(figsize=(12.0, 5.0), dpi=300)
     setup_axes(ax, xmax=22.5, ymax=10.0)
 
-    fig.suptitle("Figure 4(c). Sampling: DDIM denoise with multi-head guidance",
-                 fontsize=12, fontweight="bold", y=0.99, color=TEXT_NAVY)
+    # Title intentionally omitted; the HTML figcaption carries the label.
 
-    # Heads (top row)
+    # Heads (top row): viab, sens, hazard, perf — all unified under a single
+    # enclosing "4-head classifier" frame.
     head_y = 7.6
     head_specs = [
-        (4.5,  "Viability",   "RandomForest on z"),
-        (8.5,  "Sensitivity", r"$h_{50}$ on Huang-Massa"),
-        (12.5, "Performance", r"$\rho, D, P$ heads"),
-        (16.5, "Hazard",      "SMARTS-aware learned"),
+        (4.0,  "Viability",   "decoded validity"),
+        (8.4,  "Sensitivity", r"$h_{50}$ Huang-Massa"),
+        (12.8, "Hazard",      "SMARTS-aware"),
+        (17.2, "Performance", r"$\rho,\ D,\ P$ regressors"),
     ]
+    # Enclosing frame
+    frame_x_l = head_specs[0][0]  - 1.95
+    frame_x_r = head_specs[-1][0] + 1.95
+    frame_w   = frame_x_r - frame_x_l
+    frame_h   = 2.6
+    frame_y_c = head_y + 0.05
+    frame_x_c = (frame_x_l + frame_x_r) / 2
+    sh = FancyBboxPatch(
+        (frame_x_l + 0.05, frame_y_c - frame_h / 2 - 0.05),
+        frame_w, frame_h,
+        boxstyle="round,pad=0.04,rounding_size=0.18",
+        linewidth=0, facecolor="#0a1620", alpha=0.08, zorder=1,
+    )
+    ax.add_patch(sh)
+    frame = FancyBboxPatch(
+        (frame_x_l, frame_y_c - frame_h / 2),
+        frame_w, frame_h,
+        boxstyle="round,pad=0.04,rounding_size=0.18",
+        linewidth=1.6, facecolor="#f4faf5", edgecolor=GREEN, zorder=2,
+    )
+    ax.add_patch(frame)
+    # Frame caption sits inside the frame, above the head-box row
+    ax.text(frame_x_c, frame_y_c + frame_h / 2 - 0.32,
+            "4-head classifier (multi-head guidance)",
+            ha="center", va="center", fontsize=10.0, fontweight="bold",
+            color=GREEN, family="serif", zorder=3)
+    # Heads, slightly smaller and lowered to fit inside the frame caption
     for x_c, t, sub in head_specs:
-        add_box(ax, x_c, 3.2, 1.4, head_y, PALE_GREEN, GREEN, t, sub,
-                title_size=10.5, sub_size=8.8)
+        add_box(ax, x_c, 3.4, 1.4, head_y - 0.20, PALE_GREEN, GREEN, t, sub,
+                title_size=10.2, sub_size=8.4)
 
     # Trajectory row
     traj_y = 3.0
-    add_box(ax, 2.2, 2.4, 1.6, traj_y, CREAM, NAVY,
-            r"$z_T$", r"$\mathcal{N}(0, I_{1024})$")
-    add_box(ax, 10.5, 6.6, 1.8, traj_y, PALE_GREY, NAVY,
-            "DDIM denoise",
-            r"$t = T \to 1$ (40 steps)")
-    add_box(ax, 19.4, 2.4, 1.6, traj_y, PALE_GOLD, GOLD,
+    add_box(ax, 2.2, 2.8, 1.7, traj_y, CREAM, NAVY,
+            r"$z_T$", r"$\mathcal{N}(0,\ I_{1024})$")
+    # DDIM box: title + per-step formula + protocol annotation.
+    ddim_x_c = 10.6
+    ddim_w   = 8.0
+    ddim_h   = 2.5
+    x = ddim_x_c - ddim_w / 2
+    y = traj_y - ddim_h / 2
+    sh = FancyBboxPatch(
+        (x + 0.04, y - 0.04), ddim_w, ddim_h,
+        boxstyle="round,pad=0.02,rounding_size=0.16",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+    )
+    ax.add_patch(sh)
+    box = FancyBboxPatch(
+        (x, y), ddim_w, ddim_h,
+        boxstyle="round,pad=0.02,rounding_size=0.16",
+        linewidth=1.5, facecolor=PALE_GREY, edgecolor=NAVY, zorder=2,
+    )
+    ax.add_patch(box)
+    ax.text(ddim_x_c, traj_y + ddim_h * 0.30, "DDIM denoise step",
+            ha="center", va="center", fontsize=11.0, fontweight=600,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(ddim_x_c, traj_y + 0.08,
+            r"$z_{t-1} = \frac{1}{\sqrt{\alpha_t}}\!\left(z_t - \frac{1-\alpha_t}{\sqrt{1-\bar\alpha_t}}\,(\hat\varepsilon_\theta - g_t)\right) + \sigma_t\,\eta$",
+            ha="center", va="center", fontsize=9.6, color=TEXT_NAVY,
+            family="serif", zorder=3)
+    ax.text(ddim_x_c, traj_y - ddim_h * 0.32,
+            r"$t = T \to 1$,  40 steps,  $\eta = 0.1$",
+            ha="center", va="center", fontsize=8.8, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+    add_box(ax, 19.4, 2.8, 1.7, traj_y, PALE_GOLD, GOLD,
             r"$z_0$", "denoised latent")
 
-    add_arrow(ax, 3.4, traj_y, 7.2, traj_y)
-    add_arrow(ax, 13.8, traj_y, 18.2, traj_y)
+    add_arrow(ax, 3.6, traj_y, 6.5, traj_y)
+    add_arrow(ax, 14.7, traj_y, 18.0, traj_y)
 
     # Guidance bus: each head drops to a horizontal bus, bus drops as a
     # single bundled gold-dashed arrow into DDIM top.
-    bus_y = 5.6
-    ddim_top = traj_y + 0.9
+    bus_y = 5.9
+    ddim_top = traj_y + ddim_h / 2
     bus_x_left  = head_specs[0][0]
     bus_x_right = head_specs[-1][0]
     for x_c, *_ in head_specs:
-        ax.plot([x_c, x_c], [head_y - 0.7, bus_y + 0.02],
+        ax.plot([x_c, x_c], [head_y - 0.78, bus_y + 0.02],
                 color=GOLD, lw=1.3, linestyle=(0, (4, 3)), zorder=4)
         ax.plot([x_c], [bus_y], marker="o", markersize=3.6,
                 markerfacecolor=GOLD, markeredgecolor=GOLD, zorder=5)
     ax.plot([bus_x_left, bus_x_right], [bus_y, bus_y],
             color=GOLD, lw=2.0, zorder=4)
-    bundle_x = 10.5
-    ax.plot([bundle_x, bundle_x], [bus_y, bus_y - 0.02],
-            color=GOLD, lw=2.0, zorder=4)
-    add_arrow(ax, bundle_x, bus_y, bundle_x, ddim_top + 0.05,
+    bundle_x = ddim_x_c
+    # Sigma glyph at convergence point on the bus
+    ax.plot([bundle_x], [bus_y], marker="o", markersize=11,
+            markerfacecolor="white", markeredgecolor=GOLD,
+            markeredgewidth=1.8, zorder=5)
+    ax.text(bundle_x, bus_y, r"$\Sigma$", ha="center", va="center",
+            fontsize=10.5, color=GOLD, fontweight="bold",
+            family="serif", zorder=6)
+    add_arrow(ax, bundle_x, bus_y - 0.20, bundle_x, ddim_top + 0.05,
               color=GOLD, dashed=True, lw=2.0)
-    add_label(ax, bundle_x + 0.3, (bus_y + ddim_top) / 2,
-              r"$\sum_h s_h\,\nabla_{z_t}\log p_h(c\!\mid\!z_t)$",
-              color=GOLD, size=9.5, italic=True, bold=True)
+    # Gradient label sits to the right of the vertical bundled arrow, in the
+    # gap between bus and DDIM box top.
+    add_label(ax, bundle_x + 0.35,
+              (bus_y + ddim_top) / 2 - 0.05,
+              r"$g_t = \sum_h s_h\,\nabla_{z_t}\log p_h(c\!\mid\!z_t)$",
+              color=GOLD, size=9.0, italic=True, bold=True)
 
-    # Tag for the heads row
-    add_label(ax, 0.4, head_y + 1.05,
-              "FOUR CLASSIFIER-GUIDANCE HEADS",
-              color=TEXT_LIGHT, size=8.4, bold=True)
-    add_label(ax, 0.4, 0.4,
-              r"DDIM with $n=40$ steps; conditioning $c=(p_\mathrm{target},\,m=\mathbf{1})$.  "
-              r"per-head scales $s_h$ in Appendix C.",
-              color=TEXT_LIGHT, size=8.4, italic=True)
+    # Color legend intentionally omitted per user spec.
+
+    # Bottom text labels intentionally omitted; the HTML figcaption carries
+    # the protocol detail (n=40 steps, eta, conditioning vector).
 
     base = os.path.join(OUT_DIR, "fig4c_sampling_guidance")
     save(fig, base)
@@ -418,60 +642,75 @@ def fig4c_sampling_guidance():
 # 4d  Post-sampling: decode + chem filter + reranker, with D sparkline
 # ──────────────────────────────────────────────────────────────────────────
 def fig4d_decode_rerank():
-    fig = plt.figure(figsize=(13.0, 4.0), dpi=300)
-    # main flow on the left, sparkline inset on the right
-    ax = fig.add_axes([0.0, 0.06, 0.76, 0.82])
-    ax_spark = fig.add_axes([0.80, 0.22, 0.17, 0.55])
+    # Single-panel pipeline (histogram intentionally dropped per user spec).
+    # Canvas height tightened: the figure-coords subtitle was dropped because
+    # the banner above the boxes already frames the funnel, and two competing
+    # top labels read as crowded. The HTML figcaption carries the full caption.
+    fig, ax = plt.subplots(figsize=(15.0, 4.4), dpi=300)
+    setup_axes(ax, xmax=36.0, ymax=7.6)
 
-    setup_axes(ax, xmax=23.0, ymax=7.0)
+    y = 3.4
 
-    fig.suptitle("Figure 4(d). Post-sampling: decode, filter, rerank",
-                 fontsize=12, fontweight="bold", y=0.995, color=TEXT_NAVY)
+    # Six boxes with PROGRESSIVELY DECREASING HEIGHTS to mirror the
+    # candidate-funnel narrowing (40k -> 30k -> 12k -> 8k -> 100). Widths are
+    # uniform so the row reads as a clean horizontal pipeline; box-height
+    # encodes the survivor count.
+    # Six box centres on a 36-wide canvas, with ~6.0 unit centre-to-centre
+    # spacing and 4.4-unit-wide boxes -> 1.6-unit gap between adjacent boxes
+    # leaves clear room for arrow + count annotation.
+    centres = [3.2, 9.4, 15.6, 21.8, 28.0, 33.6]
+    widths  = [4.4, 4.4, 4.4, 4.4, 4.4, 4.0]
+    # Heights drop from 3.0 to 1.4 in proportion to log10(count) of survivors.
+    heights = [3.00, 2.85, 2.45, 2.10, 1.75, 1.40]
 
-    y = 3.6
-    add_box(ax, 1.8, 2.4, 1.6, y, PALE_GOLD, GOLD,
-            r"$z_0$", "denoised latent")
-    add_box(ax, 5.6, 2.6, 1.6, y, PALE_GREY, NAVY,
-            "LIMO decoder", "non-autoregressive")
-    add_box(ax, 9.6, 2.6, 1.6, y, CREAM, NAVY,
-            "SMILES pool", r"$\sim 10^4$ candidates")
-    add_box(ax, 13.6, 2.8, 1.6, y, PALE_RED, RED,
-            "chem filter", "SMARTS + redflags")
-    add_box(ax, 17.7, 2.8, 1.6, y, PALE_GREEN, GREEN,
-            "Phase-A reranker", "scaffold-aware composite")
-    add_box(ax, 21.7, 2.2, 1.6, y, PALE_GOLD, GOLD,
-            r"top-$K$ leads", r"$K \approx 100$")
+    # Role-coded box fills:
+    #   PALE_GOLD  = data state (latent / SMILES / final leads)
+    #   PALE_GREY  = transform (decoder)
+    #   PALE_RED   = filter / gate
+    #   PALE_GREEN = ranker / score
+    box_specs = [
+        (PALE_GOLD,  GOLD, r"$z_0$",
+         "denoised latent (1024-d)"),
+        (PALE_GREY,  NAVY, "LIMO decoder",
+         r"frozen NAR (latent $\to$ SMILES)"),
+        (PALE_GOLD,  GOLD, "SMILES",
+         "RDKit canonical + valence"),
+        (PALE_RED,   RED,  "SMARTS gate",
+         r"Stage 1: rules + red-flags"),
+        (PALE_GREEN, GREEN, "Pareto reranker",
+         r"Stage 2: composite score"),
+        (PALE_GOLD,  GOLD, r"top-$K$ leads",
+         r"to xTB + DFT audit"),
+    ]
+    for cx, w, h, (fill, edge, t, sub) in zip(centres, widths, heights,
+                                              box_specs):
+        add_box(ax, cx, w, h, y, fill, edge, t, sub,
+                title_size=10.8, sub_size=8.2)
 
-    for x0, x1 in [(3.0, 4.3), (6.9, 8.3), (10.9, 12.3),
-                   (15.0, 16.3), (19.1, 20.6)]:
-        add_arrow(ax, x0, y, x1, y, lw=1.8)
+    # Connectors: arrow tail/head shrunk to each box's actual half-width.
+    counts = ["40,000\nsamples",
+              "30,000\nparse-valid",
+              "12,000\nSMILES",
+              "8,000\nchem-pass",
+              "100\nleads"]
+    # Uniform y for all count annotations: clears the tallest box (heights[0])
+    # so every label sits at one common baseline above the pipeline.
+    count_y = y + heights[0] / 2 + 0.55
+    for i in range(len(centres) - 1):
+        x0 = centres[i]     + widths[i]     / 2
+        x1 = centres[i + 1] - widths[i + 1] / 2
+        add_arrow(ax, x0, y, x1, y, lw=1.6)
+        ax.text((x0 + x1) / 2, count_y, counts[i],
+                ha="center", va="center",
+                fontsize=8.2, color=TEXT_SLATE, family="serif",
+                fontstyle="italic", linespacing=1.05, zorder=3)
 
-    add_label(ax, 0.3, 0.7,
-              r"hard-reject SMARTS catalog removes infeasible / unsafe candidates; "
-              r"reranker scores on $\rho, D, P$, SA, scaffold novelty.",
-              color=TEXT_LIGHT, size=8.4, italic=True)
+    # Banner: explicit funnel framing so the reader knows what the counts mean.
+    add_label(ax, 0.3, y + heights[0] / 2 + 1.30,
+              "candidates surviving each stage  (illustrative scale)",
+              color=TEXT_SLATE, size=8.8, italic=True, bold=True)
 
-    # Sparkline: synthetic D-distribution shape consistent with paper
-    rng = np.random.default_rng(7)
-    samples = np.concatenate([
-        rng.normal(loc=8.2, scale=0.45, size=300),
-        rng.normal(loc=9.0, scale=0.30, size=120),
-        rng.normal(loc=9.6, scale=0.22, size=60),
-    ])
-    ax_spark.hist(samples, bins=22, color=GOLD, edgecolor=NAVY, linewidth=0.6,
-                  alpha=0.85)
-    ax_spark.set_xlabel(r"$D$  (km/s)", fontsize=8.5, color=TEXT_SLATE,
-                        family="serif")
-    ax_spark.set_title(r"top-$K$ candidate $D$", fontsize=9.0,
-                       color=TEXT_NAVY, family="serif", fontweight="bold",
-                       pad=4)
-    for s in ax_spark.spines.values():
-        s.set_color(TEXT_LIGHT)
-        s.set_linewidth(0.6)
-    ax_spark.tick_params(axis="both", labelsize=7.5, colors=TEXT_SLATE,
-                         length=2)
-    ax_spark.set_yticks([])
-    ax_spark.set_facecolor(LIGHT_GREY)
+    # Color legend intentionally omitted per user spec.
 
     base = os.path.join(OUT_DIR, "fig4d_decode_rerank")
     save(fig, base)

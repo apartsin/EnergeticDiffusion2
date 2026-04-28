@@ -1,0 +1,42 @@
+{
+  "pod_id": null,
+  "job_id": null,
+  "gpu_sku": null,
+  "price_per_hr": null,
+  "results_prefix": "results_reverse",
+  "anchor_order": ["NTO", "FOX7", "PETN", "HMX"],
+  "status": "ABANDONED",
+  "outcome": "All RunPod SKUs in the requested order were unavailable or broken. Vast.ai siblings are the surviving path; the chemist-aggregator should rely on those. No pod metadata to splice into smart_pod_monitor.",
+  "attempts": [
+    {
+      "ts": "2026-04-28T14:58:54Z",
+      "sku": "RTX_A6000 SECURE @ <=$0.80/hr",
+      "result": "Not available in Secure Cloud (stock empty)"
+    },
+    {
+      "ts": "2026-04-28T14:59:35Z",
+      "sku": "NVIDIA A40 SECURE @ <=$0.60/hr",
+      "result": "Not available in Secure Cloud (stock empty)"
+    },
+    {
+      "ts": "2026-04-28T15:00:02Z",
+      "sku": "RTX_A6000 COMMUNITY @ <=$0.50/hr (fell through to SECURE @ $0.49/hr)",
+      "result": "Pod ljh1g9xgoy605e created, desiredStatus=RUNNING but runtime.ports oscillated between null and populated; SSH on 38.147.83.23:28492 refused for 12+ minutes. Pod terminated at 15:11Z.",
+      "pod_id": "ljh1g9xgoy605e",
+      "ssh_endpoint": "38.147.83.23:28492",
+      "image": "pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime",
+      "storage_prefix_deleted": "m2-anchors-6cal-reve-20260428-150002/"
+    },
+    {
+      "ts": "2026-04-28T15:13:07Z",
+      "sku": "RTX_A6000 SECURE @ <=$0.80/hr (final retry)",
+      "result": "Not available in Secure Cloud (stock empty)"
+    }
+  ],
+  "artifacts_left_in_repo": [
+    "m2_bundle/m2_anchors_reverse.py",
+    "m2_bundle/m2_anchors_run_reverse.sh",
+    "m2_bundle/monitor_daemon_reverse.sh"
+  ],
+  "note": "Reverse driver, entry script, and monitor variant are committed locally and ready for relaunch when RunPod stock recovers. Sibling pod 19g52uvrxup26l (default order) was also gone from RunPod's pod list at the time of last check, suggesting a broader RunPod A6000 incident."
+}

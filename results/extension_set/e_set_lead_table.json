@@ -1,0 +1,232 @@
+{
+  "calibration": {
+    "a_rho": 1.3919790559400185,
+    "b_rho": -0.4148770464650988,
+    "c_hof_kJmol": -206.6542859700803
+  },
+  "rows": [
+    {
+      "id": "E1",
+      "smiles": "O=[N+]([O-])c1nnon1",
+      "formula": "C1N4O3",
+      "scaffold": "c1nnon1",
+      "scaffold_class": "nitroaromatic",
+      "n_atoms": 8,
+      "xtb_gap_eV": 2.0742,
+      "graph_unchanged": true,
+      "rho_dft": 1.765386069780378,
+      "rho_cal": 2.042503388317451,
+      "HOF_dft_kJmol": 320.1059344738669,
+      "HOF_cal_kJmol": 113.4516485037866,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 8.996978926334357,
+        "P_GPa": 38.60188079584918,
+        "N": 0.030163052845668586,
+        "M": 37.142857142857146,
+        "Q": 1043.770416012315
+      },
+      "h50_BDE_cm": 82.7,
+      "h50_model_cm": null
+    },
+    {
+      "id": "E2",
+      "smiles": "O=[N+]([O-])NC([N+](=O)[O-])[N+](=O)[O-]",
+      "formula": "C1H2N4O6",
+      "scaffold": "",
+      "scaffold_class": "nitramine",
+      "n_atoms": 13,
+      "xtb_gap_eV": 1.5407,
+      "graph_unchanged": true,
+      "rho_dft": 1.7302001369136895,
+      "rho_cal": 1.9935253067033092,
+      "HOF_dft_kJmol": 42.68494590133923,
+      "HOF_cal_kJmol": -163.96934006874108,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 9.217997698854482,
+        "P_GPa": 39.98246933533229,
+        "N": 0.03312275292233016,
+        "M": 30.545454545454547,
+        "Q": 1244.279265298622
+      },
+      "h50_BDE_cm": 38.31,
+      "h50_model_cm": null
+    },
+    {
+      "id": "E3",
+      "smiles": "O=[N+]([O-])Nc1conc1[N+](=O)[O-]",
+      "formula": "C3H2N4O5",
+      "scaffold": "c1cnoc1",
+      "scaffold_class": "nitramine",
+      "n_atoms": 14,
+      "xtb_gap_eV": 2.1026,
+      "graph_unchanged": true,
+      "rho_dft": 1.6779188908546407,
+      "rho_cal": 1.9207509071706668,
+      "HOF_dft_kJmol": 214.7682176074868,
+      "HOF_cal_kJmol": 8.113931637406495,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 7.3521709009831575,
+        "P_GPa": 24.906496369986986,
+        "N": 0.028723746495702928,
+        "M": 13.8,
+        "Q": 1649.092159213773
+      },
+      "h50_BDE_cm": 38.31,
+      "h50_model_cm": null
+    },
+    {
+      "id": "E4",
+      "smiles": "O=[N+]([O-])NC1=CC1([N+](=O)[O-])[N+](=O)[O-]",
+      "formula": "C3H2N4O6",
+      "scaffold": "C1=CC1",
+      "scaffold_class": "nitramine",
+      "n_atoms": 15,
+      "xtb_gap_eV": 1.5934,
+      "graph_unchanged": true,
+      "rho_dft": 1.669428357595316,
+      "rho_cal": 1.9089322626999248,
+      "HOF_dft_kJmol": 332.42613280363,
+      "HOF_cal_kJmol": 125.77184683354972,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 7.392717407868472,
+        "P_GPa": 25.093036931805468,
+        "N": 0.02893655528723477,
+        "M": 14.0,
+        "Q": 1666.4326941342006
+      },
+      "h50_BDE_cm": 38.31,
+      "h50_model_cm": null
+    },
+    {
+      "id": "E5",
+      "smiles": "O=[N+]([O-])OCC1([N+](=O)[O-])C=N1",
+      "formula": "C3H3N3O5",
+      "scaffold": "C1=NC1",
+      "scaffold_class": "nitrate_ester",
+      "n_atoms": 14,
+      "xtb_gap_eV": 2.2242,
+      "graph_unchanged": true,
+      "rho_dft": 1.5896072096243599,
+      "rho_cal": 1.7978228965032648,
+      "HOF_dft_kJmol": 195.10345545792734,
+      "HOF_cal_kJmol": -11.55083051215297,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 7.191718818403729,
+        "P_GPa": 22.925948772414813,
+        "N": 0.02948973446822248,
+        "M": 13.157894736842104,
+        "Q": 1811.356642593138
+      },
+      "h50_BDE_cm": 24.8,
+      "h50_model_cm": null
+    },
+    {
+      "id": "E6",
+      "smiles": "O=[N+]([O-])c1c[nH]c([N+](=O)[O-])c1",
+      "error": [
+        "CUSOLVER_STATUS_EXECUTION_FAILED"
+      ]
+    },
+    {
+      "id": "E7",
+      "smiles": "N=C1C(O[N+](=O)[O-])=CC1[N+](=O)[O-]",
+      "formula": "C4H3N3O5",
+      "scaffold": "N=C1C=CC1",
+      "scaffold_class": "nitrate_ester",
+      "n_atoms": 15,
+      "xtb_gap_eV": 1.6807,
+      "graph_unchanged": true,
+      "rho_dft": 1.5836579833249498,
+      "rho_cal": 1.7895416980954384,
+      "HOF_dft_kJmol": 235.4671449012949,
+      "HOF_cal_kJmol": 28.812858931214578,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 6.735241366967423,
+        "P_GPa": 20.052320416552536,
+        "N": 0.027443322317487463,
+        "M": 13.157894736842104,
+        "Q": 1629.9237752503968
+      },
+      "h50_BDE_cm": 24.8,
+      "h50_model_cm": null
+    },
+    {
+      "id": "E8",
+      "smiles": "CC1(C([N+](=O)[O-])[N+](=O)[O-])C=C([N+](=O)[O-])C=C1[N+](=O)[O-]",
+      "formula": "C7H6N4O8",
+      "scaffold": "C1=CCC=C1",
+      "scaffold_class": "geminal_polynitro",
+      "n_atoms": 25,
+      "xtb_gap_eV": 1.5695,
+      "graph_unchanged": true,
+      "rho_dft": 1.5797426873935119,
+      "rho_cal": 1.7840916881610693,
+      "HOF_dft_kJmol": 170.98533539048367,
+      "HOF_cal_kJmol": -35.66895057959664,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 6.73471574501859,
+        "P_GPa": 20.012417330634886,
+        "N": 0.027357785113717194,
+        "M": 12.666666666666666,
+        "Q": 1717.7948866057145
+      },
+      "h50_BDE_cm": 44.1,
+      "h50_model_cm": null
+    },
+    {
+      "id": "E9",
+      "smiles": "n1n[nH][nH]1",
+      "formula": "H2N4",
+      "scaffold": "n1n[nH][nH]1",
+      "scaffold_class": "unknown",
+      "n_atoms": 4,
+      "xtb_gap_eV": 4.9177,
+      "graph_unchanged": true,
+      "rho_dft": 1.4530287926323289,
+      "rho_cal": 1.6077086005569152,
+      "HOF_dft_kJmol": 506.88407061451426,
+      "HOF_cal_kJmol": 300.22978464443395,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": null,
+        "P_GPa": null,
+        "N": NaN,
+        "M": NaN,
+        "Q": NaN
+      },
+      "h50_BDE_cm": 53.75,
+      "h50_model_cm": null
+    },
+    {
+      "id": "E10",
+      "smiles": "O=[N+]([O-])C1=NCC=N1",
+      "formula": "C3H3N3O2",
+      "scaffold": "C1=NC=NC1",
+      "scaffold_class": "unknown",
+      "n_atoms": 11,
+      "xtb_gap_eV": 1.6493,
+      "graph_unchanged": true,
+      "rho_dft": 1.482853577829058,
+      "rho_cal": 1.649224076898672,
+      "HOF_dft_kJmol": 249.13498501034155,
+      "HOF_cal_kJmol": 42.48069904026124,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 5.5191167041435545,
+        "P_GPa": 12.801490033155135,
+        "N": 0.0287417312250168,
+        "M": 11.846153846153847,
+        "Q": 932.5331010062042
+      },
+      "h50_BDE_cm": 53.75,
+      "h50_model_cm": null
+    }
+  ]
+}
