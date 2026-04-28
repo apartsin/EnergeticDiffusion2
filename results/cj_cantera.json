@@ -1,0 +1,47 @@
+{
+  "RDX_lit": {
+    "formula": "C3H6N6O6",
+    "rho_g_cm3": 1.806,
+    "HOF_kJmol": 66.0,
+    "D_CJ_kms": null,
+    "P_CJ_GPa": null,
+    "T_CJ_K": null,
+    "note": "CJ root not found; check basis-species choice or HOF"
+  },
+  "TATB_lit": {
+    "formula": "C6H6N6O6",
+    "rho_g_cm3": 1.937,
+    "HOF_kJmol": -154.0,
+    "D_CJ_kms": null,
+    "P_CJ_GPa": null,
+    "T_CJ_K": null,
+    "note": "CJ root not found; check basis-species choice or HOF"
+  },
+  "L1": {
+    "formula": "C3N4O7",
+    "rho_g_cm3": 2.5289657575547313,
+    "HOF_kJmol": -9457.919457345226,
+    "D_CJ_kms": null,
+    "P_CJ_GPa": null,
+    "T_CJ_K": null,
+    "note": "CJ root not found; check basis-species choice or HOF"
+  },
+  "L4": {
+    "formula": "C2H2N6O4",
+    "rho_g_cm3": 2.0634253785986774,
+    "HOF_kJmol": -7696.49581862109,
+    "D_CJ_kms": null,
+    "P_CJ_GPa": null,
+    "T_CJ_K": null,
+    "note": "CJ root not found; check basis-species choice or HOF"
+  },
+  "L5": {
+    "formula": "C2H1N3O6",
+    "rho_g_cm3": 2.0667486011422467,
+    "HOF_kJmol": -10330.662610860287,
+    "D_CJ_kms": null,
+    "P_CJ_GPa": null,
+    "T_CJ_K": null,
+    "note": "CJ root not found; check basis-species choice or HOF"
+  }
+}
