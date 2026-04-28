@@ -88,16 +88,62 @@ pip install gpu4pyscf-cuda12x pyscf rdkit-pypi geometric
 
 ## Diagnostic checklist when DFT seems stuck
 
+**Prevention first**: pass `--host-probe probes/dft_probe.sh --destroy-on-probe-fail` to `gpu_runner.py run`. The probe SCPs `dft_probe.sh` to the pod after SSH is up but before the main onstart job runs, and validates `nvidia-smi`, `import torch`, and `torch.cuda.is_available()` with a 300 s timeout. Non-zero exit aborts the run before any DFT-side cost is spent. Probe lives at `C:\Users\apart\Projects\claude-skills\gpu2vast\probes\dft_probe.sh`. Caveat: the probe runs on the same pod that will be billed, so a failed probe still costs ~30 s of pod time, still far cheaper than discovering the failure 5+ min into SCF.
+
+The three classic failure-mode signatures, in increasing severity:
+
+| Signature | Meaning | Action |
+|---|---|---|
+| `actual_status=loading` AND `duration>600` AND `inet_down` flat | Image pull never completed; broken host | Kill, relaunch on a different offer (filter by `reliability>0.99`) |
+| `actual_status=running` AND `gpu_util=0%` AND `cpu_util` 10–20% AND `inet_*` flat | **Silent CPU fallback**: gpu4pyscf failed to load CUDA kernels; PySCF is grinding on CPU at hours-per-molecule | Kill immediately; check torch+gpu4pyscf ABI |
+| `actual_status=running` AND `gpu_util=0%` AND `cpu_util<5%` AND duration>10 min | Pod alive but pipeline crashed silently (or smoke script never started) | SSH-inspect; if recovery isn't fast, kill |
+
+### Diagnose
+
 In order, fastest to slowest:
 
-1. `vastai show instances --raw | jq '.[] | select(.id==N) | {gpu_util, cpu_util, duration, inet_up}'`
-   - GPU util > 50% during SCF means the GPU stack works.
-   - GPU util 0% + CPU util ~10–20% on a busy node = **silent CPU fallback**, abort the run.
-2. `python3 -c "from gpu4pyscf import dft; print('OK')"` on the pod (via `vastai ssh-host` or `vastai exec`)
-   - If `ImportError`: the torch + gpu4pyscf-cuda12x ABI doesn't match. Re-pin torch.
-3. Quick water smoke test (3 atoms, B3LYP/6-31G, mf.kernel) — should be < 30s on A100.
-   - Add as `dft_smoke.py` and call from run.sh **before** the main pipeline.
-4. If RDX (21 atoms) opt+freq+SP takes > 15 min on A100, something is wrong (CPU fallback, OOM, or bad geometry).
+1. **Vast.ai metadata** (free, instant):
+   ```bash
+   vastai show instances --raw | jq '.[] | select(.id==N) | {actual_status, gpu_util, cpu_util, gpu_temp, duration, inet_up, inet_down, mem_usage}'
+   ```
+   GPU util > 50% during SCF means the stack works. GPU util 0% + CPU util ~10–20% on a busy node = silent CPU fallback. GPU 0% + CPU <5% = pipeline crashed or stalled.
+
+2. **Local launcher buffer**: `tail -50 ~/.claude/.../tasks/<jobid>.output`. **Note**: gpu_runner.py buffers SSH-polled stdout and only flushes on completion, so this lags reality.
+
+3. **R2 bucket incremental sync** (free): the bucket is named `gpu2vast-<job-name>-<timestamp>`. Partial outputs (e.g. `dft_smoke.log`, per-lead JSONs from a resume-aware pipeline) end up there. Pull via boto3 even before the job finishes.
+
+4. **Direct SSH** (free, ~5 s per command):
+   ```bash
+   vastai ssh-url N    # prints ssh://root@host:port
+   ssh -i C:/Users/apart/.claude/skills/gpu2vast/keys/ssh/gpu2vast_ed25519 -p PORT root@HOST
+   ```
+   Then `nvidia-smi`, `ps -ef`, `tail /var/log/onstart.log`, `tail dft_smoke.log`. **Caveat**: vast.ai's bastion IP (3.81.22.154 region-dependent) sometimes blocks unsolicited SSH connections from new client IPs; the gpu_runner.py polling channel works because the key was registered at instance-creation time. If direct SSH closes immediately, fall back to `vastai ssh-host N` which uses a pre-authorised tunnel.
+
+5. **Heartbeat thread** (already in `m2_dft_pipeline.py`): "elapsed=Xs" every 60 s. Visible in the local stdout buffer once the pipeline starts.
+
+### Alleviate (recover gracefully)
+
+- `--stale-timeout 7200` on every `gpu_runner.py run`. Default 600 s is too aggressive for slow installs.
+- **Early-fail probes in `run.sh`** before launching the pipeline. The `dft_smoke_run.sh` template runs `from gpu4pyscf import dft; assert torch.cuda.is_available()` first; aborts in 5 s if the GPU stack is broken.
+- **Per-molecule wall-clock alarm** via `signal.alarm(7200)` (already in `m2_dft_pipeline.py`). One hung optimisation no longer kills the whole bundle.
+- **Resume-from-cache** at top of `run_lead()` (already in `m2_dft_pipeline.py`). A failed pod restart skips completed leads.
+- `--max-hours` cap on every launch. Quietly stuck pods can't bill > $0.43 × max-hours.
+- **Never spawn `gpu_runner.py recover`** alongside `run`. The recover loop's default 600 s stale-timeout will destroy a pod doing legitimate slow work; the `run` process self-monitors safely.
+
+### Prevent (kill failure modes upstream)
+
+- **Use `pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime`** (real torch image, ~5 GB). NOT `vastai/pytorch` (Ubuntu 22.04 with no torch despite the name — cycles 1–2 root cause).
+- **Pin torch BEFORE installing gpu4pyscf-cuda12x**:
+  ```bash
+  pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu124
+  pip install gpu4pyscf-cuda12x pyscf rdkit-pypi geometric
+  ```
+  Without this, pip resolves the latest torch with mismatched CUDA, and gpu4pyscf's CUDA kernels silently fail (cycle 4).
+- **Hard-fail on silent CPU fallback** (already added): `_get_mf()` no longer swallows `ImportError`; logs a loud warning. `main()` exits non-zero unless `--cpu` is explicit.
+- **Filter the offer pool**: `vastai search offers 'gpu_name=A100_PCIE rentable=true reliability>0.99 verification=verified inet_down>500'`. Most stuck-loading hours come from low-reliability hosts.
+- **Pre-launch host-probe** (now wired into `gpu_runner.py` — see CLAUDE.md): runs a 30-s SSH-side probe (`from gpu4pyscf import dft; assert torch.cuda.is_available()`) BEFORE uploading the data + main script. If the probe fails, exit non-zero so the caller can retry on a different offer. Saves the 60-min stuck-loading hours.
+- **Smoke before pipeline**: water → RDX in `dft_smoke.py` is < 5 min on A100. If it passes, full pipeline launches on the same pod via `gpu_runner.py rerun --instance-id N` (no second pod boot).
+- **`--keep-alive` for iteration**: don't pay for fresh pod boots between cycles.
 
 ## Per-molecule cost on the working stack (when it works)
 
