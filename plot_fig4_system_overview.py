@@ -717,8 +717,227 @@ def fig4d_decode_rerank():
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 4e  Multi-head classifier training: four independent models
+# ──────────────────────────────────────────────────────────────────────────
+def fig4e_head_training():
+    """Four heterogeneous heads, each with its own architecture, inputs,
+    training labels, and validation metric. Bottom row shows them feeding
+    into the sample-time guidance bus referenced by 4(c)."""
+    fig, ax = plt.subplots(figsize=(15.0, 7.6), dpi=300)
+    setup_axes(ax, xmax=36.0, ymax=18.0)
+
+    # Four columns, one per head. Each column is a vertical stack:
+    #   [arch badge]  [head title]  [input box]  [training-data box]
+    #   [validation metric]  -> bus
+    centres   = [4.8, 13.2, 21.6, 30.0]
+    head_names = ["Viability", "Sensitivity", "Hazard", "Performance"]
+    arch_badges = [
+        "Random Forest",
+        "MLP score model",
+        "MLP head",
+        "3D-CNN ensemble",
+    ]
+    # Each head uses a different border-color tint to communicate heterogeneity
+    edge_cols  = [GREEN,      GOLD,       RED,       PURPLE]
+    fill_cols  = [PALE_GREEN, PALE_GOLD,  PALE_RED,  PALE_PURPLE]
+
+    # Per-head input descriptors (top input box)
+    inputs = [
+        ("input", "Morgan FP-2-2048\n+ RDKit descriptors"),
+        ("input", "cached LIMO latent  $z$"),
+        ("input", "cached LIMO latent  $z$"),
+        ("input", "3D conformer voxel grid"),
+    ]
+    # Per-head training-data descriptors (training-labels box)
+    labels = [
+        ("labels",
+         "66k energetic (+) vs\n80k ZINC drug-like ($-$)"),
+        ("labels",
+         r"$h_{50} = 1.93\!\cdot\!\mathrm{BDE} - 52.4$"
+         "\nPolitzer-Murray fit"),
+        ("labels",
+         "SMARTS hazard catalog\n+ Bruns-Watson demerits"),
+        ("labels",
+         r"$\rho, D, P, T, E, V, $HOF, BDE"
+         "\n5-fold CV"),
+    ]
+    # Per-head outputs (small italic sub-line under head title)
+    outputs = [
+        r"output:  $P(\mathrm{energetic})$",
+        r"output:  predicted $h_{50}$ (cm)",
+        r"output:  $P(\mathrm{hazardous\ motif})$",
+        r"output:  8 properties",
+    ]
+    # Validation metrics (bold, prominent)
+    metrics = [
+        "val AUC = 0.9986",
+        r"val $R^2 \approx 0.78$",
+        r"val AUC $\approx 0.93$",
+        r"val $R^2 = 0.84{-}0.92$",
+    ]
+
+    # Layout y-coordinates
+    y_title  = 16.4   # head name
+    y_arch   = 15.4   # arch badge (architecture pill)
+    y_output = 14.5   # output sub-line (italic)
+    y_input  = 12.4   # input box centre
+    y_labels = 9.2    # training-labels box centre
+    y_metric = 6.7    # validation metric line
+    y_bus    = 4.2    # guidance bus line
+    y_foot   = 2.0    # 4(c) reference box centre
+
+    box_w_input  = 6.4
+    box_h_input  = 1.7
+    box_w_lab    = 6.4
+    box_h_lab    = 2.0
+
+    # Per-column rendering
+    for i, cx in enumerate(centres):
+        edge = edge_cols[i]
+        fill = fill_cols[i]
+
+        # Head title (bold, large)
+        ax.text(cx, y_title, head_names[i], ha="center", va="center",
+                fontsize=13.2, fontweight="bold", color=TEXT_NAVY,
+                family="serif", zorder=3)
+        # Output sub-line BELOW the badge (clear of overlap)
+        ax.text(cx, y_output, outputs[i], ha="center", va="center",
+                fontsize=8.8, fontstyle="italic", color=TEXT_SLATE,
+                family="serif", zorder=3)
+
+        # Architecture badge: pill-shaped box with edge-color border
+        badge_w = 4.6
+        badge_h = 0.78
+        bx = cx - badge_w / 2
+        by = y_arch - badge_h / 2
+        ax.add_patch(FancyBboxPatch(
+            (bx + 0.04, by - 0.04), badge_w, badge_h,
+            boxstyle="round,pad=0.02,rounding_size=0.30",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (bx, by), badge_w, badge_h,
+            boxstyle="round,pad=0.02,rounding_size=0.30",
+            linewidth=1.6, facecolor="white", edgecolor=edge, zorder=2,
+        ))
+        ax.text(cx, y_arch, arch_badges[i], ha="center", va="center",
+                fontsize=9.6, fontweight="bold", color=edge,
+                family="serif", zorder=3)
+
+        # Input box (caption "input" placed to the LEFT of the box at column 0
+        # for the leftmost head; for clarity inside each box the input text
+        # is self-describing, so per-column caption omitted).
+        in_label, in_text = inputs[i]
+        # box: white fill, head-tinted border
+        x = cx - box_w_input / 2
+        yb = y_input - box_h_input / 2
+        ax.add_patch(FancyBboxPatch(
+            (x + 0.04, yb - 0.04), box_w_input, box_h_input,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), box_w_input, box_h_input,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=1.4, facecolor=CREAM, edgecolor=edge, zorder=2,
+        ))
+        ax.text(cx, y_input, in_text, ha="center", va="center",
+                fontsize=9.4, color=TEXT_NAVY, family="serif",
+                linespacing=1.18, zorder=3)
+
+        # Training-labels box (caption omitted; left-edge row label provides
+        # the row identity).
+        lab_label, lab_text = labels[i]
+        x = cx - box_w_lab / 2
+        yb = y_labels - box_h_lab / 2
+        ax.add_patch(FancyBboxPatch(
+            (x + 0.04, yb - 0.04), box_w_lab, box_h_lab,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), box_w_lab, box_h_lab,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=1.4, facecolor=fill, edgecolor=edge, zorder=2,
+        ))
+        ax.text(cx, y_labels, lab_text, ha="center", va="center",
+                fontsize=9.4, color=TEXT_NAVY, family="serif",
+                linespacing=1.18, zorder=3)
+
+        # Arrow: input -> labels (training). Italic "trains on" label sits to
+        # the right of the arrow.
+        add_arrow(ax,
+                  cx, y_input - box_h_input / 2 - 0.05,
+                  cx, y_labels + box_h_lab / 2 + 0.05,
+                  color=edge, lw=1.6)
+        ax.text(cx + 0.30,
+                (y_input - box_h_input / 2 + y_labels + box_h_lab / 2) / 2,
+                "trains on", ha="left", va="center",
+                fontsize=8.0, fontstyle="italic", color=edge,
+                family="serif", zorder=3)
+
+        # Validation metric (bold, head-tinted)
+        ax.text(cx, y_metric, metrics[i], ha="center", va="center",
+                fontsize=10.2, fontweight="bold", color=edge,
+                family="serif", zorder=3)
+
+        # Drop from metric down to the guidance bus
+        ax.plot([cx, cx], [y_metric - 0.40, y_bus + 0.02],
+                color=GOLD, lw=1.4, linestyle=(0, (4, 3)), zorder=4)
+        ax.plot([cx], [y_bus], marker="o", markersize=4.2,
+                markerfacecolor=GOLD, markeredgecolor=GOLD, zorder=5)
+
+    # Guidance bus: horizontal gold line spanning all four heads
+    bus_x_l = centres[0]
+    bus_x_r = centres[-1]
+    ax.plot([bus_x_l, bus_x_r], [y_bus, y_bus],
+            color=GOLD, lw=2.0, zorder=4)
+
+    # Bus label (left side, above the bus line so it does not collide with markers)
+    add_label(ax, bus_x_l - 3.8, y_bus,
+              "guidance bus", color=GOLD, size=9.6, italic=True, bold=True)
+
+    # 4(c) footer reference: a long pale box with arrow from bus midpoint
+    foot_cx = (bus_x_l + bus_x_r) / 2
+    foot_w  = 18.0
+    foot_h  = 1.3
+    fx = foot_cx - foot_w / 2
+    fy = y_foot - foot_h / 2
+    ax.add_patch(FancyBboxPatch(
+        (fx + 0.04, fy - 0.04), foot_w, foot_h,
+        boxstyle="round,pad=0.02,rounding_size=0.18",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+    ))
+    ax.add_patch(FancyBboxPatch(
+        (fx, fy), foot_w, foot_h,
+        boxstyle="round,pad=0.02,rounding_size=0.18",
+        linewidth=1.6, facecolor=PALE_GOLD, edgecolor=GOLD, zorder=2,
+    ))
+    ax.text(foot_cx, y_foot,
+            r"used at sample time as classifier guidance "
+            r"$g_t = \sum_h s_h\,\nabla_{z_t}\log p_h(c\!\mid\!z_t)$  "
+            r"[see Fig. 4(c)]",
+            ha="center", va="center", fontsize=9.6, color=TEXT_NAVY,
+            family="serif", zorder=3)
+
+    # Arrow from bus into footer
+    add_arrow(ax, foot_cx, y_bus - 0.10, foot_cx, y_foot + foot_h / 2 + 0.05,
+              color=GOLD, dashed=True, lw=1.8)
+
+    # Top-row banner: four-models heterogeneity callout
+    add_label(ax, 0.3, 17.5,
+              "four independent models, each with its own architecture, "
+              "inputs, and training labels",
+              color=TEXT_SLATE, size=9.4, italic=True, bold=True)
+
+    base = os.path.join(OUT_DIR, "fig4e_head_training")
+    save(fig, base)
+
+
+# ──────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     fig4a_data_prep()
     fig4b_train_loop()
     fig4c_sampling_guidance()
     fig4d_decode_rerank()
+    fig4e_head_training()

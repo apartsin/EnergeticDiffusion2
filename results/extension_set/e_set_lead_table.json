@@ -128,9 +128,27 @@
     {
       "id": "E6",
       "smiles": "O=[N+]([O-])c1c[nH]c([N+](=O)[O-])c1",
-      "error": [
-        "CUSOLVER_STATUS_EXECUTION_FAILED"
-      ]
+      "formula": "C4H3N3O4",
+      "scaffold": "c1c[nH]cc1",
+      "scaffold_class": "nitroaromatic_NH",
+      "n_atoms": 14,
+      "xtb_gap_eV": null,
+      "graph_unchanged": true,
+      "rho_dft": 1.5757936125021998,
+      "rho_cal": 1.7785946586220247,
+      "HOF_dft_kJmol": 123.46766943621606,
+      "HOF_cal_kJmol": -83.18661653386425,
+      "kj_dft": {},
+      "kj_cal": {
+        "D_kms": 6.583903199693298,
+        "P_GPa": 19.090596889787015,
+        "N": 0.02705541585765668,
+        "M": 12.823529411764707,
+        "Q": 1598.3805032408795
+      },
+      "h50_BDE_cm": 38.31,
+      "h50_model_cm": null,
+      "_retry_note": "DFT retry succeeded after first run hit transient CUSOLVER_STATUS_EXECUTION_FAILED"
     },
     {
       "id": "E7",

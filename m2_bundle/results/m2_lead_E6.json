@@ -3,11 +3,196 @@
   "smiles": "O=[N+]([O-])c1c[nH]c([N+](=O)[O-])c1",
   "name": "E6",
   "predicted": null,
-  "errors": [
-    "CUSOLVER_STATUS_EXECUTION_FAILED"
-  ],
+  "errors": [],
   "formula": "C4H3N3O4",
   "n_atoms": 14,
-  "traceback": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/df/df.py\", line 138, in build\n    self.cd_low = cholesky(j2c)\n                  ^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/lib/cusolver.py\", line 191, in cholesky\n    raise RuntimeError('failed to perform Cholesky Decomposition')\nRuntimeError: failed to perform Cholesky Decomposition\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/m2_bundle/m2_dft_pipeline.py\", line 379, in run_lead\n    opt = opt_b3lyp_6_31gss(atoms0, charge=charge, use_gpu=use_gpu)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/m2_bundle/m2_dft_pipeline.py\", line 137, in opt_b3lyp_6_31gss\n    e0 = mf.kernel()\n         ^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/scf/hf.py\", line 300, in scf\n    _kernel(mf, mf.conv_tol, mf.conv_tol_grad,\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/scf/hf.py\", line 197, in _kernel\n    vhf = mf.get_veff(mol, dm)\n          ^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/df/df_jk.py\", line 215, in get_veff\n    return rks.get_veff(self, dm=dm)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/dft/rks.py\", line 144, in get_veff\n    vj, vk = ks.get_jk(mol, dm, hermi)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/df/df_jk.py\", line 159, in get_jk\n    vj, vk = self.with_df.get_jk(dm, hermi, with_j, with_k,\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/df/df.py\", line 160, in get_jk\n    return df_jk.get_jk(self, dm, hermi, with_j, with_k, direct_scf_tol)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/df/df_jk.py\", line 435, in get_jk\n    dfobj.build(direct_scf_tol=direct_scf_tol, omega=omega)\n  File \"/usr/local/lib/python3.11/site-packages/gpu4pyscf/df/df.py\", line 141, in build\n    w, v = cupy.linalg.eigh(j2c)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/cupy/linalg/_eigenvalue.py\", line 141, in eigh\n    return _syevd(a, UPLO, True)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/cupy/linalg/_eigenvalue.py\", line 53, in _syevd\n    cusolver.xsyevd(\n  File \"cupy_backends/cuda/libs/cusolver.pyx\", line 3475, in cupy_backends.cuda.libs.cusolver.xsyevd\n  File \"cupy_backends/cuda/libs/cusolver.pyx\", line 3489, in cupy_backends.cuda.libs.cusolver.xsyevd\n  File \"cupy_backends/cuda/libs/cusolver.pyx\", line 1079, in cupy_backends.cuda.libs.cusolver.check_status\ncupy_backends.cuda.libs.cusolver.CUSOLVERError: CUSOLVER_STATUS_EXECUTION_FAILED\n",
-  "_elapsed_s": 13.402982711791992
+  "opt": {
+    "atoms_opt": [
+      [
+        "O",
+        -3.22327444174655,
+        0.8220904566540722,
+        0.49907556897756555
+      ],
+      [
+        "N",
+        -2.531759206530286,
+        -0.1633647993959987,
+        0.23189697011451524
+      ],
+      [
+        "O",
+        -2.950197744865863,
+        -1.3059114990184035,
+        0.04940181985461373
+      ],
+      [
+        "C",
+        -1.1128190091094055,
+        0.042706455276424374,
+        0.12519478911335888
+      ],
+      [
+        "C",
+        -0.4865789677133512,
+        1.2723197765487202,
+        0.3023032424980718
+      ],
+      [
+        "N",
+        0.8381346540999712,
+        1.0631941063251948,
+        0.12457930406208216
+      ],
+      [
+        "C",
+        1.0534616489991548,
+        -0.2672538801371709,
+        -0.15910149552276637
+      ],
+      [
+        "N",
+        2.3837373725333895,
+        -0.7285423352991708,
+        -0.38610107806837396
+      ],
+      [
+        "O",
+        2.5386584193798627,
+        -1.9210014975545766,
+        -0.6368500030681183
+      ],
+      [
+        "O",
+        3.2804684355485034,
+        0.12316656198812743,
+        -0.3092197263436155
+      ],
+      [
+        "C",
+        -0.1463533645432512,
+        -0.9443770623846395,
+        -0.1684729218187087
+      ],
+      [
+        "H",
+        -0.9086582750822215,
+        2.2370485595855087,
+        0.5354575090909924
+      ],
+      [
+        "H",
+        1.5922717244540783,
+        1.7362014785756128,
+        0.17918115225571515
+      ],
+      [
+        "H",
+        -0.3078451420605541,
+        -1.993391956158451,
+        -0.35784876659061987
+      ]
+    ],
+    "E_b3lyp_631gss_hartree": -619.1571726000756,
+    "backend": "gpu",
+    "elapsed_s": 20.063390970230103
+  },
+  "freq": {
+    "freqs_cm1": [
+      77.43974712122625,
+      94.37420643947382,
+      142.44007776609726,
+      150.06218410097162,
+      266.93747611687473,
+      268.4289749792216,
+      343.2799994124061,
+      508.6427125027258,
+      526.9657672220562,
+      583.7310769037271,
+      591.8631736047805,
+      599.8496269927297,
+      661.47759125908,
+      750.5982982644006,
+      759.259956025858,
+      813.801263594744,
+      829.0604881931877,
+      846.8477034492611,
+      892.0067041127959,
+      982.8312312894284,
+      994.6841142442923,
+      1110.1234976600379,
+      1133.4298184455129,
+      1246.7015731827832,
+      1317.3079561764057,
+      1403.7995949679496,
+      1434.6201741937316,
+      1451.7100970133185,
+      1483.6401604962616,
+      1529.9676704373755,
+      1591.9766045060917,
+      1634.2495043832864,
+      1644.0716071240058,
+      3318.800106911021,
+      3324.022410785087,
+      3633.1869618897863
+    ],
+    "freqs_au": [
+      0.000352841817398328,
+      0.00043000097176843215,
+      0.0006490054239287796,
+      0.0006837343319066211,
+      0.001216257899930361,
+      0.0012230536758568267,
+      0.0015641003925227224,
+      0.0023175491366846696,
+      0.0024010352038245438,
+      0.002659677254939528,
+      0.002696729852422406,
+      0.002733118849452054,
+      0.0030139168081573966,
+      0.003419981050314019,
+      0.0034594465080388576,
+      0.003707955249367276,
+      0.003777481464774149,
+      0.0038585260651340064,
+      0.004064285826217297,
+      0.004478113252373274,
+      0.004532119017095839,
+      0.005058100097328337,
+      0.005164291618976028,
+      0.005680396245955643,
+      0.006002102933044804,
+      0.006396188246536268,
+      0.006536617284485867,
+      0.006614484783425664,
+      0.006759969008875537,
+      0.006971052895520632,
+      0.007253586682175286,
+      0.007446196386801744,
+      0.007490949226403393,
+      0.015121581679122961,
+      0.015145376271156523,
+      0.01655403508193691
+    ],
+    "ZPE_kJmol": 232.9262657535782,
+    "n_imag": 0,
+    "min_real_freq_cm1": 77.43974712122625,
+    "backend": "gpu"
+  },
+  "sp": {
+    "E_wb97xd_def2tzvp_hartree": -619.5737819594018,
+    "backend": "gpu",
+    "elapsed_s": 1.9181978702545166
+  },
+  "HOF_kJmol_b3lyp": 152.7381717951448,
+  "HOF_kJmol_wb97xd": 123.46766943621606,
+  "rho_dft": 1.5757936125021998,
+  "kamlet_jacobs_dft": {
+    "D_kms": 5.736924856511132,
+    "P_GPa": 13.430750161080425,
+    "N": 0.02705541585765668,
+    "M": 12.823529411764707,
+    "Q": 1283.9623579892693
+  },
+  "_elapsed_s": 41.33168816566467
 }
