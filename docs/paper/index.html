@@ -72,7 +72,7 @@ figcaption{font-size:.85rem;color:var(--muted);margin-top:.4rem;text-align:left;
 
 <p>We introduce <strong>Domain-Gated Latent Diffusion (DGLD)</strong>: latent diffusion over a frozen VAE encoder, gated at training time by a four-tier label-trust hierarchy (only experimental and DFT labels drive the conditional gradient) and at inference by a three-layer credibility filter (chemist-curated SMARTS, semi-empirical electronic-structure triage, first-principles DFT). A small noise-conditional score model with one head per target property and per safety axis provides per-head sample-time guidance over a single trained denoiser; we identify and fix a noise-anneal misconfiguration that silently disables guidance in 40-step latent regimes.</p>
 
-<p>Across the 100 highest-ranked candidates, <strong>96 are unknown to PubChem</strong>, <strong>77 pass an expert-curated safety screen</strong>, and <strong>85 are electronically stable</strong> in fast semi-empirical checks. Our top candidate, <strong>trinitro-1,2-isoxazole</strong>, is a previously unreported molecule: it appears in no public chemistry database and lies far from any molecule in our 694&nbsp;k-molecule training corpus. Its predicted physical properties match the strongest explosives in regular use, with density 2.00&nbsp;g/cm<sup>3</sup>, detonation velocity 9.56&nbsp;km/s, and detonation pressure 40.5&nbsp;GPa, comparable to HMX and CL-20. A first-principles quantum-mechanical (DFT) calculation confirms that this molecule corresponds to a stable three-dimensional structure rather than a numerical artefact of the generator, and an automated retrosynthesis search recovers a four-step synthesis from commercially available precursors.</p>
+<p>Across the 100 highest-ranked candidates, <strong>96 are unknown to PubChem</strong>, <strong>77 pass an energetic-chemistry SMARTS safety screen</strong>, and <strong>85 are electronically stable</strong> in fast semi-empirical checks. Our top candidate, <strong>trinitro-1,2-isoxazole</strong>, is a previously unreported molecule: it appears in no public chemistry database and lies far from any molecule in our 694&nbsp;k-molecule training corpus. Its predicted physical properties match the strongest explosives in regular use, with density 2.00&nbsp;g/cm<sup>3</sup>, detonation velocity 9.56&nbsp;km/s, and detonation pressure 40.5&nbsp;GPa, comparable to HMX and CL-20. A first-principles quantum-mechanical (DFT) calculation confirms that this molecule corresponds to a stable three-dimensional structure rather than a numerical artefact of the generator, and an automated retrosynthesis search recovers a four-step synthesis from commercially available precursors.</p>
 
 <p>DGLD outperforms the two strongest available baselines, which fail in complementary ways: a same-corpus SMILES language model rediscovers a training molecule verbatim (memorisation, not discovery), and a larger pretrained chemical language model proposes new molecules but at sub-HMX performance (7.70&nbsp;km/s). DGLD is the only method that produces candidates simultaneously novel and on-target across all four physical properties (Fig&nbsp;1).</p>
 
@@ -181,24 +181,19 @@ Classifier-free guidance avoids the separately-trained property predictor requir
 <h3>3.1&nbsp;Four-tier label hierarchy</h3>
 <p>Available property labels in the energetic-materials literature span four orders of reliability, from a small core of experimental measurements to a large majority of model-derived estimates. A naive concatenation would let the noisiest tier dominate the conditional gradient and degrade calibration in the high-property tail; discarding the noisier tiers would throw away most of the training signal. We resolve this by annotating each property label with a trust tier and gating the conditional gradient accordingly: only Tier-A and Tier-B rows participate in the conditional signal, while Tier-C and Tier-D rows train the unconditional prior via classifier-free-guidance dropout (§4.2). Each label per row carries one of the following tiers:</p>
 
-<div style="display:flex; gap:1.5em; align-items:flex-start; flex-wrap:wrap; margin:1em 0;">
-  <figure style="flex:1 1 320px; min-width:280px; max-width:520px; margin:0;">
-    <object data="figs/fig_eda_tier_composition.svg" type="image/svg+xml" aria-label="Tier composition pies"></object>
-    <figcaption><strong>Figure 3(c).</strong> Label-tier composition by property. Tiers&nbsp;A and&nbsp;B (experimental and DFT-derived, used for conditioning) make up a small minority of all available rows for every property; the C and D tiers (Kamlet&ndash;Jacobs derived and 3D-CNN surrogate) dominate by volume but are masked out of the conditional signal during training. <em><strong>Takeaway:</strong> generation must extrapolate into a high-tail that contains only a handful of trustworthy training labels.</em></figcaption>
-  </figure>
-  <div style="flex:1 1 360px; min-width:320px;">
-    <table style="margin-top:0;">
-      <caption><strong>Table 3.1.</strong> The four-tier label hierarchy: trust tier, source, approximate row count over the labelled corpus, and whether the tier is trusted to drive the conditional gradient.</caption>
-      <thead><tr><th>Tier</th><th>Source</th><th>~ rows</th><th>Trusted for conditioning?</th></tr></thead>
-      <tbody>
-        <tr><td>A</td><td>Experimental measurement (literature)</td><td>~3&nbsp;000</td><td>yes</td></tr>
-        <tr><td>B</td><td>DFT-derived (B3LYP/6-31G* heat of formation; experimentally-anchored density)</td><td>~9&nbsp;000</td><td>yes</td></tr>
-        <tr><td>C</td><td>Kamlet&ndash;Jacobs derived from quoted density &amp; HOF (regime-limited: reliable for carbon-deficient CHNO with \(2a + b/2 \ge d \ge b/2\); under-predicts \(D\) for high-N low-H compounds where the assumed gas-product distribution is wrong)</td><td>~25&nbsp;000</td><td>no (mask out)</td></tr>
-        <tr><td>D</td><td>3D-CNN smoke-model surrogate</td><td>~30&nbsp;000</td><td>no (mask out)</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
+<figure style="margin:1em 0;">
+  <object data="figs/fig_eda_tier_composition.svg" type="image/svg+xml" aria-label="Tier composition pies" style="display:block; max-width:600px; margin:0 auto;"></object>
+  <table style="margin:0.8em auto 0 auto;">
+    <thead><tr><th>Tier</th><th>Source</th><th>~ rows</th><th>Trusted for conditioning?</th></tr></thead>
+    <tbody>
+      <tr><td>A</td><td>Experimental measurement (literature)</td><td>~3&nbsp;000</td><td>yes</td></tr>
+      <tr><td>B</td><td>DFT-derived (B3LYP/6-31G* heat of formation; experimentally-anchored density)</td><td>~9&nbsp;000</td><td>yes</td></tr>
+      <tr><td>C</td><td>Kamlet&ndash;Jacobs derived from quoted density &amp; HOF (regime-limited: reliable for carbon-deficient CHNO with \(2a + b/2 \ge d \ge b/2\); under-predicts \(D\) for high-N low-H compounds where the assumed gas-product distribution is wrong)</td><td>~25&nbsp;000</td><td>no (mask out)</td></tr>
+      <tr><td>D</td><td>3D-CNN smoke-model surrogate</td><td>~30&nbsp;000</td><td>no (mask out)</td></tr>
+    </tbody>
+  </table>
+  <figcaption><strong>Figure 3(c).</strong> Label-tier composition by property (top), and the four-tier label hierarchy (bottom). Tiers&nbsp;A and&nbsp;B (experimental and DFT-derived) drive the conditional gradient; Tiers&nbsp;C and&nbsp;D (Kamlet&ndash;Jacobs and 3D-CNN surrogate) dominate by volume but are masked out of the conditional signal and instead train the unconditional prior via classifier-free-guidance dropout (§4.2). Approximate row counts and trust verdicts are listed in the table. <em><strong>Takeaway:</strong> generation must extrapolate into a high-tail with only a handful of trustworthy training labels; trust-gating decouples corpus volume from conditional-signal quality.</em></figcaption>
+</figure>
 
 <p>The denoiser conditional gradient fires only on Tier-A and Tier-B rows; Tier-C and Tier-D rows train the unconditional prior via classifier-free-guidance dropout (§4.2). This recipe lets the full corpus shape the marginal density of the generative model without letting noisy labels contaminate the conditional gradient.</p>
 
