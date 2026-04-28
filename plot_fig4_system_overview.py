@@ -384,7 +384,7 @@ def fig4b_train_loop():
     samp_y = 11.5  # t / eps samplers row
     upd_y  = 3.4   # theta-update return row
 
-    BW_MAIN = 3.4
+    BW_MAIN = 3.6
     BH_MAIN = 1.8
 
     # Column centres
@@ -400,7 +400,7 @@ def fig4b_train_loop():
     # ── LEFT: tier hierarchy panel (the source of m) ──────────────────
     # Outer container framing the tier story.
     panel_x = cx_cache
-    panel_w = 5.8
+    panel_w = 6.0
     panel_y = 7.6
     panel_h = 9.0
     px = panel_x - panel_w / 2
@@ -429,10 +429,10 @@ def fig4b_train_loop():
         ("Tier-C", "K-J empirical",  PALE_GREY, TEXT_LIGHT, "m = (0, 0, 0, 0)", False),
         ("Tier-D", "3D-CNN",         PALE_GREY, TEXT_LIGHT, "m = (0, 0, 0, 0)", False),
     ]
-    tier_top = py + panel_h - 1.65
-    tier_h = 1.05
-    tier_gap = 0.18
-    tier_w = 5.0
+    tier_top = py + panel_h - 1.60
+    tier_h = 1.20
+    tier_gap = 0.14
+    tier_w = 5.2
     for i, (name, src, fill, edge, mtxt, trusted) in enumerate(tier_rows):
         ty = tier_top - i * (tier_h + tier_gap) - tier_h / 2
         tx = panel_x - tier_w / 2
@@ -448,19 +448,19 @@ def fig4b_train_loop():
             linewidth=1.2, facecolor=fill, edgecolor=edge, zorder=2,
         )
         ax.add_patch(box)
-        # Left: tier name + source on two lines.
-        ax.text(tx + 0.30, ty + 0.22, name,
-                ha="left", va="center", fontsize=10.0, fontweight=600,
+        # Top line: tier name (left) | trust-mask vector (right).
+        ax.text(tx + 0.30, ty + 0.28, name,
+                ha="left", va="center", fontsize=10.2, fontweight=600,
                 color=TEXT_NAVY, family="serif", zorder=3)
-        ax.text(tx + 0.30, ty - 0.24, src,
-                ha="left", va="center", fontsize=8.4, fontstyle="italic",
-                color=TEXT_SLATE, family="serif", zorder=3)
-        # Right: trust-mask vector, vertically centred.
-        ax.text(tx + tier_w - 0.25, ty + 0.0, mtxt,
-                ha="right", va="center", fontsize=9.6,
+        ax.text(tx + tier_w - 0.25, ty + 0.28, mtxt,
+                ha="right", va="center", fontsize=9.8,
                 color=(GOLD if trusted else TEXT_SLATE),
                 family="serif", zorder=3,
                 fontweight=("bold" if trusted else "normal"))
+        # Bottom line: source label, full-width italic.
+        ax.text(tx + 0.30, ty - 0.30, src,
+                ha="left", va="center", fontsize=8.6, fontstyle="italic",
+                color=TEXT_SLATE, family="serif", zorder=3)
 
     # Caption under tier rows: arrow from the tier panel feeds m into
     # the cached-row tuple, then into the main flow.
