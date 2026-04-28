@@ -369,139 +369,246 @@ def fig4a_data_prep():
 # 4b  Training Phase 2: denoiser update loop
 # ──────────────────────────────────────────────────────────────────────────
 def fig4b_train_loop():
-    fig, ax = plt.subplots(figsize=(13.5, 6.8), dpi=300)
-    setup_axes(ax, xmax=28.0, ymax=12.0)
+    """Per-step denoiser update for one cached row.
 
-    # Title intentionally omitted; the HTML figcaption carries the label.
+    Story: the trust mask m, derived from the four-tier label hierarchy,
+    gates the conditional gradient. Tier-A/B rows feed real (p, m=1) into
+    epsilon_theta and contribute to the masked MSE; Tier-C/D rows have
+    m=0 on the missing properties so the conditional gradient is zero.
+    """
+    fig, ax = plt.subplots(figsize=(14.0, 7.4), dpi=300)
+    setup_axes(ax, xmax=28.0, ymax=14.0)
 
-    # Layout columns - wide enough that 3.4-unit boxes don't collide
-    # (centres need to be at least ~4.0 apart with 0.6 unit gap).
-    col_x = [2.4, 7.0, 11.6, 16.2, 20.8, 25.6]
-    mid_y = 6.6        # main flow row
-    samp_y = 9.6       # samplers row
-    drop_y = 3.6       # cfg-dropout row
-    upd_y  = 1.6       # parameter-update return row
+    # ── Layout anchors ────────────────────────────────────────────────
+    mid_y = 8.0    # main flow row (forward diff, eps_theta, loss)
+    samp_y = 11.5  # t / eps samplers row
+    upd_y  = 3.4   # theta-update return row
 
-    # Common box width parameters - keep narrow enough that arrows are visible.
-    BW_MAIN = 3.2   # main row boxes (forward, noise pred, loss)
+    BW_MAIN = 3.4
     BH_MAIN = 1.8
 
-    # Mini-batch from cache (light grey = cached source)
-    add_box(ax, col_x[0], 3.0, BH_MAIN, mid_y, LIGHT_GREY, NAVY,
-            "mini-batch",
-            r"$(z_0, p, m) \sim \mathcal{D}_\mathrm{cache}$")
+    # Column centres
+    cx_cache = 3.2      # cached row + tier panel
+    cx_fwd   = 10.0     # forward diffusion
+    cx_eps   = 15.2     # noise predictor eps_theta
+    cx_loss  = 20.4     # masked MSE
+    cx_ema   = 25.4     # EMA
 
-    # Samplers: t and epsilon (purple = stochastic)
-    add_box(ax, col_x[1] - 1.05, 1.5, 1.4, samp_y, PALE_PURPLE, PURPLE,
+    HM = BW_MAIN / 2
+    SH = 0.10
+
+    # ── LEFT: tier hierarchy panel (the source of m) ──────────────────
+    # Outer container framing the tier story.
+    panel_x = cx_cache
+    panel_w = 5.8
+    panel_y = 7.6
+    panel_h = 9.0
+    px = panel_x - panel_w / 2
+    py = panel_y - panel_h / 2
+    container = FancyBboxPatch(
+        (px, py), panel_w, panel_h,
+        boxstyle="round,pad=0.04,rounding_size=0.20",
+        linewidth=1.0, facecolor=CREAM, edgecolor=TEXT_LIGHT,
+        zorder=1,
+    )
+    ax.add_patch(container)
+    ax.text(panel_x, py + panel_h - 0.45,
+            "four-tier label hierarchy",
+            ha="center", va="center", fontsize=10.5, fontweight=600,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(panel_x, py + panel_h - 0.95,
+            r"trust mask $m \in \{0,1\}^4$ per row",
+            ha="center", va="center", fontsize=9.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # Four tier mini-rows (vertical stack). Tier-A/B gold (m=1),
+    # Tier-C/D grey (m=0).
+    tier_rows = [
+        ("Tier-A", "experimental",   PALE_GOLD, GOLD,       "m = (1, 1, 1, 1)", True),
+        ("Tier-B", "DFT",            PALE_GOLD, GOLD,       "m = (1, 1, 1, 1)", True),
+        ("Tier-C", "K-J empirical",  PALE_GREY, TEXT_LIGHT, "m = (0, 0, 0, 0)", False),
+        ("Tier-D", "3D-CNN",         PALE_GREY, TEXT_LIGHT, "m = (0, 0, 0, 0)", False),
+    ]
+    tier_top = py + panel_h - 1.65
+    tier_h = 1.05
+    tier_gap = 0.18
+    tier_w = 5.0
+    for i, (name, src, fill, edge, mtxt, trusted) in enumerate(tier_rows):
+        ty = tier_top - i * (tier_h + tier_gap) - tier_h / 2
+        tx = panel_x - tier_w / 2
+        sh = FancyBboxPatch(
+            (tx + 0.04, ty - tier_h / 2 - 0.04), tier_w, tier_h,
+            boxstyle="round,pad=0.02,rounding_size=0.12",
+            linewidth=0, facecolor="#0a1620", alpha=0.08, zorder=1,
+        )
+        ax.add_patch(sh)
+        box = FancyBboxPatch(
+            (tx, ty - tier_h / 2), tier_w, tier_h,
+            boxstyle="round,pad=0.02,rounding_size=0.12",
+            linewidth=1.2, facecolor=fill, edgecolor=edge, zorder=2,
+        )
+        ax.add_patch(box)
+        # Left: tier name + source on two lines.
+        ax.text(tx + 0.30, ty + 0.22, name,
+                ha="left", va="center", fontsize=10.0, fontweight=600,
+                color=TEXT_NAVY, family="serif", zorder=3)
+        ax.text(tx + 0.30, ty - 0.24, src,
+                ha="left", va="center", fontsize=8.4, fontstyle="italic",
+                color=TEXT_SLATE, family="serif", zorder=3)
+        # Right: trust-mask vector, vertically centred.
+        ax.text(tx + tier_w - 0.25, ty + 0.0, mtxt,
+                ha="right", va="center", fontsize=9.6,
+                color=(GOLD if trusted else TEXT_SLATE),
+                family="serif", zorder=3,
+                fontweight=("bold" if trusted else "normal"))
+
+    # Caption under tier rows: arrow from the tier panel feeds m into
+    # the cached-row tuple, then into the main flow.
+    cache_label_y = py + 0.55
+    ax.text(panel_x, cache_label_y + 0.30,
+            r"cached row: $(z_0,\; p,\; m)$",
+            ha="center", va="center", fontsize=10.5, fontweight=600,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(panel_x, cache_label_y - 0.20,
+            r"$p = (\rho,\; \mathrm{HOF},\; D,\; P)$",
+            ha="center", va="center", fontsize=9.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── MIDDLE: samplers, forward diffusion, noise predictor ──────────
+    # Stochastic samplers (purple)
+    add_box(ax, cx_fwd - 1.20, 1.6, 1.5, samp_y, PALE_PURPLE, PURPLE,
             r"$t$", r"$\mathcal{U}\{1{:}T\}$",
             title_size=11.0, sub_size=9.0)
-    add_box(ax, col_x[1] + 1.05, 1.5, 1.4, samp_y, PALE_PURPLE, PURPLE,
+    add_box(ax, cx_fwd + 1.20, 1.6, 1.5, samp_y, PALE_PURPLE, PURPLE,
             r"$\varepsilon$", r"$\mathcal{N}(0, I)$",
             title_size=11.0, sub_size=9.0)
 
     # Forward diffusion
-    add_box(ax, col_x[2], BW_MAIN, BH_MAIN, mid_y, PALE_GREY, NAVY,
+    add_box(ax, cx_fwd, BW_MAIN, BH_MAIN, mid_y, PALE_GREY, NAVY,
             "forward diffusion",
             r"$z_t = \sqrt{\bar\alpha_t}\,z_0 + \sqrt{1-\bar\alpha_t}\,\varepsilon$",
             title_size=11.0, sub_size=9.0)
 
-    # cfg-dropout (acts on (p,m) only)
-    add_box(ax, col_x[1], 3.0, 1.6, drop_y, PALE_RED, RED,
-            "cfg-dropout",
-            r"$(p, m) \to \varnothing$ w.p. 0.10",
+    # Noise predictor (NAVY, taller to make it the visual centrepiece)
+    EPS_W = 3.8
+    EPS_H = 2.2
+    add_box(ax, cx_eps, EPS_W, EPS_H, mid_y, PALE_GREY, NAVY,
+            r"noise predictor  $\varepsilon_\theta$",
+            r"inputs: $(z_t,\; t,\; p,\; m)$",
+            title_size=11.5, sub_size=9.5)
+
+    # Loss (RED) — show m elementwise multiplied with (eps - hat eps)
+    add_box(ax, cx_loss, BW_MAIN, BH_MAIN, mid_y, PALE_RED, RED,
+            "masked MSE",
+            r"$\mathcal{L} = \Vert\, m \odot (\varepsilon - \hat\varepsilon)\,\Vert^2$",
+            title_size=11.0, sub_size=10.0)
+
+    # EMA (purple)
+    add_box(ax, cx_ema, 2.8, BH_MAIN, mid_y, PALE_PURPLE, PURPLE,
+            "EMA",
+            r"$\bar\theta \leftarrow 0.999\,\bar\theta + 0.001\,\theta$",
             title_size=11.0, sub_size=9.0)
 
-    # Noise predictor
-    add_box(ax, col_x[3], BW_MAIN, BH_MAIN, mid_y, PALE_GREY, NAVY,
-            r"noise predictor $\varepsilon_\theta$",
-            "FiLM ResNet, 44.6 M params",
-            title_size=11.0, sub_size=9.0)
+    # ── Arrows: tier panel -> forward diffusion (z_0) ─────────────────
+    # z_0 from the cached-row caption into forward diffusion
+    add_arrow(ax,
+              panel_x + panel_w / 2, cache_label_y,
+              cx_fwd - HM - SH, mid_y - 0.40,
+              lw=1.8)
+    add_label(ax,
+              (panel_x + panel_w / 2 + cx_fwd) / 2 + 0.2,
+              (cache_label_y + mid_y) / 2 + 0.55,
+              r"$z_0$", color=TEXT_NAVY, size=10.5,
+              italic=True, ha="center")
 
-    # Loss
-    add_box(ax, col_x[4], BW_MAIN, BH_MAIN, mid_y, PALE_RED, RED,
-            "masked MSE loss",
-            r"$\mathcal{L} = \Vert m\odot(\varepsilon - \hat\varepsilon)\Vert^2$",
-            title_size=11.0, sub_size=9.5)
-
-    # Optimizer (purple = parameter-space update)
-    add_box(ax, col_x[5], 3.0, BH_MAIN, mid_y, PALE_PURPLE, PURPLE,
-            "AdamW + EMA",
-            r"$\theta - \eta\nabla_\theta\mathcal{L}$",
-            title_size=11.0, sub_size=9.5)
-
-    # Half-widths for shrink calculations
-    HM = BW_MAIN / 2   # 1.6
-    SH = 0.10          # extra arrow shrink
-
-    # Arrows: minibatch -> forward diffusion (z_0 carries through)
-    add_arrow(ax, col_x[0] + 1.5, mid_y, col_x[2] - HM - SH, mid_y, lw=1.8)
-    add_label(ax, (col_x[0] + col_x[2]) / 2, mid_y + 0.45,
-              r"$z_0$", color=TEXT_NAVY, size=10.5, italic=True, ha="center")
-
-    # samplers -> forward diffusion
-    add_arrow(ax, col_x[1] - 1.05, samp_y - 0.78,
-              col_x[2] - 0.7, mid_y + BH_MAIN / 2 + 0.05,
+    # samplers -> forward diffusion (purple dashed)
+    add_arrow(ax, cx_fwd - 1.20, samp_y - 0.78,
+              cx_fwd - 0.6, mid_y + BH_MAIN / 2 + 0.05,
               color=PURPLE, dashed=True, lw=1.2)
-    add_arrow(ax, col_x[1] + 1.05, samp_y - 0.78,
-              col_x[2] + 0.0, mid_y + BH_MAIN / 2 + 0.05,
+    add_arrow(ax, cx_fwd + 1.20, samp_y - 0.78,
+              cx_fwd + 0.0, mid_y + BH_MAIN / 2 + 0.05,
               color=PURPLE, dashed=True, lw=1.2)
 
-    # epsilon -> loss (skip-connection in purple dashed)
-    eps_x = col_x[1] + 1.05
-    skip_y = samp_y + 0.95
-    ax.plot([eps_x, eps_x], [samp_y + 0.78, skip_y],
-            color=PURPLE, lw=1.2, linestyle=(0, (4, 3)), zorder=4)
-    ax.plot([eps_x, col_x[4]], [skip_y, skip_y],
-            color=PURPLE, lw=1.2, linestyle=(0, (4, 3)), zorder=4)
-    add_arrow(ax, col_x[4], skip_y, col_x[4], mid_y + BH_MAIN / 2 + 0.05,
-              color=PURPLE, dashed=True, lw=1.2)
-    add_label(ax, (eps_x + col_x[4]) / 2, skip_y + 0.30,
-              r"true $\varepsilon$ (target)",
-              color=PURPLE, size=9.5, italic=True, ha="center")
+    # forward diffusion -> noise predictor (z_t)
+    add_arrow(ax, cx_fwd + HM + SH, mid_y, cx_eps - EPS_W / 2 - SH, mid_y,
+              lw=1.8)
+    add_label(ax, (cx_fwd + cx_eps) / 2, mid_y + 0.45,
+              r"$z_t$", color=TEXT_NAVY, size=10.5,
+              italic=True, ha="center")
 
-    # mini-batch -> cfg-dropout (gold dashed = conditioning)
-    add_arrow(ax, col_x[0] + 0.5, mid_y - BH_MAIN / 2 - 0.05,
-              col_x[1] - 1.55, drop_y + 0.4,
-              color=GOLD, dashed=True, lw=1.4)
-    add_label(ax, col_x[0] + 0.4, mid_y - BH_MAIN / 2 - 0.55,
-              r"$p, m$", color=GOLD, size=10, italic=True)
+    # ── KEY VISUAL: m gates the (p) input into eps_theta ──────────────
+    # Conditioning route: (p, m) leave the cached-row caption, run along
+    # the bottom, then up into eps_theta. Gold dashed = conditioning.
+    cond_y = mid_y - 3.2  # below main row
+    pm_start_x = panel_x + panel_w / 2
+    pm_start_y = cache_label_y - 0.55
+    # Down from cached caption
+    ax.plot([pm_start_x, pm_start_x], [pm_start_y, cond_y],
+            color=GOLD, lw=1.6, linestyle=(0, (5, 3)), zorder=4)
+    # Across to under eps_theta
+    ax.plot([pm_start_x, cx_eps], [cond_y, cond_y],
+            color=GOLD, lw=1.6, linestyle=(0, (5, 3)), zorder=4)
+    # Up into eps_theta
+    add_arrow(ax, cx_eps, cond_y, cx_eps, mid_y - EPS_H / 2 - 0.05,
+              color=GOLD, dashed=True, lw=1.6)
+    # Label on the horizontal: "p gated by m"
+    add_label(ax, (pm_start_x + cx_eps) / 2, cond_y + 0.40,
+              r"$p$  gated by trust mask  $m$",
+              color=GOLD, size=10.0, italic=True, ha="center")
+    # Small inline reminder: m dashed-gold tag near eps_theta
+    add_label(ax, cx_eps + 0.05, cond_y + 0.40,
+              "", color=GOLD)
 
-    # cfg-dropout -> noise predictor (right then up)
-    ax.plot([col_x[1] + 1.55, col_x[3]], [drop_y, drop_y],
-            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=4)
-    add_arrow(ax, col_x[3], drop_y, col_x[3], mid_y - BH_MAIN / 2 - 0.05,
-              color=GOLD, dashed=True, lw=1.4)
-    add_label(ax, (col_x[1] + col_x[3]) / 2, drop_y + 0.40,
-              r"$p', m'$", color=GOLD, size=10, italic=True, ha="center")
-
-    # forward diffusion -> noise predictor
-    add_arrow(ax, col_x[2] + HM + SH, mid_y, col_x[3] - HM - SH, mid_y, lw=1.8)
-    add_label(ax, (col_x[2] + col_x[3]) / 2, mid_y + 0.45, r"$z_t$",
-              color=TEXT_NAVY, size=10.5, italic=True, ha="center")
-
-    # noise predictor -> loss
-    add_arrow(ax, col_x[3] + HM + SH, mid_y, col_x[4] - HM - SH, mid_y, lw=1.8)
-    add_label(ax, (col_x[3] + col_x[4]) / 2, mid_y + 0.45,
+    # eps_theta -> loss (hat eps)
+    add_arrow(ax, cx_eps + EPS_W / 2 + SH, mid_y,
+              cx_loss - HM - SH, mid_y, lw=1.8)
+    add_label(ax, (cx_eps + cx_loss) / 2, mid_y + 0.45,
               r"$\hat\varepsilon$", color=TEXT_NAVY, size=10.5,
               italic=True, ha="center")
 
-    # loss -> optimizer (red gradient)
-    add_arrow(ax, col_x[4] + HM + SH, mid_y, col_x[5] - 1.55, mid_y,
+    # ── true epsilon skip from sampler to loss (purple dashed) ────────
+    eps_x = cx_fwd + 1.20
+    skip_y = samp_y + 1.10
+    ax.plot([eps_x, eps_x], [samp_y + 0.78, skip_y],
+            color=PURPLE, lw=1.2, linestyle=(0, (4, 3)), zorder=4)
+    ax.plot([eps_x, cx_loss], [skip_y, skip_y],
+            color=PURPLE, lw=1.2, linestyle=(0, (4, 3)), zorder=4)
+    add_arrow(ax, cx_loss, skip_y, cx_loss, mid_y + BH_MAIN / 2 + 0.05,
+              color=PURPLE, dashed=True, lw=1.2)
+    add_label(ax, (eps_x + cx_loss) / 2, skip_y + 0.32,
+              r"true $\varepsilon$ (target)",
+              color=PURPLE, size=9.5, italic=True, ha="center")
+
+    # ── m skip into the loss (gold dashed) — explicit gating ──────────
+    # m is also fed into the masked-MSE box (it appears as m in the
+    # formula); show this with a short gold-dashed branch from the
+    # gold conditioning route up into the loss box.
+    branch_x = cx_loss
+    ax.plot([branch_x, branch_x], [cond_y, mid_y - BH_MAIN / 2 - 0.05],
+            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=4)
+    add_arrow(ax, branch_x, mid_y - BH_MAIN / 2 - 0.45,
+              branch_x, mid_y - BH_MAIN / 2 - 0.05,
+              color=GOLD, dashed=True, lw=1.4)
+    add_label(ax, branch_x + 0.20, (cond_y + mid_y - BH_MAIN / 2) / 2,
+              r"$m$", color=GOLD, size=10.5, italic=True, ha="left")
+
+    # ── Loss -> EMA (red gradient) ────────────────────────────────────
+    add_arrow(ax, cx_loss + HM + SH, mid_y, cx_ema - 1.40 - SH, mid_y,
               color=RED, lw=1.8)
-    add_label(ax, (col_x[4] + col_x[5]) / 2, mid_y + 0.45,
+    add_label(ax, (cx_loss + cx_ema) / 2, mid_y + 0.45,
               r"$\nabla_\theta\mathcal{L}$", color=RED, size=10,
               italic=True, ha="center")
 
-    # optimizer -> noise predictor (param update L-route under main row)
-    ax.plot([col_x[5], col_x[5]], [mid_y - BH_MAIN / 2 - 0.05, upd_y],
-            color=PURPLE, lw=1.3, linestyle=(0, (4, 3)), zorder=4)
-    ax.plot([col_x[5], col_x[3]], [upd_y, upd_y],
-            color=PURPLE, lw=1.3, linestyle=(0, (4, 3)), zorder=4)
-    add_arrow(ax, col_x[3], upd_y, col_x[3], mid_y - BH_MAIN / 2 - 0.05,
-              color=PURPLE, dashed=True, lw=1.3)
-    add_label(ax, (col_x[3] + col_x[5]) / 2, upd_y - 0.40,
-              r"update $\theta$  (EMA decay 0.999)",
-              color=PURPLE, size=9, italic=True, ha="center")
+    # ── theta-update feedback loop: EMA -> eps_theta ──────────────────
+    ax.plot([cx_ema, cx_ema], [mid_y - BH_MAIN / 2 - 0.05, upd_y],
+            color=PURPLE, lw=1.4, linestyle=(0, (4, 3)), zorder=4)
+    ax.plot([cx_ema, cx_eps], [upd_y, upd_y],
+            color=PURPLE, lw=1.4, linestyle=(0, (4, 3)), zorder=4)
+    add_arrow(ax, cx_eps, upd_y, cx_eps, mid_y - EPS_H / 2 - 0.05,
+              color=PURPLE, dashed=True, lw=1.4)
+    add_label(ax, (cx_eps + cx_ema) / 2, upd_y - 0.40,
+              r"update $\theta$",
+              color=PURPLE, size=9.5, italic=True, ha="center")
 
     base = os.path.join(OUT_DIR, "fig4b_train_loop")
     save(fig, base)
@@ -718,7 +825,431 @@ def fig4d_decode_rerank():
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# 4e  Multi-head classifier training: four independent models
+# 4e1  Data labeling: how per-row training labels are produced
+# ──────────────────────────────────────────────────────────────────────────
+def fig4e1_data_labeling():
+    """Three-stage diagram: shared input column (SMILES + LIMO encoder + cached
+    latent z) feeds four label-source models, which produce four per-row label
+    vectors consumed by the score-model trainer in 4(e2)."""
+    fig, ax = plt.subplots(figsize=(20.0, 9.6), dpi=300)
+    setup_axes(ax, xmax=52.0, ymax=24.0)
+
+    # ── Stage A (left): shared input column ──────────────────────────────
+    col_x    = 4.2
+    col_w    = 6.4
+    smiles_y = 19.6
+    enc_y    = 16.4
+    latent_y = 13.2
+    bypass_y = 10.6
+
+    add_box(ax, col_x, col_w, 1.8, smiles_y, CREAM, NAVY,
+            "326k energetic SMILES",
+            "labelled corpus", title_size=11.0, sub_size=8.6)
+
+    add_box(ax, col_x, col_w, 1.8, enc_y, PALE_GREY, NAVY,
+            "LIMO encoder",
+            "frozen, fine-tuned", title_size=11.0, sub_size=8.6)
+    ax.text(col_x + col_w / 2 - 0.55, enc_y + 0.32, "*",
+            ha="center", va="center", fontsize=16, color=NAVY,
+            family="serif", zorder=4)
+
+    add_box(ax, col_x, col_w, 1.8, latent_y, PALE_GOLD, GOLD,
+            r"$z = \mu \in \mathbb{R}^{1024}$",
+            "(cached)", title_size=11.0, sub_size=8.6)
+
+    add_arrow(ax, col_x, smiles_y - 0.95, col_x, enc_y + 0.95, lw=1.8)
+    add_arrow(ax, col_x, enc_y - 0.95,    col_x, latent_y + 0.95, lw=1.8)
+
+    bypass_x = col_x + col_w / 2 + 0.6
+    ax.plot([col_x + col_w / 2, bypass_x], [smiles_y, smiles_y],
+            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=4)
+    ax.plot([bypass_x, bypass_x], [smiles_y, bypass_y],
+            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=4)
+    add_label(ax, bypass_x + 0.25, (smiles_y + bypass_y) / 2,
+              "SMILES (bypasses z)",
+              color=GOLD, size=8.6, italic=True, bold=True)
+
+    ax.text(col_x, latent_y - 1.55,
+            r"$z$ is NOT consumed by label sources",
+            ha="center", va="center", fontsize=8.8, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── Stage B (middle): four label-source models ───────────────────────
+    src_y_c   = 5.8
+    src_w     = 6.4
+    src_h     = 7.6
+    src_centres = [14.0, 21.4, 28.8, 36.2]
+    edge_cols = [GREEN, GOLD, RED, PURPLE]
+    fill_cols = [PALE_GREEN, PALE_GOLD, PALE_RED, PALE_PURPLE]
+
+    src_titles = [
+        "Random Forest",
+        r"Politzer-Murray BDE fit",
+        "SMARTS + Bruns-Watson",
+        "3D-CNN smoke ensemble",
+    ]
+    src_arch = [
+        "arch: Random Forest",
+        "arch: linear fit",
+        "arch: SMARTS rules",
+        "arch: Uni-Mol v1 ensemble",
+    ]
+    src_inputs = [
+        "input: Morgan FP\n+ RDKit descriptors\nof SMILES",
+        "input: chemotype class\nof weakest bond",
+        "input: SMILES patterns",
+        "input: 3D conformer\nvoxel grid",
+    ]
+    src_subset = [
+        "training subset:\n66k energetic vs 80k ZINC",
+        "training subset: 306 pairs\n(Huang & Massa)",
+        "no training subset;\nrules-based",
+        "training subset:\n9k Tier-A/B rows",
+    ]
+    src_eq = [
+        r"$\to P(\mathrm{viable})$",
+        r"$h_{50} = 1.93\!\cdot\!\mathrm{BDE} - 52.4$",
+        r"pattern match $\to$ hazard",
+        r"8 outputs ($\rho, D, P, T,$ ...)",
+    ]
+    src_metrics = [
+        "AUC = 0.9986",
+        r"Pearson $r = +0.71$",
+        "(rules; no metric)",
+        r"$R^2 = 0.84{-}0.92$",
+    ]
+
+    for i, cx in enumerate(src_centres):
+        edge = edge_cols[i]
+        fill = fill_cols[i]
+        x  = cx - src_w / 2
+        yb = src_y_c - src_h / 2
+        ax.add_patch(FancyBboxPatch(
+            (x + 0.04, yb - 0.04), src_w, src_h,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), src_w, src_h,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=1.8, facecolor=fill, edgecolor=edge, zorder=2,
+        ))
+        ax.text(cx, src_y_c + src_h / 2 - 0.55, src_titles[i],
+                ha="center", va="center", fontsize=10.0,
+                fontweight="bold", color=edge, family="serif", zorder=3)
+        ax.text(cx, src_y_c + src_h / 2 - 1.30, src_arch[i],
+                ha="center", va="center", fontsize=8.2,
+                fontstyle="italic", color=TEXT_NAVY, family="serif", zorder=3)
+        ax.text(cx, src_y_c + 1.05, src_inputs[i],
+                ha="center", va="center", fontsize=8.0,
+                color=TEXT_NAVY, family="serif",
+                linespacing=1.20, zorder=3)
+        ax.text(cx, src_y_c - 0.55, src_eq[i],
+                ha="center", va="center", fontsize=8.4,
+                color=edge, family="serif", zorder=3)
+        ax.text(cx, src_y_c - 1.85, src_subset[i],
+                ha="center", va="center", fontsize=7.8,
+                color=TEXT_SLATE, family="serif",
+                linespacing=1.20, zorder=3)
+        ax.text(cx, src_y_c - src_h / 2 + 0.45, src_metrics[i],
+                ha="center", va="center", fontsize=8.4,
+                fontstyle="italic", color=TEXT_SLATE, family="serif",
+                zorder=3)
+
+        ax.plot([bypass_x, cx], [bypass_y, bypass_y],
+                color=GOLD, lw=1.2, linestyle=(0, (5, 3)), zorder=3)
+        add_arrow(ax, cx, bypass_y, cx, src_y_c + src_h / 2 + 0.05,
+                  color=GOLD, dashed=True, lw=1.4)
+
+    # ── Stage C (right): per-row label vectors ───────────────────────────
+    label_x  = 47.4
+    label_w  = 5.6
+    label_h  = 1.6
+    label_specs = [
+        (GREEN,  PALE_GREEN,  r"$y_{\mathrm{viab}} \in [0, 1]$"),
+        (GOLD,   PALE_GOLD,   r"$y_{\mathrm{sens}} \in \mathbb{R}$"),
+        (RED,    PALE_RED,    r"$y_{\mathrm{haz}} \in \{0, 1\}$"),
+        (PURPLE, PALE_PURPLE, r"$y_{\mathrm{perf}} \in \mathbb{R}^4$"),
+    ]
+    label_y_centres = np.linspace(src_y_c + 2.7, src_y_c - 2.7, 4)
+
+    for i, (edge, fill, txt) in enumerate(label_specs):
+        ly = label_y_centres[i]
+        x = label_x - label_w / 2
+        yb = ly - label_h / 2
+        ax.add_patch(FancyBboxPatch(
+            (x + 0.04, yb - 0.04), label_w, label_h,
+            boxstyle="round,pad=0.02,rounding_size=0.16",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), label_w, label_h,
+            boxstyle="round,pad=0.02,rounding_size=0.16",
+            linewidth=1.6, facecolor=fill, edgecolor=edge, zorder=2,
+        ))
+        ax.text(label_x, ly, txt, ha="center", va="center",
+                fontsize=10.4, fontweight=600, color=TEXT_NAVY,
+                family="serif", zorder=3)
+
+        cx = src_centres[i]
+        add_arrow(ax, cx + src_w / 2 + 0.05, src_y_c,
+                  label_x - label_w / 2 - 0.05, ly,
+                  color=edge_cols[i], lw=1.8)
+
+    ax.text(label_x, label_y_centres[-1] - 1.7,
+            r"$\to$ used in 4(e2) for",
+            ha="center", va="center", fontsize=9.4, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(label_x, label_y_centres[-1] - 2.3,
+            r"score-model head training",
+            ha="center", va="center", fontsize=9.4, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+
+    add_label(ax, col_x, 23.0, "Stage A: shared input",
+              color=TEXT_NAVY, size=11.0, italic=True, bold=True, ha="center")
+    add_label(ax, (src_centres[0] + src_centres[-1]) / 2, 23.0,
+              "Stage B: four label-source models",
+              color=TEXT_NAVY, size=11.0, italic=True, bold=True, ha="center")
+    add_label(ax, label_x, 23.0, "Stage C: per-row labels",
+              color=TEXT_NAVY, size=11.0, italic=True, bold=True, ha="center")
+
+    base = os.path.join(OUT_DIR, "fig4e1_data_labeling")
+    save(fig, base)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 4e2  Score-model head training
+# ──────────────────────────────────────────────────────────────────────────
+def fig4e2_score_training():
+    """Cached (z, sigma_t) -> trunk -> 4 heads -> 4 losses -> sum loss; with a
+    hard-negative self-distillation feedback loop on the right margin and a
+    gold-dashed handoff to the guidance bus / 4(c)."""
+    fig, ax = plt.subplots(figsize=(16.0, 10.4), dpi=300)
+    setup_axes(ax, xmax=40.0, ymax=26.0)
+
+    y_in = 23.0
+    add_box(ax, 4.0, 4.0, 1.8, y_in, CREAM, NAVY,
+            r"cached $z$",
+            "LIMO latent (1024-d)", title_size=10.8, sub_size=8.4)
+    add_box(ax, 12.0, 6.0, 2.2, y_in, PALE_PURPLE, PURPLE,
+            "Forward diffusion",
+            r"$z_t = \sqrt{\bar\alpha_t}\,\mu + \sqrt{1-\bar\alpha_t}\,\varepsilon$",
+            title_size=10.6, sub_size=8.8)
+    add_box(ax, 20.6, 6.4, 2.2, y_in, PALE_PURPLE, PURPLE,
+            r"$\sigma_t = \sqrt{1 - \bar\alpha_t}$",
+            "128-d sinusoidal embed", title_size=10.6, sub_size=8.6)
+
+    add_arrow(ax, 4.0 + 2.0, y_in, 12.0 - 3.0, y_in, lw=1.8)
+    add_arrow(ax, 12.0 + 3.0, y_in, 20.6 - 3.2, y_in,
+              color=PURPLE, dashed=True, lw=1.6)
+
+    trunk_x_c = 14.4
+    trunk_y_c = 18.4
+    trunk_w   = 16.4
+    trunk_h   = 2.8
+    tx = trunk_x_c - trunk_w / 2
+    ty = trunk_y_c - trunk_h / 2
+    ax.add_patch(FancyBboxPatch(
+        (tx + 0.04, ty - 0.04), trunk_w, trunk_h,
+        boxstyle="round,pad=0.02,rounding_size=0.20",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+    ))
+    ax.add_patch(FancyBboxPatch(
+        (tx, ty), trunk_w, trunk_h,
+        boxstyle="round,pad=0.02,rounding_size=0.20",
+        linewidth=1.8, facecolor=NAVY, edgecolor=NAVY, zorder=2,
+    ))
+    ax.text(trunk_x_c, trunk_y_c + 0.55,
+            "4-block FiLM-MLP trunk", ha="center", va="center",
+            fontsize=12.4, fontweight="bold", color="white",
+            family="serif", zorder=3)
+    ax.text(trunk_x_c, trunk_y_c - 0.18,
+            r"1024-d hidden;  inputs $(z_t, \sigma_t)$",
+            ha="center", va="center", fontsize=10.0, fontstyle="italic",
+            color="#dde6e9", family="serif", zorder=3)
+    ax.text(trunk_x_c, trunk_y_c - 0.85,
+            "* frozen at sample time *",
+            ha="center", va="center", fontsize=8.8,
+            color="#cdd6da", family="serif", zorder=3)
+
+    add_arrow(ax, 12.0, y_in - 1.1,
+              trunk_x_c - 3.0, trunk_y_c + trunk_h / 2 + 0.05,
+              color=NAVY, lw=1.8)
+    add_arrow(ax, 20.6, y_in - 1.1,
+              trunk_x_c + 3.0, trunk_y_c + trunk_h / 2 + 0.05,
+              color=PURPLE, lw=1.8)
+
+    bus_y = trunk_y_c - trunk_h / 2 - 1.0
+    head_centres = [5.4, 12.6, 19.8, 27.0]
+    ax.plot([trunk_x_c, trunk_x_c],
+            [trunk_y_c - trunk_h / 2 - 0.05, bus_y],
+            color=NAVY, lw=2.4, zorder=4)
+    ax.plot([head_centres[0], head_centres[-1]], [bus_y, bus_y],
+            color=NAVY, lw=2.4, zorder=4)
+    add_label(ax, trunk_x_c, bus_y + 0.40,
+              "1024-d feature bus", color=TEXT_SLATE, size=9.0,
+              italic=True, ha="center")
+
+    head_y_c = 12.4
+    head_w   = 5.2
+    head_h   = 2.4
+    head_names = ["Viability", "Sensitivity", "Hazard", "Performance"]
+    head_arch  = [
+        r"Linear(1024 $\to$ 1) + sigmoid",
+        r"Linear(1024 $\to$ 1)",
+        r"Linear(1024 $\to$ 1) + sigmoid",
+        r"Linear(1024 $\to$ 4)",
+    ]
+    head_outputs = [
+        r"$\hat y_{\mathrm{viab}}$",
+        r"$\hat y_{\mathrm{sens}}$  ($h_{50}$)",
+        r"$\hat y_{\mathrm{haz}}$",
+        r"$\hat y_{\mathrm{perf}} = (\rho, D, P, \mathrm{HOF})$",
+    ]
+    edge_cols2 = [GREEN, GOLD, RED, PURPLE]
+    fill_cols2 = [PALE_GREEN, PALE_GOLD, PALE_RED, PALE_PURPLE]
+
+    for i, cx in enumerate(head_centres):
+        edge = edge_cols2[i]
+        fill = fill_cols2[i]
+        add_arrow(ax, cx, bus_y, cx, head_y_c + head_h / 2 + 0.05,
+                  color=NAVY, lw=1.8)
+        x = cx - head_w / 2
+        yb = head_y_c - head_h / 2
+        ax.add_patch(FancyBboxPatch(
+            (x + 0.04, yb - 0.04), head_w, head_h,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), head_w, head_h,
+            boxstyle="round,pad=0.02,rounding_size=0.18",
+            linewidth=1.8, facecolor=fill, edgecolor=edge, zorder=2,
+        ))
+        ax.text(cx, head_y_c + 0.65, head_names[i] + " head",
+                ha="center", va="center", fontsize=11.2,
+                fontweight="bold", color=TEXT_NAVY, family="serif", zorder=3)
+        ax.text(cx, head_y_c + 0.05, head_arch[i],
+                ha="center", va="center", fontsize=8.4,
+                color=TEXT_SLATE, family="serif", zorder=3)
+        ax.text(cx, head_y_c - 0.65, head_outputs[i],
+                ha="center", va="center", fontsize=8.8,
+                fontstyle="italic", color=edge, family="serif", zorder=3)
+
+    loss_y_c = 7.6
+    loss_w   = 5.2
+    loss_h   = 1.6
+    loss_specs = [
+        r"$\mathcal{L}_{\mathrm{viab}} = \mathrm{BCE}$",
+        r"$\mathcal{L}_{\mathrm{sens}} = \mathrm{SmoothL1}$",
+        r"$\mathcal{L}_{\mathrm{haz}} = \mathrm{BCE}$",
+        r"$\mathcal{L}_{\mathrm{perf}} = \mathrm{SmoothL1}$",
+    ]
+    for i, cx in enumerate(head_centres):
+        add_arrow(ax, cx, head_y_c - head_h / 2 - 0.05,
+                  cx, loss_y_c + loss_h / 2 + 0.05,
+                  color=RED, dashed=True, lw=1.5)
+        x = cx - loss_w / 2
+        yb = loss_y_c - loss_h / 2
+        ax.add_patch(FancyBboxPatch(
+            (x + 0.04, yb - 0.04), loss_w, loss_h,
+            boxstyle="round,pad=0.02,rounding_size=0.16",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), loss_w, loss_h,
+            boxstyle="round,pad=0.02,rounding_size=0.16",
+            linewidth=1.5, facecolor=PALE_RED, edgecolor=RED, zorder=2,
+        ))
+        ax.text(cx, loss_y_c, loss_specs[i],
+                ha="center", va="center", fontsize=9.4,
+                color=TEXT_NAVY, family="serif", zorder=3)
+
+    sum_x_c = trunk_x_c
+    sum_y_c = 3.6
+    sum_w   = 14.0
+    sum_h   = 1.8
+    x = sum_x_c - sum_w / 2
+    yb = sum_y_c - sum_h / 2
+    ax.add_patch(FancyBboxPatch(
+        (x + 0.04, yb - 0.04), sum_w, sum_h,
+        boxstyle="round,pad=0.04,rounding_size=0.20",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+    ))
+    ax.add_patch(FancyBboxPatch(
+        (x, yb), sum_w, sum_h,
+        boxstyle="round,pad=0.04,rounding_size=0.20",
+        linewidth=2.0, facecolor=PALE_RED, edgecolor=RED, zorder=2,
+    ))
+    ax.text(sum_x_c, sum_y_c + 0.20,
+            r"$\mathcal{L}_{\mathrm{score}} = \sum_k m_k \, w_k \, \mathcal{L}_k$",
+            ha="center", va="center", fontsize=12.0, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(sum_x_c, sum_y_c - 0.40,
+            "AdamW, LR 1e-4 cosine, batch 1024, ~40k steps, EMA 0.999",
+            ha="center", va="center", fontsize=8.6, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    for cx in head_centres:
+        add_arrow(ax, cx, loss_y_c - loss_h / 2 - 0.05,
+                  sum_x_c, sum_y_c + sum_h / 2 + 0.05,
+                  color=RED, lw=1.5)
+
+    hn_x = 35.6
+    ax.plot([trunk_x_c + trunk_w / 2 + 0.05, hn_x],
+            [trunk_y_c, trunk_y_c],
+            color=GOLD, lw=1.4, linestyle=(0, (2, 3)), zorder=4)
+    ax.plot([hn_x, hn_x], [trunk_y_c, y_in + 1.4],
+            color=GOLD, lw=1.4, linestyle=(0, (2, 3)), zorder=4)
+    ax.plot([hn_x, 4.0 + 2.1], [y_in + 1.4, y_in + 1.4],
+            color=GOLD, lw=1.4, linestyle=(0, (2, 3)), zorder=4)
+    add_arrow(ax, 4.0 + 2.1, y_in + 1.4, 4.0 + 2.1, y_in + 0.95,
+              color=GOLD, dashed=True, lw=1.4)
+    ax.text(hn_x + 0.4, (trunk_y_c + y_in) / 2 + 0.4,
+            "self-distillation:",
+            ha="left", va="center", fontsize=8.6, fontweight="bold",
+            color=GOLD, family="serif", zorder=3)
+    ax.text(hn_x + 0.4, (trunk_y_c + y_in) / 2 - 0.10,
+            r"137 $\to$ 918 hard negatives",
+            ha="left", va="center", fontsize=8.4,
+            color=GOLD, family="serif", zorder=3)
+    ax.text(hn_x + 0.4, (trunk_y_c + y_in) / 2 - 0.55,
+            "encoded as viab=0",
+            ha="left", va="center", fontsize=8.4, fontstyle="italic",
+            color=GOLD, family="serif", zorder=3)
+    ax.text(hn_x + 0.4, (trunk_y_c + y_in) / 2 - 1.10,
+            "3 rounds; anchor/cheat probe stops",
+            ha="left", va="center", fontsize=8.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    handoff_y = head_y_c
+    add_arrow(ax, head_centres[-1] + head_w / 2 + 0.05, handoff_y,
+              hn_x - 0.4, handoff_y, color=GOLD, dashed=True, lw=1.8)
+    ax.text(hn_x + 0.4, handoff_y + 0.55,
+            r"$\to$ guidance bus",
+            ha="left", va="center", fontsize=10.0, fontweight="bold",
+            color=GOLD, family="serif", zorder=3)
+    ax.text(hn_x + 0.4, handoff_y - 0.05,
+            r"$\to$ 4(c)",
+            ha="left", va="center", fontsize=10.0, fontweight="bold",
+            color=GOLD, family="serif", zorder=3)
+    ax.text(hn_x + 0.4, handoff_y - 0.65,
+            "frozen at sample time",
+            ha="left", va="center", fontsize=8.2, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    add_label(ax, 0.6, loss_y_c + 1.05,
+              r"per-row labels  $y_k$  from 4(e1)",
+              color=RED, size=9.0, italic=True, bold=True)
+    add_arrow(ax, 2.4, loss_y_c, head_centres[0] - loss_w / 2 - 0.05,
+              loss_y_c, color=RED, dashed=True, lw=1.4)
+
+    base = os.path.join(OUT_DIR, "fig4e2_score_training")
+    save(fig, base)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# (legacy) 4e  Multi-head classifier training: kept for reference only.
 # ──────────────────────────────────────────────────────────────────────────
 def fig4e_head_training():
     """ONE shared 4-block FiLM-MLP trunk takes (z, sigma); four heads branch
@@ -1001,4 +1532,5 @@ if __name__ == "__main__":
     # Re-running the matplotlib renderer would clobber those assets. The
     # functions are preserved as documentation of alternative layouts.
     fig4b_train_loop()
-    fig4e_head_training()
+    fig4e1_data_labeling()
+    fig4e2_score_training()
