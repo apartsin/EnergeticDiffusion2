@@ -421,13 +421,16 @@ def fig4b_train_loop():
             ha="center", va="center", fontsize=9.0, fontstyle="italic",
             color=TEXT_SLATE, family="serif", zorder=3)
 
-    # Four tier mini-rows (vertical stack). Tier-A/B gold (m=1),
-    # Tier-C/D grey (m=0).
+    # FOUR ILLUSTRATIVE PER-PROPERTY MASK STATES.
+    # The mask is set per-property, not per-row: a row's m-vector reflects
+    # the tier of EACH property independently. We show the spectrum:
+    # full-trust (all-1s); typical "exp rho only" partial (m=(1,0,0,0));
+    # DFT-trust on the energetic-pair (1,1,0,0); fully-untrusted (all-0s).
     tier_rows = [
-        ("Tier-A", "experimental",   PALE_GOLD, GOLD,       "m = (1, 1, 1, 1)", True),
-        ("Tier-B", "DFT",            PALE_GOLD, GOLD,       "m = (1, 1, 1, 1)", True),
-        ("Tier-C", "K-J empirical",  PALE_GREY, TEXT_LIGHT, "m = (0, 0, 0, 0)", False),
-        ("Tier-D", "3D-CNN",         PALE_GREY, TEXT_LIGHT, "m = (0, 0, 0, 0)", False),
+        ("All A/B",   "exp/DFT all 4",         PALE_GOLD, GOLD,       "m = (1, 1, 1, 1)", True),
+        ("rho only",  r"exp $\rho$ + K-J D,P", PALE_GOLD, GOLD,       "m = (1, 0, 0, 0)", True),
+        ("rho/HOF",   r"DFT $\rho$/HOF + K-J", PALE_GOLD, GOLD,       "m = (1, 1, 0, 0)", True),
+        ("All C/D",   "K-J / 3D-CNN only",     PALE_GREY, TEXT_LIGHT, "m = (0, 0, 0, 0)", False),
     ]
     tier_top = py + panel_h - 1.60
     tier_h = 1.20
@@ -1531,6 +1534,7 @@ if __name__ == "__main__":
     #   assets/_4d sampling.png         -> figs/fig4d_decode_rerank.png
     # Re-running the matplotlib renderer would clobber those assets. The
     # functions are preserved as documentation of alternative layouts.
+    # fig4e1_data_labeling() is also asset-sourced now:
+    #   assets/4e1_score_labels.png -> figs/fig4e1_data_labeling.png
     fig4b_train_loop()
-    fig4e1_data_labeling()
     fig4e2_score_training()
