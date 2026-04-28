@@ -31,24 +31,27 @@ TEXT_LIGHT  = "#8a9aaa"
 # Layout (figure-coord units; 0..16 wide, 0..8 tall)
 FIG_W, FIG_H = 16.0, 6.4
 
-# Two row centres (y midpoints in axis units)
-ROW_TOP_Y = 4.4
+# Two row centres (y midpoints in axis units). Box heights matched across rows.
+ROW_TOP_Y = 4.7
 ROW_BOT_Y = 1.5
-BOX_H_TOP = 1.1
-BOX_H_BOT = 1.3
+BOX_H_TOP = 1.4
+BOX_H_BOT = 1.4
 
 # Box specs: (x_centre, width, fill, edge, title, subtitle)
+# Top row: Cond mask at x=4.0 w=3.4; DDPM at x=8.0 w=3.4. Gap of 0.6 fig units between them.
+# Subtitle of Cond mask shortened to "Tier-A/B → 1, else 0" (the m∈{0,1}⁴ set is implicit
+# from the title "Cond. mask m"; spelling it out twice was redundant).
 BOX_SPECS_TOP = [
-    (4.5,  3.0, PALE_GOLD,  GOLD, "Cond. mask m",       "m∈{0,1}⁴;  Tier-A/B → 1, else 0"),
+    (4.0,  3.4, PALE_GOLD,  GOLD, "Cond. mask m",       "Tier-A/B → 1, else 0"),
     (8.0,  3.4, PALE_GREY,  NAVY, "Conditional DDPM",   "FiLM ResNet, latent diffusion"),
 ]
 
 BOX_SPECS_BOT = [
     (1.5,  2.4, CREAM,      NAVY, "SMILES",             "SELFIES tokens"),
     (4.5,  3.0, PALE_GREY,  NAVY, "LIMO encoder",       "frozen, fine-tuned"),
-    (8.0,  3.4, PALE_GOLD,  GOLD, "Latent z (1024-d)",  "N(μ, σ²)"),
+    (8.0,  3.6, PALE_GOLD,  GOLD, "Latent z (1024-d)",  "N(μ, σ²)"),
     (11.5, 3.0, PALE_GREY,  NAVY, "LIMO decoder",       "non-autoregressive"),
-    (14.5, 2.4, CREAM,      NAVY, "SMILES′",       "candidate"),
+    (14.5, 2.4, CREAM,      NAVY, "SMILES′",            "candidate"),
 ]
 
 
@@ -75,16 +78,18 @@ def add_box(ax, x_c, w, h, y_c, fill, edge, title, subtitle):
         zorder=2,
     )
     ax.add_patch(box)
+    # Vertical placement: title +0.22 from box centre, subtitle -0.28; with
+    # box_h=1.4 this leaves >=0.40 of box-edge clearance at both top and bottom.
     ax.text(
-        x_c, y_c + 0.18, title,
+        x_c, y_c + 0.22, title,
         ha="center", va="center",
         fontsize=12.5, fontweight=600, color=TEXT_NAVY,
         family="serif", zorder=3,
     )
     ax.text(
-        x_c, y_c - 0.30, subtitle,
+        x_c, y_c - 0.28, subtitle,
         ha="center", va="center",
-        fontsize=9.8, fontstyle="italic", color=TEXT_SLATE,
+        fontsize=9.5, fontstyle="italic", color=TEXT_SLATE,
         family="serif", zorder=3,
     )
 
