@@ -1517,6 +1517,305 @@ def fig4e_head_training():
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# 4f  Mask construction: per-property inputs (value, availability, tier)
+#                       -> binary eligibility mask + tier weight
+# ──────────────────────────────────────────────────────────────────────────
+def fig4f_mask_construction():
+    """Per-property derivation diagram.
+
+    Reads top-to-bottom for ONE example row across the 4 properties:
+    value -> avail -> trust -> eligibility c_k, then a parallel
+    tier-weight lookup w_k. Then per-step mask m_k is sampled from the
+    eligibility column, and the row weight omega is shown at the bottom.
+    """
+    fig, ax = plt.subplots(figsize=(13.5, 7.0), dpi=300)
+    setup_axes(ax, xmax=22.5, ymax=11.0)
+
+    # 4 property columns at x = 6, 10, 14, 18; row-label column at x = 2.6
+    prop_x = [6.0, 10.0, 14.0, 18.0]
+    prop_names = [r"$\rho$", "HOF", r"$D$", r"$P$"]
+    rowlabel_x = 2.6
+
+    # Concrete example row: experimental rho + HOF (Tier-A), missing D, K-J P
+    example_value = ["1.82",  "+70",  "(NaN)", "34"]
+    example_avail = ["yes",   "yes",  "no",    "yes"]
+    example_tier  = ["A",     "A",    "—",     "C"]
+
+    # Row layout (top -> bottom)
+    rows = [
+        # (label, values, fill, edge, text_color, italic_label?)
+        ("value (raw)",      example_value, CREAM,      NAVY,      TEXT_NAVY, False),
+        ("availability $a$", example_avail, PALE_GREY,  NAVY,      TEXT_NAVY, False),
+        ("tier",             example_tier,  PALE_GREY,  NAVY,      TEXT_NAVY, False),
+    ]
+    row_y = [9.6, 8.4, 7.2]
+    cell_w = 1.7
+    cell_h = 0.9
+
+    def cell(x, y, w, h, fill, edge, text, color=TEXT_NAVY, bold=False,
+             italic=False, size=10.0):
+        sh = FancyBboxPatch((x - w / 2 + 0.03, y - h / 2 - 0.03), w, h,
+                            boxstyle="round,pad=0.02,rounding_size=0.10",
+                            linewidth=0, facecolor="#0a1620", alpha=0.08,
+                            zorder=1)
+        ax.add_patch(sh)
+        b = FancyBboxPatch((x - w / 2, y - h / 2), w, h,
+                           boxstyle="round,pad=0.02,rounding_size=0.10",
+                           linewidth=1.0, facecolor=fill, edgecolor=edge,
+                           zorder=2)
+        ax.add_patch(b)
+        ax.text(x, y, text, ha="center", va="center", fontsize=size,
+                color=color, family="serif",
+                fontweight="bold" if bold else "normal",
+                fontstyle="italic" if italic else "normal", zorder=3)
+
+    # Top section: input rows (value, avail, tier)
+    for (lbl, vals, fill, edge, _, _), ry in zip(rows, row_y):
+        ax.text(rowlabel_x, ry, lbl, ha="right", va="center", fontsize=10.5,
+                fontweight=600, color=TEXT_NAVY, family="serif")
+        for x, v in zip(prop_x, vals):
+            cell(x, ry, cell_w, cell_h, fill, edge, v)
+
+    # Property column headers above
+    for x, name in zip(prop_x, prop_names):
+        ax.text(x, 10.6, name, ha="center", va="center", fontsize=12,
+                fontweight="bold", color=TEXT_NAVY, family="serif")
+
+    # Divider line
+    ax.plot([rowlabel_x - 0.5, prop_x[-1] + cell_w / 2 + 0.3],
+            [6.55, 6.55], color=TEXT_LIGHT, lw=0.8, linestyle=":", zorder=2)
+
+    # Mid section: derivation rules (with formulas) and outputs
+    # trust_k = (tier_k in {A,B})
+    ry_trust = 5.8
+    ax.text(rowlabel_x, ry_trust, "trust  $t = (\\,\\mathrm{tier} \\in \\{A,B\\}\\,)$",
+            ha="right", va="center", fontsize=10.5, fontweight=600,
+            color=TEXT_NAVY, family="serif")
+    trust_vals = ["1", "1", "—", "0"]
+    for x, v, t in zip(prop_x, trust_vals, example_tier):
+        c_color = GOLD if v == "1" else (TEXT_LIGHT if v == "—" else TEXT_SLATE)
+        cell(x, ry_trust, cell_w, cell_h, "#ffffff",
+             c_color, v, color=c_color, bold=(v == "1"))
+
+    # eligibility c = trust AND avail
+    ry_elig = 4.6
+    ax.text(rowlabel_x, ry_elig,
+            r"eligibility  $c = t \wedge a$",
+            ha="right", va="center", fontsize=10.5, fontweight=600,
+            color=GREEN, family="serif")
+    elig_vals = ["1", "1", "0", "0"]
+    for x, v in zip(prop_x, elig_vals):
+        is_one = (v == "1")
+        cell(x, ry_elig, cell_w, cell_h, PALE_GREEN if is_one else PALE_GREY,
+             GREEN if is_one else TEXT_LIGHT, v,
+             color=GREEN if is_one else TEXT_SLATE, bold=is_one, size=11)
+
+    # tier weight w = lookup(tier)
+    ry_w = 3.4
+    ax.text(rowlabel_x, ry_w,
+            "tier weight  $w$",
+            ha="right", va="center", fontsize=10.5, fontweight=600,
+            color=GOLD, family="serif")
+    ax.text(rowlabel_x, ry_w - 0.45,
+            r"(A:1.0  B:0.7  C:0.3  D:0.1)",
+            ha="right", va="center", fontsize=8.4, fontstyle="italic",
+            color=TEXT_SLATE, family="serif")
+    weight_vals = ["1.0", "1.0", "0.0", "0.3"]
+    for x, v in zip(prop_x, weight_vals):
+        is_strong = float(v) >= 0.5
+        cell(x, ry_w, cell_w, cell_h, PALE_GOLD if is_strong else PALE_GREY,
+             GOLD if is_strong else TEXT_LIGHT, v,
+             color=GOLD if is_strong else TEXT_SLATE, bold=is_strong, size=11)
+
+    # per-step sampled mask m
+    ry_m = 2.0
+    ax.text(rowlabel_x, ry_m,
+            r"sampled mask  $m$  (per step)",
+            ha="right", va="center", fontsize=10.5, fontweight=600,
+            color=NAVY, family="serif")
+    ax.text(rowlabel_x, ry_m - 0.45,
+            r"(random subset of eligible)",
+            ha="right", va="center", fontsize=8.4, fontstyle="italic",
+            color=TEXT_SLATE, family="serif")
+    mask_vals = ["1", "1", "0", "0"]
+    for x, v in zip(prop_x, mask_vals):
+        is_one = (v == "1")
+        cell(x, ry_m, cell_w, cell_h, PALE_GREY if not is_one else "#dde6e9",
+             NAVY if is_one else TEXT_LIGHT, v,
+             color=NAVY if is_one else TEXT_SLATE, bold=is_one, size=11)
+
+    # Per-row sample weight, formula at the bottom
+    ax.add_patch(FancyBboxPatch(
+        (rowlabel_x - 1.0, 0.4), prop_x[-1] + cell_w / 2 + 0.3 - (rowlabel_x - 1.0), 0.95,
+        boxstyle="round,pad=0.02,rounding_size=0.12",
+        linewidth=1.4, facecolor=PALE_GOLD, edgecolor=GOLD, zorder=2,
+    ))
+    ax.text((rowlabel_x - 1.0 + prop_x[-1] + cell_w / 2 + 0.3) / 2, 0.85,
+            r"row weight  $\omega = \alpha + (1 - \alpha)\,\mathrm{mean}(w \odot m)$"
+            r" $\;\;=\;\; \alpha + (1-\alpha)\,\mathrm{mean}(1.0,\,1.0,\,0,\,0) "
+            r"= \alpha + 0.5\,(1-\alpha)$  for this row",
+            ha="center", va="center", fontsize=10.6, color=TEXT_NAVY,
+            family="serif", zorder=3)
+
+    # Right margin: outputs note
+    ax.text(prop_x[-1] + cell_w / 2 + 0.5, ry_elig,
+            r"$\to$ feeds FiLM",
+            ha="left", va="center", fontsize=9.0, fontstyle="italic",
+            color=GREEN, family="serif")
+    ax.text(prop_x[-1] + cell_w / 2 + 0.5, ry_w,
+            r"$\to$ row weight $\omega$",
+            ha="left", va="center", fontsize=9.0, fontstyle="italic",
+            color=GOLD, family="serif")
+    ax.text(prop_x[-1] + cell_w / 2 + 0.5, ry_m,
+            r"$\to$ FiLM gate",
+            ha="left", va="center", fontsize=9.0, fontstyle="italic",
+            color=NAVY, family="serif")
+
+    base = os.path.join(OUT_DIR, "fig_mask_construction_aside")
+    save(fig, base)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 4f  Self-distillation: 3 rounds of (mine-with-current-model, retrain)
+#                       to grow the viability head's hard-negative set.
+# ──────────────────────────────────────────────────────────────────────────
+def fig4f_self_distillation():
+    """Three sequential rounds of viability-head self-distillation.
+    Each row = one round. Round 0 trains on corpus only, mines 137 cheats.
+    Round 1 trains on corpus + 137, mines additional cheats up to 918 total.
+    Round 2 trains on corpus + 918 and is the final score model.
+    """
+    fig, ax = plt.subplots(figsize=(15.5, 7.5), dpi=300)
+    setup_axes(ax, xmax=29.0, ymax=11.5)
+
+    # Three rows, top-to-bottom.
+    rows_y = [9.4, 6.4, 3.4]
+    round_labels = ["Round 0", "Round 1", "Round 2 (final)"]
+
+    # x-positions for the 5 boxes per row:
+    # train_data  ->  train  ->  v_n  ->  sample  ->  mine -> hard-negative count
+    train_x = 3.0
+    fit_x   = 8.0
+    model_x = 12.5
+    samp_x  = 17.0
+    gate_x  = 21.0
+    out_x   = 25.5
+
+    bw_data = 4.4
+    bw_step = 2.4
+    bw_model = 2.6
+    bh = 1.55
+
+    train_data_specs = [
+        ("corpus only",          "66k labelled rows"),
+        ("corpus + 137",         "66k + 137 cheats"),
+        ("corpus + 918",         "66k + 918 cheats"),
+    ]
+    out_specs = [
+        ("137 cheats",  PALE_RED,  RED,    True),
+        ("918 cheats",  PALE_RED,  RED,    True),
+        ("(final v2)",  PALE_GOLD, GOLD,   False),  # Round 2 doesn't mine more
+    ]
+
+    for i, (y, lbl, td, out) in enumerate(zip(rows_y, round_labels,
+                                              train_data_specs, out_specs)):
+        # Row label on the left
+        ax.text(0.6, y, lbl, ha="left", va="center", fontsize=11.5,
+                fontweight="bold", color=TEXT_NAVY, family="serif")
+        if i == 2:
+            ax.text(0.6, y - 0.55,
+                    "stops; passes anchor/cheat probe",
+                    ha="left", va="center", fontsize=8.4, fontstyle="italic",
+                    color=GREEN, family="serif")
+
+        # Train-data box
+        add_box(ax, train_x, bw_data, bh, y, CREAM, NAVY, td[0], td[1],
+                title_size=10.2, sub_size=8.6)
+        # train arrow + box
+        add_arrow(ax, train_x + bw_data / 2, y, fit_x - bw_step / 2, y, lw=1.6)
+        add_box(ax, fit_x, bw_step, bh, y, PALE_GREY, NAVY,
+                "train", r"$\sim$40k steps",
+                title_size=10.2, sub_size=8.4)
+        # model arrow + box
+        add_arrow(ax, fit_x + bw_step / 2, y, model_x - bw_model / 2, y, lw=1.6)
+        # Score model box (navy fill, white text)
+        sh = FancyBboxPatch((model_x - bw_model / 2 + 0.04,
+                             y - bh / 2 - 0.04), bw_model, bh,
+                            boxstyle="round,pad=0.02,rounding_size=0.14",
+                            linewidth=0, facecolor="#0a1620", alpha=0.10,
+                            zorder=1)
+        ax.add_patch(sh)
+        b = FancyBboxPatch((model_x - bw_model / 2, y - bh / 2),
+                           bw_model, bh,
+                           boxstyle="round,pad=0.02,rounding_size=0.14",
+                           linewidth=1.4, facecolor=NAVY, edgecolor=NAVY,
+                           zorder=2)
+        ax.add_patch(b)
+        ax.text(model_x, y + 0.16, f"score model v{i}",
+                ha="center", va="center", fontsize=10.4, fontweight="bold",
+                color="white", family="serif", zorder=3)
+        ax.text(model_x, y - 0.30, ("FINAL" if i == 2 else "intermediate"),
+                ha="center", va="center", fontsize=8.4, fontstyle="italic",
+                color=("#ffd54a" if i == 2 else "#dde6e9"),
+                family="serif", zorder=3)
+
+        if i < 2:
+            # sample step (purple, stochastic)
+            add_arrow(ax, model_x + bw_model / 2, y, samp_x - bw_step / 2, y,
+                      color=PURPLE, dashed=True, lw=1.6)
+            add_box(ax, samp_x, bw_step, bh, y, PALE_PURPLE, PURPLE,
+                    "sample", r"diffusion + v$_{}$".format(i),
+                    title_size=10.2, sub_size=8.4)
+            # SMARTS gate
+            add_arrow(ax, samp_x + bw_step / 2, y, gate_x - bw_step / 2, y,
+                      lw=1.6)
+            add_box(ax, gate_x, bw_step, bh, y, PALE_RED, RED,
+                    "SMARTS gate",
+                    "false-positive\nfilter",
+                    title_size=10.2, sub_size=8.0)
+            # output (mined hard negatives)
+            add_arrow(ax, gate_x + bw_step / 2, y, out_x - bw_step / 2, y,
+                      color=RED, dashed=True, lw=1.6)
+            add_box(ax, out_x, bw_step, bh, y, *out_specs[i][1:3],
+                    f"mine\n{out_specs[i][0]}",
+                    "encode via LIMO",
+                    title_size=10.2, sub_size=8.0)
+            # vertical feedback to next round's train data
+            ax.annotate("", xy=(train_x, rows_y[i + 1] + bh / 2 + 0.05),
+                        xytext=(out_x - bw_step / 2, y - bh / 2 - 0.05),
+                        arrowprops=dict(arrowstyle="-|>", color=RED, lw=1.6,
+                                        linestyle=(0, (4, 3)),
+                                        shrinkA=0, shrinkB=0,
+                                        connectionstyle="arc3,rad=0.18",
+                                        mutation_scale=12),
+                        zorder=4)
+            # label on feedback arrow
+            ax.text((out_x + train_x) / 2 + 1.5,
+                    (y + rows_y[i + 1]) / 2 + 0.5,
+                    f"feed back as viab=0",
+                    ha="center", va="center", fontsize=8.6,
+                    fontstyle="italic", color=RED,
+                    family="serif", zorder=5)
+
+    # Right margin: anchor/cheat probe note
+    ax.add_patch(FancyBboxPatch(
+        (24.3, 0.4), 4.4, 1.4,
+        boxstyle="round,pad=0.04,rounding_size=0.12",
+        linewidth=1.2, facecolor=PALE_GREEN, edgecolor=GREEN, zorder=2,
+    ))
+    ax.text(26.5, 1.4, "stop criterion",
+            ha="center", va="center", fontsize=9.6, fontweight="bold",
+            color=GREEN, family="serif", zorder=3)
+    ax.text(26.5, 0.85,
+            r"7 anchors $\geq 0.86$;  5 cheats $\leq 0.84$",
+            ha="center", va="center", fontsize=8.6, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    base = os.path.join(OUT_DIR, "fig4f_self_distillation")
+    save(fig, base)
+
+
+# ──────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     # NOTE: fig4a_data_prep(), fig4c_sampling_guidance(), and
     # fig4d_decode_rerank() are intentionally NOT called here. Their PNGs are
@@ -1530,3 +1829,5 @@ if __name__ == "__main__":
     #   assets/4e1_score_labels.png -> figs/fig4e1_data_labeling.png
     fig4b_train_loop()
     fig4e2_score_training()
+    fig4f_mask_construction()
+    fig4f_self_distillation()
