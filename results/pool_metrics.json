@@ -159,7 +159,202 @@
       "novelty": 0.9948,
       "scaffold_nn": 0.554499744147198,
       "chem_pass": 0.9798
+    },
+    "m1_sweep_C1_viab_seed0": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.66085,
+      "novelty": 0.993,
+      "scaffold_nn": 0.5363295127257514,
+      "chem_pass": 0.9818
+    },
+    "m1_sweep_C1_viab_seed1": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.66315,
+      "novelty": 0.99,
+      "scaffold_nn": 0.5348869387817061,
+      "chem_pass": 0.981
+    },
+    "m1_sweep_C1_viab_seed2": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6553,
+      "novelty": 0.9928,
+      "scaffold_nn": 0.5445886866089387,
+      "chem_pass": 0.9832
+    },
+    "m1_sweep_C2_viab_sens_seed0": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6543,
+      "novelty": 0.9926,
+      "scaffold_nn": 0.4957072324542345,
+      "chem_pass": 0.9912
+    },
+    "m1_sweep_C2_viab_sens_seed1": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6614,
+      "novelty": 0.995,
+      "scaffold_nn": 0.5053930160450837,
+      "chem_pass": 0.9942
+    },
+    "m1_sweep_C2_viab_sens_seed2": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6562,
+      "novelty": 0.9904,
+      "scaffold_nn": 0.5192223106489686,
+      "chem_pass": 0.9908
+    },
+    "m1_sweep_C3_viab_sens_sa_seed0": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.61575,
+      "novelty": 0.9932,
+      "scaffold_nn": 0.4790432023242637,
+      "chem_pass": 0.991
+    },
+    "m1_sweep_C3_viab_sens_sa_seed1": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6204,
+      "novelty": 0.9942,
+      "scaffold_nn": 0.4627399000646518,
+      "chem_pass": 0.9918
+    },
+    "m1_sweep_C3_viab_sens_sa_seed2": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6159,
+      "novelty": 0.9946,
+      "scaffold_nn": 0.5004473924558892,
+      "chem_pass": 0.9898
     }
   },
-  "per_condition": {}
+  "per_condition": {
+    "C0_unguided": {
+      "n_seeds": 6,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.6714916666666667,
+      "uniqueness_std": 0.001752953856272942,
+      "novelty_mean": 0.9939666666666667,
+      "novelty_std": 0.0013437096247164034,
+      "scaffold_nn_mean": 0.555633015764147,
+      "scaffold_nn_std": 0.005186551142324992,
+      "chem_pass_mean": 0.9803666666666667,
+      "chem_pass_std": 0.0010546194679704123
+    },
+    "C1_viab": {
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.6597666666666667,
+      "uniqueness_std": 0.0032950299273636825,
+      "novelty_mean": 0.9919333333333333,
+      "novelty_std": 0.0013695092389449483,
+      "scaffold_nn_mean": 0.5386017127054653,
+      "scaffold_nn_std": 0.004274197568874744,
+      "chem_pass_mean": 0.9820000000000001,
+      "chem_pass_std": 0.0009092121131323798
+    },
+    "C1_viab_sens": {
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.6232,
+      "uniqueness_std": 0.005473725117930791,
+      "novelty_mean": 0.9926666666666666,
+      "novelty_std": 0.001481740718059548,
+      "scaffold_nn_mean": 0.4977753964268048,
+      "scaffold_nn_std": 0.009423435667810955,
+      "chem_pass_mean": 0.9914666666666667,
+      "chem_pass_std": 0.0008993825042154746
+    },
+    "C2_viab_sens": {
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.6573000000000001,
+      "uniqueness_std": 0.0030011109054259633,
+      "novelty_mean": 0.9926666666666666,
+      "novelty_std": 0.0018785337071474018,
+      "scaffold_nn_mean": 0.5067741863827623,
+      "scaffold_nn_std": 0.00964954055045723,
+      "chem_pass_mean": 0.9920666666666667,
+      "chem_pass_std": 0.0015173075568987945
+    },
+    "C2_viab_sens_hazard": {
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.5523333333333333,
+      "uniqueness_std": 0.004550702021544436,
+      "novelty_mean": 0.9927333333333334,
+      "novelty_std": 0.0006599663291074239,
+      "scaffold_nn_mean": 0.44051926792399687,
+      "scaffold_nn_std": 0.014579363558713641,
+      "chem_pass_mean": 0.9940000000000001,
+      "chem_pass_std": 0.00016329931618552722
+    },
+    "C3_hazard_only": {
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.6691500000000001,
+      "uniqueness_std": 0.0030471297970385085,
+      "novelty_mean": 0.9931333333333333,
+      "novelty_std": 0.0006599663291074764,
+      "scaffold_nn_mean": 0.5053307576698213,
+      "scaffold_nn_std": 0.017819735188760726,
+      "chem_pass_mean": 0.9842,
+      "chem_pass_std": 0.0008164965809277268
+    },
+    "C3_viab_sens_sa": {
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.61735,
+      "uniqueness_std": 0.0021575449010391135,
+      "novelty_mean": 0.9940000000000001,
+      "novelty_std": 0.0005887840577552129,
+      "scaffold_nn_mean": 0.4807434982816015,
+      "scaffold_nn_std": 0.015440898081949142,
+      "chem_pass_mean": 0.9908666666666667,
+      "chem_pass_std": 0.0008219218670625297
+    },
+    "smiles_lstm": {
+      "n_seeds": 1,
+      "validity_mean": 0.7469,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.9824608381309412,
+      "uniqueness_std": 0.0,
+      "novelty_mean": 0.708,
+      "novelty_std": 0.0,
+      "scaffold_nn_mean": 0.8495484995427715,
+      "scaffold_nn_std": 0.0,
+      "chem_pass_mean": 0.9062,
+      "chem_pass_std": 0.0
+    }
+  }
 }

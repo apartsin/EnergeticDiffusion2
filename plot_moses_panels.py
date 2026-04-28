@@ -43,78 +43,82 @@ def color_for(key):
 def main():
     fcd = json.load(open(os.path.join(ROOT, "results", "fcd_results.json")))
     m6 = json.load(open(os.path.join(ROOT, "results", "m6_post.json")))
+    pool = json.load(open(os.path.join(ROOT, "results", "pool_metrics.json")))
     per_run = m6["per_run"]
 
-    # internal diversity by condition
+    # internal diversity by condition (from m6_post per-run aggregates)
     intdiv = {}
-    nscaf = {}
-    nvalid = {}
     for r in per_run:
         c = r["condition"]
         intdiv.setdefault(c, []).append(r["topN_internal_diversity"])
-        nscaf.setdefault(c, []).append(r["topN_n_scaffolds"])
-        nvalid.setdefault(c, []).append(r["n_validated"])
-    # smiles_lstm key in fcd_results is "smiles_lstm"; in m6_post per_run it's "smiles_lstm_samples"
     if "smiles_lstm_samples" in intdiv:
         intdiv["smiles_lstm"] = intdiv.pop("smiles_lstm_samples")
-        nscaf["smiles_lstm"] = nscaf.pop("smiles_lstm_samples")
-        nvalid["smiles_lstm"] = nvalid.pop("smiles_lstm_samples")
 
+    # Pool-level metrics (real, computed by compute_pool_metrics.py)
+    pool_pc = pool["per_condition"]
     fcd_pc = fcd["per_condition"]
 
-    keys = [k for k, _ in CONDITION_LABELS if k in intdiv or k in fcd_pc]
-    labels = [lbl for k, lbl in CONDITION_LABELS if k in keys]
+    def from_intdiv(k):
+        v = intdiv.get(k, [])
+        return float(np.mean(v)) if v else None
 
-    def get_metric(values_by_cond, k, agg="mean"):
-        v = values_by_cond.get(k, [])
-        if not v:
-            return None
-        return float(np.mean(v))
+    def from_pool(k, metric):
+        c = pool_pc.get(k)
+        return float(c[f"{metric}_mean"]) if c and f"{metric}_mean" in c else None
 
-    # Panel definitions: (title, list of (label, value, color, note)), better=higher?
     panels = []
 
-    # 1. Validity proxy: n_validated (per-run avg)
+    # 1. Validity (real, from pool_metrics; fraction RDKit-parseable per pool)
     vals = []
     for k, lbl in CONDITION_LABELS:
-        v = get_metric(nvalid, k)
+        v = from_pool(k, "validity")
         if v is not None:
             vals.append((lbl, v, color_for(k)))
-    panels.append(("Validity proxy: validated SMILES per run\n(higher is better)",
-                   vals, "count"))
+    panels.append(("RDKit validity (per pool)\n(higher is better)", vals, "fraction"))
 
-    # 2. Uniqueness proxy: topN_n_scaffolds / 100
+    # 2. Uniqueness (real, from pool_metrics; distinct canonical / parseable)
     vals = []
     for k, lbl in CONDITION_LABELS:
-        v = get_metric(nscaf, k)
+        v = from_pool(k, "uniqueness")
         if v is not None:
-            vals.append((lbl, v / 100.0, color_for(k)))
-    panels.append(("Scaffold uniqueness in top-100\n(scaffolds / 100, higher = more diverse)",
+            vals.append((lbl, v, color_for(k)))
+    panels.append(("Pool uniqueness (distinct / parseable)\n(higher is better)",
                    vals, "fraction"))
 
-    # 3. Novelty: not available — annotate panel
-    panels.append(("Novelty (vs ZINC/MOSES train)\nNOTE: see Table 6 / fig_novelty_vs_D.svg",
-                   None, None))
-
-    # 4. Internal diversity
+    # 3. Novelty (real, from pool_metrics; fraction with max-Tanimoto < 0.7 to LM)
     vals = []
     for k, lbl in CONDITION_LABELS:
-        v = get_metric(intdiv, k)
+        v = from_pool(k, "novelty")
+        if v is not None:
+            vals.append((lbl, v, color_for(k)))
+    panels.append(("Novelty fraction\n(rows with max-Tani < 0.7 to labelled master)",
+                   vals, "fraction"))
+
+    # 4. Internal diversity (m6_post topN_internal_diversity per condition)
+    vals = []
+    for k, lbl in CONDITION_LABELS:
+        v = from_intdiv(k)
         if v is not None:
             vals.append((lbl, v, color_for(k)))
     panels.append(("Internal diversity (top-100, Tanimoto)\n(higher is better)",
                    vals, "fraction"))
 
-    # 5. FCD (lower is better)
+    # 5. FCD (real, from fcd_results per_condition; lower is better)
     vals = []
     for k, lbl in CONDITION_LABELS:
         if k in fcd_pc:
             vals.append((lbl, fcd_pc[k]["mean"], color_for(k)))
-    panels.append(("FCD vs reference set\n(lower is better)", vals, "fcd"))
+    panels.append(("FCD vs labelled master\n(lower is better)", vals, "fcd"))
 
-    # 6. Scaffold-NN-Tanimoto: not available natively
-    panels.append(("Scaffold-NN Tanimoto (vs MOSES/ZINC)\nNOTE: not computed in current run",
-                   None, None))
+    # 6. Scaffold-NN Tanimoto (real, from pool_metrics; mean of per-row max
+    #    Tanimoto on Bemis-Murcko scaffold FPs against the LM scaffold bank)
+    vals = []
+    for k, lbl in CONDITION_LABELS:
+        v = from_pool(k, "scaffold_nn")
+        if v is not None:
+            vals.append((lbl, v, color_for(k)))
+    panels.append(("Scaffold-NN Tanimoto vs labelled master\n(lower = more novel scaffolds)",
+                   vals, "fraction"))
 
     # Render
     fig, axes = plt.subplots(2, 3, figsize=(13.5, 7.5))
