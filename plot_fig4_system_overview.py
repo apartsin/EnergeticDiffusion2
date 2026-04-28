@@ -992,12 +992,13 @@ def fig4e_head_training():
 
 # ──────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    # NOTE: fig4a_data_prep() and fig4c_sampling_guidance() are intentionally
-    # NOT called here. Their PNGs are sourced from hand-authored assets:
-    #   assets/4a_LIMO_TRAIN.png       -> figs/fig4a_data_prep.png
-    #   assets/4C_classifier_guide.png -> figs/fig4c_sampling_guidance.png
+    # NOTE: fig4a_data_prep(), fig4c_sampling_guidance(), and
+    # fig4d_decode_rerank() are intentionally NOT called here. Their PNGs are
+    # sourced from hand-authored assets:
+    #   assets/4a_LIMO_TRAIN.png        -> figs/fig4a_data_prep.png
+    #   assets/4C_classifier_guide.png  -> figs/fig4c_sampling_guidance.png
+    #   assets/_4d sampling.png         -> figs/fig4d_decode_rerank.png
     # Re-running the matplotlib renderer would clobber those assets. The
     # functions are preserved as documentation of alternative layouts.
     fig4b_train_loop()
-    fig4d_decode_rerank()
     fig4e_head_training()
