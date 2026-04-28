@@ -98,7 +98,7 @@ def molecular_formula(atoms):
 def _build_mol(atoms, basis, charge=0, spin=0):
     from pyscf import gto
     mol = gto.M(atom=atoms_to_pyscf(atoms), basis=basis, charge=charge, spin=spin,
-                 unit="Angstrom", verbose=0)
+                 unit="Angstrom", verbose=4)
     return mol
 
 
@@ -110,7 +110,7 @@ def _get_mf(mol, xc, use_gpu=True, df=True):
             mf = gpu_dft.RKS(mol, xc=xc)
             if df:
                 mf = mf.density_fit()
-            mf.verbose = 0
+            mf.verbose = 4  # print SCF iterations + diagnostic info
             return mf, "gpu"
         except ImportError:
             pass
@@ -118,21 +118,28 @@ def _get_mf(mol, xc, use_gpu=True, df=True):
     mf = dft.RKS(mol, xc=xc)
     if df:
         mf = mf.density_fit()
-    mf.verbose = 0
+    mf.verbose = 4  # print SCF iterations + diagnostic info
     return mf, "cpu"
 
 
 def opt_b3lyp_6_31gss(atoms, charge=0, use_gpu=True):
     """B3LYP/6-31G(d) geometry optimisation. Returns optimised atoms + energy."""
     from pyscf.geomopt.geometric_solver import optimize
+    print(f"[diag][opt] building Mole: n_atoms={len(atoms)} basis=6-31g* charge={charge}", flush=True)
     mol = _build_mol(atoms, "6-31g*", charge=charge)
+    print(f"[diag][opt] initial SCF kernel ...", flush=True)
     mf, backend = _get_mf(mol, "b3lyp", use_gpu=use_gpu)
     t0 = time.time()
     e0 = mf.kernel()
+    print(f"[diag][opt] initial E={e0:.6f} Hartree, backend={backend}, t={time.time()-t0:.1f}s", flush=True)
+    print(f"[diag][opt] starting geometric optimize() (maxsteps=100) ...", flush=True)
+    t1 = time.time()
     mol_opt = optimize(mf, maxsteps=100)
+    print(f"[diag][opt] optimize done in {time.time()-t1:.1f}s, final SCF on opt geom ...", flush=True)
     elapsed = time.time() - t0
     mf_opt, _ = _get_mf(mol_opt, "b3lyp", use_gpu=use_gpu)
     e_opt = mf_opt.kernel()
+    print(f"[diag][opt] final E={e_opt:.6f}, total opt elapsed {elapsed:.1f}s", flush=True)
     return {
         "atoms_opt": atoms_from_mol_geom(mol_opt),
         "E_b3lyp_631gss_hartree": float(e_opt),
@@ -200,7 +207,7 @@ def atomic_reference_energy(symbol, basis, xc, use_gpu=True):
             mf = dft.UKS(mol, xc=xc).density_fit()
     else:
         mf = dft.UKS(mol, xc=xc).density_fit()
-    mf.verbose = 0
+    mf.verbose = 4  # print SCF iterations + diagnostic info
     e = mf.kernel()
     return float(e)
 
@@ -396,7 +403,23 @@ def run_lead(lead, atomic_refs_b3lyp, atomic_refs_wb97xd, results_dir, use_gpu=T
     return out
 
 
+def _start_heartbeat():
+    """Print a heartbeat line every 60s to keep stale-timeout watchers happy.
+    DFT geometry optimisations can run 30-90 min per molecule without
+    emitting fresh stdout, which trips runner stale-detectors. The
+    heartbeat is a no-op compute-wise."""
+    import threading, time
+    def _beat():
+        t0 = time.time()
+        while True:
+            time.sleep(60)
+            print(f"[heartbeat] elapsed={int(time.time()-t0)}s", flush=True)
+    t = threading.Thread(target=_beat, daemon=True)
+    t.start()
+
+
 def main():
+    _start_heartbeat()
     ap = argparse.ArgumentParser()
     ap.add_argument("--smiles", default="m2_smiles.json")
     ap.add_argument("--results", default="results")
