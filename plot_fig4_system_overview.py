@@ -1,0 +1,167 @@
+"""Figure 4: DGLD system overview diagram.
+
+Redraw of the inline SVG using matplotlib for editorial-quality output
+(PNG at 300 dpi). Two-row layout:
+  Row 1 (CONDITIONING):           Cond. mask m  ->  Conditional DDPM
+  Row 2 (ENCODE / DECODE):        SMILES -> LIMO encoder -> Latent z -> LIMO decoder -> SMILES'
+Conditioning arrow (gold dashed) feeds the DDPM; DDPM arrow (navy)
+feeds the latent z block. All arrows axis-parallel.
+
+Outputs: docs/paper/figs/fig4_system_overview.{png,svg}
+"""
+from __future__ import annotations
+import os
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+import matplotlib.patheffects as patheffects
+
+OUT_DIR = os.path.join("docs", "paper", "figs")
+os.makedirs(OUT_DIR, exist_ok=True)
+
+# Palette (consistent with prior SVG)
+NAVY        = "#27445d"
+GOLD        = "#b88a25"
+PALE_GOLD   = "#fdf3d8"
+PALE_GREY   = "#dde6e9"
+CREAM       = "#f6f3ed"
+TEXT_NAVY   = "#1f2c3a"
+TEXT_SLATE  = "#5a6a7a"
+TEXT_LIGHT  = "#8a9aaa"
+
+# Layout (figure-coord units; 0..16 wide, 0..8 tall)
+FIG_W, FIG_H = 16.0, 6.4
+
+# Two row centres (y midpoints in axis units)
+ROW_TOP_Y = 4.4
+ROW_BOT_Y = 1.5
+BOX_H_TOP = 1.1
+BOX_H_BOT = 1.3
+
+# Box specs: (x_centre, width, fill, edge, title, subtitle)
+BOX_SPECS_TOP = [
+    (4.5,  3.0, PALE_GOLD,  GOLD, "Cond. mask m",       "m∈{0,1}⁴;  Tier-A/B → 1, else 0"),
+    (8.0,  3.4, PALE_GREY,  NAVY, "Conditional DDPM",   "FiLM ResNet, latent diffusion"),
+]
+
+BOX_SPECS_BOT = [
+    (1.5,  2.4, CREAM,      NAVY, "SMILES",             "SELFIES tokens"),
+    (4.5,  3.0, PALE_GREY,  NAVY, "LIMO encoder",       "frozen, fine-tuned"),
+    (8.0,  3.4, PALE_GOLD,  GOLD, "Latent z (1024-d)",  "N(μ, σ²)"),
+    (11.5, 3.0, PALE_GREY,  NAVY, "LIMO decoder",       "non-autoregressive"),
+    (14.5, 2.4, CREAM,      NAVY, "SMILES′",       "candidate"),
+]
+
+
+def add_box(ax, x_c, w, h, y_c, fill, edge, title, subtitle):
+    """Add a rounded box with title and subtitle, plus a soft drop shadow."""
+    x = x_c - w / 2
+    y = y_c - h / 2
+    # Drop shadow: a slightly-offset, slightly-blurred grey rectangle behind the real one
+    shadow = FancyBboxPatch(
+        (x + 0.04, y - 0.07), w, h,
+        boxstyle="round,pad=0.02,rounding_size=0.18",
+        linewidth=0,
+        facecolor="#0a1620",
+        alpha=0.13,
+        zorder=1,
+    )
+    ax.add_patch(shadow)
+    box = FancyBboxPatch(
+        (x, y), w, h,
+        boxstyle="round,pad=0.02,rounding_size=0.18",
+        linewidth=1.6,
+        facecolor=fill,
+        edgecolor=edge,
+        zorder=2,
+    )
+    ax.add_patch(box)
+    ax.text(
+        x_c, y_c + 0.18, title,
+        ha="center", va="center",
+        fontsize=12.5, fontweight=600, color=TEXT_NAVY,
+        family="serif", zorder=3,
+    )
+    ax.text(
+        x_c, y_c - 0.30, subtitle,
+        ha="center", va="center",
+        fontsize=9.8, fontstyle="italic", color=TEXT_SLATE,
+        family="serif", zorder=3,
+    )
+
+
+def add_arrow(ax, x0, y0, x1, y1, color=NAVY, dashed=False, lw=1.8):
+    style = "->,head_length=8,head_width=6"
+    arr = FancyArrowPatch(
+        (x0, y0), (x1, y1),
+        arrowstyle=style,
+        connectionstyle="arc3",
+        color=color,
+        linewidth=lw,
+        linestyle=(0, (5, 3)) if dashed else "-",
+        zorder=2,
+    )
+    ax.add_patch(arr)
+
+
+def build_figure():
+    fig, ax = plt.subplots(figsize=(FIG_W * 0.65, FIG_H * 0.65), dpi=300)
+    ax.set_xlim(0, FIG_W)
+    ax.set_ylim(0, FIG_H)
+    ax.set_aspect("equal")
+    ax.axis("off")
+
+    # Row banners (placed in vertical gaps ABOVE each row, NOT overlapping boxes).
+    # The banners use small all-caps letter-spaced text for an editorial feel.
+    banner_y_top = ROW_TOP_Y + BOX_H_TOP / 2 + 0.45
+    banner_y_bot = ROW_BOT_Y + BOX_H_BOT / 2 + 0.45
+    ax.text(
+        0.4, banner_y_top, "CONDITIONING",
+        ha="left", va="center",
+        fontsize=9, color=TEXT_LIGHT, family="serif",
+        fontweight="normal", zorder=3,
+    )
+    ax.text(
+        0.4, banner_y_bot, "ENCODE  /  DECODE  PIPELINE",
+        ha="left", va="center",
+        fontsize=9, color=TEXT_LIGHT, family="serif",
+        fontweight="normal", zorder=3,
+    )
+
+    # Top row
+    for (x_c, w, fill, edge, title, sub) in BOX_SPECS_TOP:
+        add_box(ax, x_c, w, BOX_H_TOP, ROW_TOP_Y, fill, edge, title, sub)
+
+    # Bottom row
+    for (x_c, w, fill, edge, title, sub) in BOX_SPECS_BOT:
+        add_box(ax, x_c, w, BOX_H_BOT, ROW_BOT_Y, fill, edge, title, sub)
+
+    # Pipeline arrows (left -> right) in the bottom row at y = ROW_BOT_Y
+    for i in range(len(BOX_SPECS_BOT) - 1):
+        x0_c, w0, *_ = BOX_SPECS_BOT[i]
+        x1_c, w1, *_ = BOX_SPECS_BOT[i + 1]
+        x0 = x0_c + w0 / 2
+        x1 = x1_c - w1 / 2
+        add_arrow(ax, x0, ROW_BOT_Y, x1, ROW_BOT_Y, color=NAVY, lw=1.8)
+
+    # Conditioning arrow (top row, gold dashed): mask -> DDPM
+    x0_c, w0, *_ = BOX_SPECS_TOP[0]
+    x1_c, w1, *_ = BOX_SPECS_TOP[1]
+    x0 = x0_c + w0 / 2
+    x1 = x1_c - w1 / 2
+    add_arrow(ax, x0, ROW_TOP_Y, x1, ROW_TOP_Y, color=GOLD, dashed=True, lw=1.8)
+
+    # DDPM -> Latent z (vertical down). DDPM x = 8.0 (top), latent z x = 8.0 (bottom).
+    add_arrow(ax, 8.0, ROW_TOP_Y - BOX_H_TOP / 2, 8.0, ROW_BOT_Y + BOX_H_BOT / 2,
+              color=NAVY, lw=1.8)
+
+    plt.tight_layout(pad=0.4)
+    base = os.path.join(OUT_DIR, "fig4_system_overview")
+    fig.savefig(base + ".png", dpi=300, bbox_inches="tight", facecolor="white")
+    fig.savefig(base + ".svg", bbox_inches="tight", facecolor="white")
+    print("Saved:", base + ".png")
+    print("Saved:", base + ".svg")
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    build_figure()
