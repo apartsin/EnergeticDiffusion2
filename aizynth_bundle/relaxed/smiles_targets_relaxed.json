@@ -1,0 +1,16 @@
+{
+  "comment": "Relaxed-threshold rerun on 11 chem-pass leads (L2, L3, L4, L5, L9, L11, L13, L16, L18, L19, L20). Same 200 MCTS / 300 s protocol; expansion-policy cutoffs widened to allow weak template matches.",
+  "leads": [
+    {"id": "L2",  "smiles": "O=[N+]([O-])N=C1NC(O)ON=C1[N+](=O)[O-]"},
+    {"id": "L3",  "smiles": "O=C1N=C([N+](=O)[O-])C(N[N+](=O)[O-])=NON1"},
+    {"id": "L4",  "smiles": "O=C(N[N+](=O)[O-])C(C[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L5",  "smiles": "O=[N+]([O-])C=NC=NC(=N[N+](=O)[O-])C[N+](=O)[O-]"},
+    {"id": "L9",  "smiles": "NN(C=NC=C(N(N[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L11", "smiles": "O=C(N[N+](=O)[O-])C(N=C[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L13", "smiles": "O=[N+]([O-])C=NOC=NN[N+](=O)[O-]"},
+    {"id": "L16", "smiles": "O=C1N=C([N+](=O)[O-])C(N[N+](=O)[O-])=NON1"},
+    {"id": "L18", "smiles": "O=[N+]([O-])C=C(N=NCN[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L19", "smiles": "O=CC(O[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L20", "smiles": "O=C1N=C(N[N+](=O)[O-])C(=N1)[N+](=O)[O-]"}
+  ]
+}

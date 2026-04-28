@@ -37,21 +37,24 @@ ROW_BOT_Y = 1.5
 BOX_H_TOP = 1.4
 BOX_H_BOT = 1.4
 
-# Box specs: (x_centre, width, fill, edge, title, subtitle)
-# Top row: Cond mask at x=4.0 w=3.4; DDPM at x=8.0 w=3.4. Gap of 0.6 fig units between them.
-# Subtitle of Cond mask shortened to "Tier-A/B → 1, else 0" (the m∈{0,1}⁴ set is implicit
-# from the title "Cond. mask m"; spelling it out twice was redundant).
+# Layout uses a 5-column architecture with uniform horizontal gaps so arrows
+# have visible length. Column centres: 1.6, 4.6, 8.0, 11.4, 14.4. The top-row
+# Cond mask sits over column 2 (LIMO encoder) and the Conditional DDPM sits
+# over column 3 (Latent z), so the gating arrow drops vertically into the
+# state node. All boxes are 2.6 fig units wide except the latent-z state
+# (3.2) and the DDPM that feeds it (3.2), which are emphasised by width.
+
 BOX_SPECS_TOP = [
-    (4.0,  3.4, PALE_GOLD,  GOLD, "Cond. mask m",       "Tier-A/B → 1, else 0"),
-    (8.0,  3.4, PALE_GREY,  NAVY, "Conditional DDPM",   "FiLM ResNet, latent diffusion"),
+    (4.6,  2.6, PALE_GOLD,  GOLD, "Cond. mask m",       "Tier-A/B → 1, else 0"),
+    (8.0,  3.2, PALE_GREY,  NAVY, "Conditional DDPM",   "FiLM ResNet, latent diffusion"),
 ]
 
 BOX_SPECS_BOT = [
-    (1.5,  2.4, CREAM,      NAVY, "SMILES",             "SELFIES tokens"),
-    (4.5,  3.0, PALE_GREY,  NAVY, "LIMO encoder",       "frozen, fine-tuned"),
-    (8.0,  3.6, PALE_GOLD,  GOLD, "Latent z (1024-d)",  "N(μ, σ²)"),
-    (11.5, 3.0, PALE_GREY,  NAVY, "LIMO decoder",       "non-autoregressive"),
-    (14.5, 2.4, CREAM,      NAVY, "SMILES′",            "candidate"),
+    (1.6,  2.6, CREAM,      NAVY, "SMILES",             "SELFIES tokens"),
+    (4.6,  2.6, PALE_GREY,  NAVY, "LIMO encoder",       "frozen, fine-tuned"),
+    (8.0,  3.2, PALE_GOLD,  GOLD, "Latent z (1024-d)",  "N(μ, σ²)"),
+    (11.4, 2.6, PALE_GREY,  NAVY, "LIMO decoder",       "non-autoregressive"),
+    (14.4, 2.6, CREAM,      NAVY, "SMILES′",            "candidate"),
 ]
 
 
@@ -94,18 +97,29 @@ def add_box(ax, x_c, w, h, y_c, fill, edge, title, subtitle):
     )
 
 
-def add_arrow(ax, x0, y0, x1, y1, color=NAVY, dashed=False, lw=1.8):
-    style = "->,head_length=8,head_width=6"
-    arr = FancyArrowPatch(
-        (x0, y0), (x1, y1),
-        arrowstyle=style,
-        connectionstyle="arc3",
-        color=color,
-        linewidth=lw,
-        linestyle=(0, (5, 3)) if dashed else "-",
-        zorder=2,
+def add_arrow(ax, x0, y0, x1, y1, color=NAVY, dashed=False, lw=2.0):
+    """Add an axis-parallel arrow. Use ax.annotate so head size is in points
+    (independent of axis units) and we don't get the FancyArrowPatch +
+    mutation_scale interaction that exploded the head in cycle 3."""
+    if x0 == x1:  # vertical
+        dy = 0.05 if y1 > y0 else -0.05
+        start = (x0, y0 + dy); end = (x1, y1 - dy)
+    else:  # horizontal
+        dx = 0.05 if x1 > x0 else -0.05
+        start = (x0 + dx, y0); end = (x1 - dx, y1)
+    ax.annotate(
+        "", xy=end, xytext=start,
+        xycoords="data", textcoords="data",
+        arrowprops=dict(
+            arrowstyle="-|>",
+            color=color,
+            lw=lw,
+            linestyle=(0, (5, 3)) if dashed else "-",
+            shrinkA=0, shrinkB=0,
+            mutation_scale=12,
+        ),
+        zorder=4,
     )
-    ax.add_patch(arr)
 
 
 def build_figure():
