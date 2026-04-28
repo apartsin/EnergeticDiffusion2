@@ -1,4 +1,71 @@
 {
-  "per_pool": {},
-  "per_condition": {}
+  "per_pool": {
+    "smiles_lstm_samples": 0.5171627298325987,
+    "m1_3seed_C0_unguided_seed0": 24.76650456502692,
+    "m1_3seed_C0_unguided_seed1": 24.97230902532486,
+    "m1_3seed_C0_unguided_seed2": 25.253466343022982,
+    "m1_3seed_C1_viab_sens_seed0": 25.681542784262945,
+    "m1_3seed_C1_viab_sens_seed1": 25.852174065609844,
+    "m1_3seed_C1_viab_sens_seed2": 25.652596482076845,
+    "m1_3seed_C2_viab_sens_hazard_seed0": 24.93328810465163,
+    "m1_3seed_C2_viab_sens_hazard_seed1": 25.145235576710636,
+    "m1_3seed_C2_viab_sens_hazard_seed2": 24.934112855153693,
+    "m1_3seed_C3_hazard_only_seed0": 24.27298396227231,
+    "m1_3seed_C3_hazard_only_seed1": 24.24438554983356,
+    "m1_3seed_C3_hazard_only_seed2": 23.923830944900978,
+    "m1_sweep_C0_unguided_seed0": 25.08395553613429,
+    "m1_sweep_C0_unguided_seed1": 25.039217352981183,
+    "m1_sweep_C0_unguided_seed2": 25.003561961146396,
+    "m1_sweep_C1_viab_seed0": 25.506791477066017,
+    "m1_sweep_C1_viab_seed1": 25.380521545702614,
+    "m1_sweep_C1_viab_seed2": 25.46983627426778,
+    "m1_sweep_C2_viab_sens_seed0": 25.91931632612319,
+    "m1_sweep_C2_viab_sens_seed1": 25.86503341339015,
+    "m1_sweep_C2_viab_sens_seed2": 25.86823436793206,
+    "m1_sweep_C3_viab_sens_sa_seed0": 26.524057473977372,
+    "m1_sweep_C3_viab_sens_sa_seed1": 26.70712648978126,
+    "m1_sweep_C3_viab_sens_sa_seed2": 26.352235741400147
+  },
+  "per_condition": {
+    "smiles_lstm": {
+      "n": 1,
+      "mean": 0.5171627298325987,
+      "std": 0.0
+    },
+    "C0_unguided": {
+      "n": 6,
+      "mean": 25.019835797272773,
+      "std": 0.14478176827334927
+    },
+    "C1_viab_sens": {
+      "n": 3,
+      "mean": 25.728771110649877,
+      "std": 0.08805562284602034
+    },
+    "C2_viab_sens_hazard": {
+      "n": 3,
+      "mean": 25.004212178838657,
+      "std": 0.09971916938371607
+    },
+    "C3_hazard_only": {
+      "n": 3,
+      "mean": 24.147066819002287,
+      "std": 0.15828278262408366
+    },
+    "C1_viab": {
+      "n": 3,
+      "mean": 25.45238309901214,
+      "std": 0.05300618760426491
+    },
+    "C2_viab_sens": {
+      "n": 3,
+      "mean": 25.884194702481803,
+      "std": 0.024869095451991893
+    },
+    "C3_viab_sens_sa": {
+      "n": 3,
+      "mean": 26.527806568386257,
+      "std": 0.14490779275868648
+    }
+  }
 }

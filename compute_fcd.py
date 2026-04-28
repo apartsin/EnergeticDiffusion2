@@ -16,7 +16,8 @@ from fcd_torch import FCD
 OUT = Path("results"); OUT.mkdir(exist_ok=True, parents=True)
 random.seed(0)
 
-device = "cpu"
+import torch
+device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"[fcd] init FCD on {device}")
 fcd = FCD(device=device, n_jobs=1)
 
@@ -58,6 +59,9 @@ for f in files:
         d = fcd(smis, ref)
         results[name] = float(d)
         print(f"    FCD = {d:.3f}", flush=True)
+        # incremental persistence — a kill mid-run still leaves usable data
+        (OUT / "fcd_results.json").write_text(json.dumps(
+            {"per_pool": results, "per_condition": {}}, indent=2))
     except Exception as e:
         print(f"    error: {e}")
         continue
