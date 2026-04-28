@@ -164,14 +164,11 @@ def freq_b3lyp_6_31gss(atoms, charge=0, use_gpu=True):
     hess.verbose = 0
     h = hess.kernel()
     freq_info = thermo.harmonic_analysis(mf.mol, h)
-    # ZPE: compute manually from real frequencies (PySCF doesn't expose 'ZPE'
-    # directly under that key; freq_au is in atomic units of energy).
+    # ZPE: compute from wavenumbers. PySCF's `freq_au` is angular frequency
+    # in atomic units (omega), NOT energy in Hartree, off by ~43x. Always
+    # use freq_wn (cm^-1) and the conversion 1 cm^-1 = 4.55634e-6 Hartree.
     freq_wn = np.asarray(freq_info.get("freq_wavenumber", []))
-    if "freq_au" in freq_info:
-        freqs_au = np.asarray(freq_info["freq_au"])
-    else:
-        # Convert wavenumbers to hartree: 1 cm-1 = 4.55634e-6 hartree
-        freqs_au = freq_wn * 4.55634e-6
+    freqs_au = freq_wn * 4.55634e-6  # vibrational quantum energy in Hartree
     real_mask = freq_wn > 0
     zpe_hartree = float(0.5 * freqs_au[real_mask].sum())
     real_freqs = freq_wn[real_mask] if len(freq_wn) else np.array([])

@@ -1,9 +1,10 @@
 {
   "a_rho": 4.275156828413768,
   "b_rho": -5.172046548450029,
-  "c_hof_kJmol": -16763.250613663018,
+  "c_hof_kJmol": -205.67554517982353,
   "anchors_used": [
     "RDX",
     "TATB"
-  ]
+  ],
+  "note": "Post-bug-fix calibration; HOF intercept reduced from -16763 to -205.7 kJ/mol after ZPE unit-bug correction."
 }
