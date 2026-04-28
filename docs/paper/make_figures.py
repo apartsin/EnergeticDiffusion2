@@ -111,7 +111,7 @@ def fig_cfg_sweep():
     print(f"  fig2: {OUT / 'fig2_cfg_sweep.svg'}")
 
 
-# ── Figure 3: Top leads in (D, P) plane vs known anchors ─────────────────
+# ── Figure 3: Top leads in (D, P) plane vs known anchors (2-panel) ────────
 def fig_top_leads_plane():
     leads = parse_rerank_md(
         ROOT / "experiments/diffusion_subset_cond_expanded_v4b_20260426T000541Z/joint_rerank_pool40k.md"
@@ -125,33 +125,47 @@ def fig_top_leads_plane():
         "CL-20": {"rho": 2.04, "d": 9.66, "p": 46.0},
         "TATB":  {"rho": 1.93, "d": 7.95, "p": 31.5},
     }
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5), sharex=True, sharey=True)
     ds  = [l["d"] for l in leads]
     ps  = [l["p"] for l in leads]
     rhos = [l["rho"] for l in leads]
-    sc = ax.scatter(ds, ps, c=rhos, cmap="viridis", s=14, alpha=0.6, label="generated leads (top 200)")
-    cb = fig.colorbar(sc, label="density ρ (g/cm³)")
-    for name, a in anchors.items():
-        ax.scatter(a["d"], a["p"], marker="*", s=180, edgecolor="k",
-                   facecolor="white", linewidth=1.4, zorder=3)
-        ax.annotate(name, (a["d"], a["p"]),
-                    xytext=(6, 4), textcoords="offset points",
-                    fontsize=9, fontweight="bold")
-    # Target box
-    ax.axvline(9.5, color="grey", linestyle=":", alpha=0.5)
-    ax.axhline(40,  color="grey", linestyle=":", alpha=0.5)
-    ax.text(9.55, ax.get_ylim()[0] + 1, "target D = 9.5",
-            color="grey", fontsize=8, rotation=90, va="bottom")
-    ax.text(ax.get_xlim()[0] + 0.05, 40.5, "target P = 40",
-            color="grey", fontsize=8)
-    ax.set_xlabel("detonation velocity D (km/s)")
-    ax.set_ylabel("detonation pressure P (GPa)")
-    ax.set_title("Generated leads vs. known energetic-material anchors (pool=40k)")
-    ax.grid(True, alpha=0.3)
+    novelties = [1.0 - l["maxtan"] for l in leads]
+
+    # Panel A: colour = predicted density rho
+    axA = axes[0]
+    scA = axA.scatter(ds, ps, c=rhos, cmap="viridis", s=22, alpha=0.75,
+                       edgecolor="black", linewidths=0.3)
+    cbA = fig.colorbar(scA, ax=axA, label=r"predicted density $\rho$ (g/cm$^3$)")
+    axA.set_title("A. Coloured by predicted density")
+
+    # Panel B: colour = novelty (1 - max Tanimoto to labelled-master)
+    axB = axes[1]
+    scB = axB.scatter(ds, ps, c=novelties, cmap="plasma", vmin=0.0, vmax=1.0,
+                       s=22, alpha=0.85, edgecolor="black", linewidths=0.3)
+    cbB = fig.colorbar(scB, ax=axB, label="novelty (1 - max Tanimoto to labelled master)")
+    axB.set_title("B. Coloured by novelty")
+
+    # Anchors + targets in both panels
+    for ax in (axA, axB):
+        for name, a in anchors.items():
+            ax.scatter(a["d"], a["p"], marker="*", s=200, edgecolor="black",
+                       facecolor="white", linewidth=1.4, zorder=4)
+            ax.annotate(name, (a["d"], a["p"]),
+                        xytext=(6, 4), textcoords="offset points",
+                        fontsize=9, fontweight="bold")
+        ax.axvline(9.5, color="grey", linestyle=":", alpha=0.5)
+        ax.axhline(40,  color="grey", linestyle=":", alpha=0.5)
+        ax.set_xlabel("detonation velocity D (km/s)")
+        ax.set_ylabel("detonation pressure P (GPa)")
+        ax.grid(True, alpha=0.3)
+
+    fig.suptitle("Generated leads vs. known energetic anchors (pool=40k, top-200)",
+                 fontsize=12, y=1.02)
     fig.tight_layout()
-    fig.savefig(OUT / "fig3_leads_dp_plane.svg")
+    fig.savefig(OUT / "fig3_leads_dp_plane.svg", bbox_inches="tight")
+    fig.savefig(OUT / "fig3_leads_dp_plane.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
-    print(f"  fig3: {OUT / 'fig3_leads_dp_plane.svg'}")
+    print(f"  fig3: {OUT / 'fig3_leads_dp_plane.svg'} (+ .png)")
 
 
 # ── Figure 4: Self-consistency comparison v1 vs v3.1 ─────────────────────

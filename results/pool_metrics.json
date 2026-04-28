@@ -1,0 +1,165 @@
+{
+  "per_pool": {
+    "smiles_lstm_samples": {
+      "n_raw": 10000,
+      "n_valid": 7469,
+      "n_sampled": 5000,
+      "validity": 0.7469,
+      "uniqueness": 0.9824608381309412,
+      "novelty": 0.708,
+      "scaffold_nn": 0.8495484995427715,
+      "chem_pass": 0.9062
+    },
+    "m1_3seed_C0_unguided_seed0": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.67375,
+      "novelty": 0.994,
+      "scaffold_nn": 0.553415894332384,
+      "chem_pass": 0.9812
+    },
+    "m1_3seed_C0_unguided_seed1": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.67135,
+      "novelty": 0.9926,
+      "scaffold_nn": 0.5487107204860238,
+      "chem_pass": 0.979
+    },
+    "m1_3seed_C0_unguided_seed2": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6696,
+      "novelty": 0.9918,
+      "scaffold_nn": 0.5636059300580758,
+      "chem_pass": 0.9808
+    },
+    "m1_3seed_C1_viab_sens_seed0": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.62805,
+      "novelty": 0.991,
+      "scaffold_nn": 0.4850242560850552,
+      "chem_pass": 0.9902
+    },
+    "m1_3seed_C1_viab_sens_seed1": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.626,
+      "novelty": 0.9946,
+      "scaffold_nn": 0.5075062645973828,
+      "chem_pass": 0.992
+    },
+    "m1_3seed_C1_viab_sens_seed2": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.61555,
+      "novelty": 0.9924,
+      "scaffold_nn": 0.5007956685979764,
+      "chem_pass": 0.9922
+    },
+    "m1_3seed_C2_viab_sens_hazard_seed0": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.5557,
+      "novelty": 0.9932,
+      "scaffold_nn": 0.44919793275944586,
+      "chem_pass": 0.994
+    },
+    "m1_3seed_C2_viab_sens_hazard_seed1": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.5554,
+      "novelty": 0.9932,
+      "scaffold_nn": 0.41998279547566275,
+      "chem_pass": 0.9938
+    },
+    "m1_3seed_C2_viab_sens_hazard_seed2": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.5459,
+      "novelty": 0.9918,
+      "scaffold_nn": 0.452377075536882,
+      "chem_pass": 0.9942
+    },
+    "m1_3seed_C3_hazard_only_seed0": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6684,
+      "novelty": 0.9936,
+      "scaffold_nn": 0.48213900395652015,
+      "chem_pass": 0.9852
+    },
+    "m1_3seed_C3_hazard_only_seed1": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6732,
+      "novelty": 0.9936,
+      "scaffold_nn": 0.5254660351537128,
+      "chem_pass": 0.9832
+    },
+    "m1_3seed_C3_hazard_only_seed2": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.66585,
+      "novelty": 0.9922,
+      "scaffold_nn": 0.5083872338992308,
+      "chem_pass": 0.9842
+    },
+    "m1_sweep_C0_unguided_seed0": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6737,
+      "novelty": 0.9952,
+      "scaffold_nn": 0.5522512402846901,
+      "chem_pass": 0.982
+    },
+    "m1_sweep_C0_unguided_seed1": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.67125,
+      "novelty": 0.9954,
+      "scaffold_nn": 0.5613145652765101,
+      "chem_pass": 0.9794
+    },
+    "m1_sweep_C0_unguided_seed2": {
+      "n_raw": 20000,
+      "n_valid": 20000,
+      "n_sampled": 5000,
+      "validity": 1.0,
+      "uniqueness": 0.6693,
+      "novelty": 0.9948,
+      "scaffold_nn": 0.554499744147198,
+      "chem_pass": 0.9798
+    }
+  },
+  "per_condition": {}
+}
