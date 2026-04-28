@@ -112,8 +112,12 @@ def _get_mf(mol, xc, use_gpu=True, df=True):
                 mf = mf.density_fit()
             mf.verbose = 4  # print SCF iterations + diagnostic info
             return mf, "gpu"
-        except ImportError:
-            pass
+        except ImportError as _gpu_imp_err:
+            print(f"[train] WARNING: gpu4pyscf import failed ({_gpu_imp_err}); "
+                  f"THIS WILL BE CPU AND VERY SLOW (hours per molecule).", flush=True)
+        except Exception as _gpu_err:
+            print(f"[train] WARNING: gpu4pyscf raised ({_gpu_err}); "
+                  f"falling back to CPU PySCF; THIS WILL BE VERY SLOW.", flush=True)
     from pyscf import dft
     mf = dft.RKS(mol, xc=xc)
     if df:
@@ -455,13 +459,18 @@ def main():
 
     use_gpu = not args.cpu
     if use_gpu:
+        # Hard early-fail: refuse to start a GPU run if gpu4pyscf or CUDA are
+        # not actually available. The previous behaviour silently fell back to
+        # CPU PySCF and took 6 to 30+ hours per CHNO molecule.
         try:
+            from gpu4pyscf import dft as _gpu_dft  # noqa: F401
             import torch
-            assert torch.cuda.is_available(), "CUDA not available"
+            assert torch.cuda.is_available(), "torch.cuda.is_available() is False"
             print(f"[train] GPU: {torch.cuda.get_device_name(0)}"); sys.stdout.flush()
-        except Exception as e:
-            print(f"[train] WARNING: GPU check failed ({e}); proceeding with CPU pyscf"); sys.stdout.flush()
-            use_gpu = False
+        except (ImportError, AssertionError) as e:
+            print(f"[train] FATAL: gpu4pyscf or CUDA unavailable ({e}); "
+                  f"pass --cpu to allow CPU fallback explicitly", flush=True)
+            sys.exit(1)
 
     results_dir = Path(args.results); results_dir.mkdir(parents=True, exist_ok=True)
     config = json.loads(Path(args.smiles).read_text())
