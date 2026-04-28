@@ -936,7 +936,11 @@ def fig4e_head_training():
 
 # ──────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    fig4a_data_prep()
+    # NOTE: fig4a_data_prep() is intentionally NOT called here. The Figure 4(a)
+    # PNG is sourced from assets/4a_LIMO_TRAIN.png (a hand-authored asset)
+    # and copied into docs/paper/figs/fig4a_data_prep.png. Re-running the
+    # matplotlib renderer would clobber that asset. The function is preserved
+    # as documentation of an alternative 4(a) layout.
     fig4b_train_loop()
     fig4c_sampling_guidance()
     fig4d_decode_rerank()
