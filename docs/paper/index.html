@@ -298,7 +298,43 @@ where \(\epsilon_\theta^{\text{cfg}}\) is the standard classifier-free-guidance 
 $$s(x) \;=\; \sum_{k\in\{\rho,\,\mathrm{HOF},\,D,\,P\}} \alpha_k \cdot \frac{|\hat y_k(x) - y_k^*|}{\sigma_k},$$
 where \(y_k^*\) is the design target and \(\sigma_k\) is the per-property training standard deviation. Lower is better. We additionally use a Pareto reranker multi-objective form
 $$S(x) \;=\; 0.45\, S_{\text{perf}}^{\text{band}}(x) \;+\; 0.20\, S_{\text{viab}}(x) \;+\; 0.15\, S_{\text{novel}}(x) \;+\; 0.20\,\big(1-S_{\text{sens}}(x)\big) \;-\; 0.10\, S_{\text{alerts}}(x),$$
-where \(S_{\text{perf}}^{\text{band}}\) is a saturating banded ramp on each property (capped at 1.0 above the design band, so the model cannot win by extrapolation), \(S_{\text{viab}}\) is the output of the Random-Forest viability classifier (Appendix&nbsp;C, Table&nbsp;C.1), \(S_{\text{novel}}\) is the inverse-Tanimoto novelty in the (0.20, 0.55) window, and \(S_{\text{sens}}\) penalises open-chain N-NO<sub>2</sub> motifs and small-skeleton polynitro patterns. Final ranking is the Pareto front over (perf, viab) maximisation × (sens, alerts) minimisation, broken by composite score. The candidates returned to the user are the lowest-\(s\) (or highest-\(S\)) retained.</p>
+where \(S_{\text{perf}}^{\text{band}}\) is a saturating banded ramp on each property (capped at 1.0 above the design band, so the model cannot win by extrapolation), \(S_{\text{viab}}\) is the output of the Random-Forest viability classifier (Appendix&nbsp;C, Table&nbsp;C.1), \(S_{\text{novel}}\) is the inverse-Tanimoto novelty in the (0.20, 0.55) window, and \(S_{\text{sens}}\) penalises open-chain N-NO<sub>2</sub> motifs and small-skeleton polynitro patterns.</p>
+
+<p><strong>Pareto-front filter.</strong> The "Pareto" in <em>Pareto reranker</em> refers to a binary stratifier we apply on top of the composite score. A candidate \(x\) is <em>Pareto-dominated</em> by another candidate \(y\) iff \(y\) is at least as good as \(x\) on every objective and strictly better on at least one; the <em>Pareto front</em> is the set of non-dominated candidates. We compute the front over four objectives (maximise perf and viability; minimise sensitivity and alerts), tag each candidate's front-membership, and sort first by front-membership then by composite \(S\). Pareto-front candidates are pulled to the top of the ranking; the composite is the within-stratum tie-breaker. Pseudocode (matches <code>scripts/diffusion/rerank_v2.py</code>):</p>
+
+<pre style="background:#f6f3ed; border-left:4px solid #b88a25; padding:0.7em 1em; margin:1em 0; font-size:0.9em; line-height:1.4; overflow-x:auto;"><code># Inputs:  pool = list of chem-pass candidates after Stage 1
+# Outputs: top-K candidates, sorted with Pareto-front candidates first
+def pareto_rerank(pool, K):
+    for x in pool:
+        x.composite = (0.45 * S_perf_band(x)   + 0.20 * S_viab(x)
+                     + 0.15 * S_novel(x)       + 0.20 * (1 - S_sens(x))
+                     - 0.10 * S_alerts(x))
+
+    # Pareto front: minimise (-perf, -viab, sens, alerts)
+    pts = [[-S_perf_band(x), -S_viab(x), S_sens(x), S_alerts(x)] for x in pool]
+    on_front = is_pareto_min(pts)         # standard Pareto-front sweep
+    for x, f in zip(pool, on_front):
+        x.pareto = bool(f)
+
+    # Sort: Pareto-front candidates first; within stratum, by composite desc
+    pool.sort(key=lambda x: (not x.pareto, -x.composite))
+    return pool[:K]
+
+def is_pareto_min(points):
+    """Return boolean array: True if point i is on the front."""
+    front = [True] * len(points)
+    for i, p in enumerate(points):
+        for j, q in enumerate(points):
+            if i == j: continue
+            # q dominates p iff q is no-worse on every dim AND strictly-better on one
+            if all(q_d &lt;= p_d for q_d, p_d in zip(q, p)) and any(
+                   q_d &lt;  p_d for q_d, p_d in zip(q, p)):
+                front[i] = False
+                break
+    return front
+</code></pre>
+
+<p>The Pareto layer is what stops a candidate that maximises the weighted-sum composite from winning when another candidate dominates it on every individual axis. In a typical 40k pool the front is 50&ndash;200 candidates wide; the composite is then the within-front tie-breaker. The candidates returned to the user are the top-\(K\) under this two-key sort (lowest-\(s\) or highest-\(S\) within Pareto-front candidates, then within non-front candidates). Our default \(K = 100\) (the merged top-100 of &sect;5.3.4).</p>
 
 <p><strong>Pool merging across runs.</strong> When multiple sampling runs are available (different denoisers, guidance scales, or pool sizes), the rerank input is the union of canonical-SMILES-deduplicated candidates from all pools, scored and ranked once. The recommended production recipe combines (i) a moderate guidance signal (\(s_{\text{viab}}=1.0, s_{\text{sens}}=0.3\), no SA), (ii) a pool of at least 40&nbsp;000, and (iii) the Pareto reranker (perf-gated, scaffold-aware composite) \(S\) for the final ranking; SA-gradient guidance is applied as a complementary run rather than as a default scale.</p>
 
