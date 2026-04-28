@@ -1,0 +1,257 @@
+{
+  "method_route1": {
+    "name": "score_model_v3e_h50",
+    "calibration_set": "Huang & Massa combined_data.xlsx (~307 rows)",
+    "h50_pivot_cm": 40.0,
+    "h50_log_slope": 1.5,
+    "found": true,
+    "fallback_method": null,
+    "predictions": {
+      "L1": {
+        "h50_cm": 30.29,
+        "uncertainty_cm": 23.45,
+        "sens_pred": 0.5451
+      },
+      "L2": {
+        "h50_cm": 33.52,
+        "uncertainty_cm": 12.61,
+        "sens_pred": 0.5288
+      },
+      "L3": {
+        "h50_cm": 82.64,
+        "uncertainty_cm": 29.18,
+        "sens_pred": 0.384
+      },
+      "L4": {
+        "h50_cm": 27.81,
+        "uncertainty_cm": 19.56,
+        "sens_pred": 0.5589
+      },
+      "L5": {
+        "h50_cm": 33.41,
+        "uncertainty_cm": 24.67,
+        "sens_pred": 0.5293
+      },
+      "L9": {
+        "h50_cm": 21.9,
+        "uncertainty_cm": 13.02,
+        "sens_pred": 0.5968
+      },
+      "L11": {
+        "h50_cm": 26.53,
+        "uncertainty_cm": 27.34,
+        "sens_pred": 0.5665
+      },
+      "L13": {
+        "h50_cm": 31.01,
+        "uncertainty_cm": 23.2,
+        "sens_pred": 0.5414
+      },
+      "L16": {
+        "h50_cm": 82.64,
+        "uncertainty_cm": 28.28,
+        "sens_pred": 0.384
+      },
+      "L18": {
+        "h50_cm": 38.6,
+        "uncertainty_cm": 15.26,
+        "sens_pred": 0.5058
+      },
+      "L19": {
+        "h50_cm": 45.47,
+        "uncertainty_cm": 41.61,
+        "sens_pred": 0.4791
+      },
+      "L20": {
+        "h50_cm": 74.13,
+        "uncertainty_cm": 16.52,
+        "sens_pred": 0.4009
+      },
+      "RDX": {
+        "h50_cm": 26.34,
+        "uncertainty_cm": 10.17,
+        "sens_pred": 0.5676
+      },
+      "TATB": {
+        "h50_cm": 89.18,
+        "uncertainty_cm": 15.18,
+        "sens_pred": 0.3723
+      }
+    },
+    "checkpoint_path": "E:\\Projects\\EnergeticDiffusion2\\experiments\\score_model_v3e_h50\\model.pt",
+    "sens_z_mu": 0.4922560751438141,
+    "sens_z_sd": 0.15404431521892548
+  },
+  "method_route2": {
+    "name": "Politzer-Murray BDE correlation",
+    "fit": "h50 = 1.93 * BDE - 52.4",
+    "bde_source": "Chemotype heuristic on RDKit substructure (weakest X-NO2 BDE rules)",
+    "bde_table_kcalmol": {
+      "nitroaromatic": 70.0,
+      "nitramine": 47.0,
+      "nitroaliphatic": 55.0,
+      "nitrate_ester": 40.0,
+      "nitrofuroxan": 60.0,
+      "geminal_polynitro": 50.0,
+      "unknown": 55.0
+    },
+    "predictions": {
+      "L1": {
+        "BDE_kcalmol": 70.0,
+        "h50_cm": 82.7,
+        "chemotype": "nitroaromatic",
+        "smiles": "O=[N+]([O-])c1noc([N+](=O)[O-])c1[N+](=O)[O-]"
+      },
+      "L2": {
+        "BDE_kcalmol": 55.0,
+        "h50_cm": 53.75,
+        "chemotype": "unknown",
+        "smiles": "O=[N+]([O-])N=C1NC(O)ON=C1[N+](=O)[O-]"
+      },
+      "L3": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "O=C1N=C([N+](=O)[O-])C(N[N+](=O)[O-])=NON1"
+      },
+      "L4": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "O=[N+]([O-])C1=NCN=NN1[N+](=O)[O-]"
+      },
+      "L5": {
+        "BDE_kcalmol": 40.0,
+        "h50_cm": 24.8,
+        "chemotype": "nitrate_ester",
+        "smiles": "O=C(C=NO[N+](=O)[O-])[N+](=O)[O-]"
+      },
+      "L9": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "NN(C=NC=C(N(N[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]"
+      },
+      "L11": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "O=C(N[N+](=O)[O-])C(N=C[N+](=O)[O-])[N+](=O)[O-]"
+      },
+      "L13": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "O=[N+]([O-])C=NOC=NN[N+](=O)[O-]"
+      },
+      "L16": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "O=C1N=C([N+](=O)[O-])C(N[N+](=O)[O-])=NON1"
+      },
+      "L18": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "O=[N+]([O-])C=C(N=NCN[N+](=O)[O-])[N+](=O)[O-]"
+      },
+      "L19": {
+        "BDE_kcalmol": 40.0,
+        "h50_cm": 24.8,
+        "chemotype": "nitrate_ester",
+        "smiles": "O=CC(O[N+](=O)[O-])[N+](=O)[O-]"
+      },
+      "L20": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "O=C1N=C(N[N+](=O)[O-])C(=N1)[N+](=O)[O-]"
+      },
+      "RDX": {
+        "BDE_kcalmol": 47.0,
+        "h50_cm": 38.31,
+        "chemotype": "nitramine",
+        "smiles": "[O-][N+](=O)N1CN([N+](=O)[O-])CN([N+](=O)[O-])C1"
+      },
+      "TATB": {
+        "BDE_kcalmol": 70.0,
+        "h50_cm": 82.7,
+        "chemotype": "nitroaromatic",
+        "smiles": "Nc1c([N+](=O)[O-])c(N)c([N+](=O)[O-])c(N)c1[N+](=O)[O-]"
+      }
+    }
+  },
+  "comparison": {
+    "L1": {
+      "route1_h50": 30.29,
+      "route2_h50": 82.7,
+      "agreement_within_30pct": false
+    },
+    "L2": {
+      "route1_h50": 33.52,
+      "route2_h50": 53.75,
+      "agreement_within_30pct": false
+    },
+    "L3": {
+      "route1_h50": 82.64,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": false
+    },
+    "L4": {
+      "route1_h50": 27.81,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": true
+    },
+    "L5": {
+      "route1_h50": 33.41,
+      "route2_h50": 24.8,
+      "agreement_within_30pct": true
+    },
+    "L9": {
+      "route1_h50": 21.9,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": false
+    },
+    "L11": {
+      "route1_h50": 26.53,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": false
+    },
+    "L13": {
+      "route1_h50": 31.01,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": true
+    },
+    "L16": {
+      "route1_h50": 82.64,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": false
+    },
+    "L18": {
+      "route1_h50": 38.6,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": true
+    },
+    "L19": {
+      "route1_h50": 45.47,
+      "route2_h50": 24.8,
+      "agreement_within_30pct": false
+    },
+    "L20": {
+      "route1_h50": 74.13,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": false
+    },
+    "RDX": {
+      "route1_h50": 26.34,
+      "route2_h50": 38.31,
+      "agreement_within_30pct": false
+    },
+    "TATB": {
+      "route1_h50": 89.18,
+      "route2_h50": 82.7,
+      "agreement_within_30pct": true
+    }
+  }
+}
