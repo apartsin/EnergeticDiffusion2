@@ -44,6 +44,14 @@ SMOKE_MODEL_LOCAL = (PROJECT_ROOT
                      / "data/raw/energetic_external/EMDP/Data/smoke_model")
 SCRIPTS_DIFF_LOCAL = PROJECT_ROOT / "scripts/diffusion"
 
+# unimol_tools backbone weights (mol.dict.txt + mol_pre_all_h_220816.pt)
+# Mount locally so the container never needs to download from HuggingFace.
+import importlib.util
+_spec = importlib.util.find_spec("unimol_tools")
+UNIMOL_WEIGHTS_LOCAL = (
+    Path(_spec.origin).parent / "weights" if _spec else None
+)
+
 
 # ---------------------------------------------------------------------------
 # Modal image
@@ -88,6 +96,12 @@ image = (
         str(SMOKE_MODEL_LOCAL),
         remote_path="/smoke_model",
         # Include all files: model_0.pth, model_1.pth, config.yaml, etc.
+    )
+    # Pre-bake Uni-Mol backbone weights so container needs no HuggingFace download
+    .add_local_dir(
+        str(UNIMOL_WEIGHTS_LOCAL),
+        remote_path="/usr/local/lib/python3.11/site-packages/unimol_tools/weights",
+        ignore=lambda p: p.suffix in (".py",) or "__pycache__" in str(p),
     )
 )
 
