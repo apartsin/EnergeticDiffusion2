@@ -231,7 +231,7 @@ Classifier-free guidance avoids the separately-trained property predictor requir
 </figure>
 
 <figure id="fig-4d2">
-  <img src="figs/fig4f_self_distillation.png" width="1600" height="727" alt="DGLD viability-head self-distillation: 3 rounds of mine-then-retrain" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
+  <img src="figs/fig4f_self_distillation.png" width="1672" height="941" alt="DGLD viability-head self-distillation: 3 rounds of mine-then-retrain, with frozen-component banner and hard-negative growth ticker" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
   <figcaption><strong>Figure 4(d2). Labeling for guidance head training (self-distilled hard negatives).</strong> Three rounds of mine-then-retrain that refine the <strong>Viability head only</strong>; the denoiser (c) and LIMO VAE (a) are frozen. Each round samples, gates with (h), encodes false-positives through frozen LIMO as viab\(=\)0 hard negatives, and folds them into the next round's training set (137 \(\to\) 918 negatives). Stopping criterion in Appendix&nbsp;C.1.</figcaption>
 </figure>
 
