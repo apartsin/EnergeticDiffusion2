@@ -66,7 +66,7 @@ image = (
         "pyyaml",
     )
     # unimol_tools brings in the Uni-Mol backbone weights automatically
-    .pip_install("unimol_tools==0.0.11")
+    .pip_install("unimol_tools==0.1.5")
     # Mount local Python source files (no image rebuild on edit)
     .add_local_dir(
         str(HERE),
