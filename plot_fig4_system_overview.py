@@ -2024,135 +2024,269 @@ def fig4f_mask_construction_DEPRECATED():
 # ──────────────────────────────────────────────────────────────────────────
 def fig4f_self_distillation():
     """Three sequential rounds of viability-head self-distillation.
-    Each row = one round. Round 0 trains on corpus only, mines 137 cheats.
-    Round 1 trains on corpus + 137, mines additional cheats up to 918 total.
-    Round 2 trains on corpus + 918 and is the final score model.
+
+    The figure communicates that self-distillation is a LABELING procedure
+    that refines the Viability head only. Layout:
+      - top header / subtitle
+      - left side: a "FROZEN" banner (LIMO encoder/decoder, denoiser, RF,
+        SMARTS) and a "TRAINED EACH ROUND" banner (score-model trunk + heads)
+      - centre: three rows (one per round), each showing the 5-step
+        TRAIN -> PROBE -> SAMPLE -> MINE -> ENCODE block. Round 0's TRAIN
+        block explicitly carries "0 hard negatives". Round 2 is marked as
+        the production checkpoint.
+      - right margin: hard-negative growth ticker (0 -> 137 -> 918) and the
+        stop-criterion box.
     """
-    fig, ax = plt.subplots(figsize=(15.5, 7.5), dpi=300)
-    setup_axes(ax, xmax=29.0, ymax=11.5)
+    fig, ax = plt.subplots(figsize=(16.0, 7.6), dpi=300)
+    setup_axes(ax, xmax=32.0, ymax=15.2)
 
-    # Three rows, top-to-bottom.
-    rows_y = [9.4, 6.4, 3.4]
-    round_labels = ["Round 0", "Round 1", "Round 2 (final)"]
+    # ── Title / subtitle ──────────────────────────────────────────────────
+    ax.text(16.0, 14.65,
+            "Figure 4(d2). Labeling for guidance head training "
+            "(self-distilled hard negatives)",
+            ha="center", va="center", fontsize=12.4, fontweight="bold",
+            color=TEXT_NAVY, family="serif")
+    ax.text(16.0, 14.05,
+            "Self-distillation: 3 rounds of mine-then-retrain, refining "
+            "the Viability head only.",
+            ha="center", va="center", fontsize=10.2, fontstyle="italic",
+            color=TEXT_SLATE, family="serif")
 
-    # x-positions for the 5 boxes per row:
-    # train_data  ->  train  ->  v_n  ->  sample  ->  mine -> hard-negative count
-    train_x = 3.0
-    fit_x   = 8.0
-    model_x = 12.5
-    samp_x  = 17.0
-    gate_x  = 21.0
-    out_x   = 25.5
+    # ── FROZEN banner (left edge, full height of the round-rows region) ───
+    fz_x, fz_y, fz_w, fz_h = 0.30, 1.2, 5.20, 12.2
+    ax.add_patch(FancyBboxPatch(
+        (fz_x + 0.05, fz_y - 0.05), fz_w, fz_h,
+        boxstyle="round,pad=0.03,rounding_size=0.14",
+        linewidth=0, facecolor="#0a1620", alpha=0.08, zorder=1))
+    ax.add_patch(FancyBboxPatch(
+        (fz_x, fz_y), fz_w, fz_h,
+        boxstyle="round,pad=0.03,rounding_size=0.14",
+        linewidth=1.4, facecolor="#eaf1f6", edgecolor=NAVY, zorder=2))
+    # snowflake glyph + FROZEN label
+    ax.text(fz_x + fz_w / 2, fz_y + fz_h - 0.65,
+            r"$\ast$  FROZEN  $\ast$",
+            ha="center", va="center", fontsize=11.2, fontweight="bold",
+            color=NAVY, family="serif", zorder=3)
+    ax.text(fz_x + fz_w / 2, fz_y + fz_h - 1.30,
+            "(no weight updates between rounds)",
+            ha="center", va="center", fontsize=8.4, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+    frozen_items = [
+        "LIMO encoder",
+        "LIMO decoder",
+        "denoiser DGLD-H",
+        "denoiser DGLD-P",
+        "RF viability teacher",
+        "SMARTS rulebook",
+    ]
+    for k, item in enumerate(frozen_items):
+        yy = fz_y + fz_h - 2.20 - k * 0.85
+        ax.text(fz_x + 0.50, yy, r"$\bullet$", ha="left", va="center",
+                fontsize=10.0, color=NAVY, family="serif", zorder=3)
+        ax.text(fz_x + 0.95, yy, item, ha="left", va="center",
+                fontsize=9.6, color=TEXT_NAVY, family="serif", zorder=3)
+    # tiny "lock" hint
+    ax.text(fz_x + fz_w / 2, fz_y + 0.45,
+            "[lock]  weights identical across rounds 0, 1, 2",
+            ha="center", va="center", fontsize=8.2, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
 
-    bw_data = 4.4
-    bw_step = 2.4
-    bw_model = 2.6
-    bh = 1.55
+    # ── TRAINED-EACH-ROUND banner (just below FROZEN, but to keep one
+    # column we place it at the bottom-left as a separate small panel)  ───
+    tr_x, tr_y, tr_w, tr_h = 0.30, 0.05, 5.20, 1.05
+    ax.add_patch(FancyBboxPatch(
+        (tr_x + 0.05, tr_y - 0.05), tr_w, tr_h,
+        boxstyle="round,pad=0.03,rounding_size=0.10",
+        linewidth=0, facecolor="#0a1620", alpha=0.08, zorder=1))
+    ax.add_patch(FancyBboxPatch(
+        (tr_x, tr_y), tr_w, tr_h,
+        boxstyle="round,pad=0.03,rounding_size=0.10",
+        linewidth=1.4, facecolor=PALE_GOLD, edgecolor=GOLD, zorder=2))
+    ax.text(tr_x + tr_w / 2, tr_y + tr_h - 0.30,
+            "TRAINED EACH ROUND: score-model trunk + heads",
+            ha="center", va="center", fontsize=9.0, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(tr_x + tr_w / 2, tr_y + 0.30,
+            r"Viability head: $a_{\mathrm{viab}}\!=\!1$ on hard negs;  "
+            r"others: $a_k\!=\!0$",
+            ha="center", va="center", fontsize=7.8, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── Three rounds, top-to-bottom in the centre band ────────────────────
+    rows_y = [11.4, 7.8, 4.2]
+    round_labels = ["Round 0", "Round 1", "Round 2"]
+    # 5 steps per round: TRAIN -> PROBE -> SAMPLE -> MINE -> ENCODE
+    train_x  = 8.6
+    probe_x  = 12.4
+    samp_x   = 16.0
+    mine_x   = 19.6
+    encode_x = 23.4
+    bw   = 2.8
+    bh   = 1.45
 
     train_data_specs = [
-        ("corpus only",          "66k labelled rows"),
-        ("corpus + 137",         "66k + 137 cheats"),
-        ("corpus + 918",         "66k + 918 cheats"),
+        ("TRAIN",  "corpus + 0 hard negs"),
+        ("TRAIN",  "corpus + 137 hard negs"),
+        ("TRAIN",  "corpus + 918 hard negs"),
     ]
-    out_specs = [
-        ("137 cheats",  PALE_RED,  RED,    True),
-        ("918 cheats",  PALE_RED,  RED,    True),
-        ("(final v2)",  PALE_GOLD, GOLD,   False),  # Round 2 doesn't mine more
-    ]
+    mined_per_round = [137, 781, 0]   # round 2 stops, no further mining
+    cumulative      = [0, 137, 918]
 
-    for i, (y, lbl, td, out) in enumerate(zip(rows_y, round_labels,
-                                              train_data_specs, out_specs)):
-        # Row label on the left
-        ax.text(0.6, y, lbl, ha="left", va="center", fontsize=11.5,
+    for i, (y, lbl, td) in enumerate(zip(rows_y, round_labels,
+                                         train_data_specs)):
+        # Round label badge on the left of the row
+        ax.text(7.0, y, lbl, ha="right", va="center", fontsize=11.2,
                 fontweight="bold", color=TEXT_NAVY, family="serif")
         if i == 2:
-            ax.text(0.6, y - 0.55,
-                    "stops; passes anchor/cheat probe",
-                    ha="left", va="center", fontsize=8.4, fontstyle="italic",
-                    color=GREEN, family="serif")
+            # green "production checkpoint" tag
+            ax.add_patch(FancyBboxPatch(
+                (5.85, y + 0.20), 1.30, 0.42,
+                boxstyle="round,pad=0.02,rounding_size=0.08",
+                linewidth=1.0, facecolor=PALE_GREEN, edgecolor=GREEN, zorder=2))
+            ax.text(6.50, y + 0.41, r"$\checkmark$ production",
+                    ha="center", va="center", fontsize=7.8, fontweight="bold",
+                    color=GREEN, family="serif", zorder=3)
 
-        # Train-data box
-        add_box(ax, train_x, bw_data, bh, y, CREAM, NAVY, td[0], td[1],
-                title_size=10.2, sub_size=8.6)
-        # train arrow + box
-        add_arrow(ax, train_x + bw_data / 2, y, fit_x - bw_step / 2, y, lw=1.6)
-        add_box(ax, fit_x, bw_step, bh, y, PALE_GREY, NAVY,
-                "train", r"$\sim$40k steps",
-                title_size=10.2, sub_size=8.4)
-        # model arrow + box
-        add_arrow(ax, fit_x + bw_step / 2, y, model_x - bw_model / 2, y, lw=1.6)
-        # Score model box (navy fill, white text)
-        sh = FancyBboxPatch((model_x - bw_model / 2 + 0.04,
-                             y - bh / 2 - 0.04), bw_model, bh,
-                            boxstyle="round,pad=0.02,rounding_size=0.14",
-                            linewidth=0, facecolor="#0a1620", alpha=0.10,
-                            zorder=1)
-        ax.add_patch(sh)
-        b = FancyBboxPatch((model_x - bw_model / 2, y - bh / 2),
-                           bw_model, bh,
-                           boxstyle="round,pad=0.02,rounding_size=0.14",
-                           linewidth=1.4, facecolor=NAVY, edgecolor=NAVY,
-                           zorder=2)
-        ax.add_patch(b)
-        ax.text(model_x, y + 0.16, f"score model v{i}",
-                ha="center", va="center", fontsize=10.4, fontweight="bold",
-                color="white", family="serif", zorder=3)
-        ax.text(model_x, y - 0.30, ("FINAL" if i == 2 else "intermediate"),
-                ha="center", va="center", fontsize=8.4, fontstyle="italic",
-                color=("#ffd54a" if i == 2 else "#dde6e9"),
-                family="serif", zorder=3)
+        # 1) TRAIN block (cream / navy outline)
+        add_box(ax, train_x, bw, bh, y, CREAM, NAVY, td[0], td[1],
+                title_size=10.0, sub_size=8.4)
+        # round 0 asymmetry: explicitly show "0 hard negatives"
+        if i == 0:
+            ax.text(train_x, y - bh / 2 - 0.30,
+                    "(round 0: zero hard negs)",
+                    ha="center", va="center", fontsize=7.8,
+                    fontstyle="italic", color=RED, family="serif")
+
+        # 2) PROBE block (green)
+        add_arrow(ax, train_x + bw / 2, y, probe_x - bw / 2, y, lw=1.5)
+        add_box(ax, probe_x, bw, bh, y, PALE_GREEN, GREEN,
+                "PROBE", "7 anchors / 5 cheats",
+                title_size=10.0, sub_size=8.0)
 
         if i < 2:
-            # sample step (purple, stochastic)
-            add_arrow(ax, model_x + bw_model / 2, y, samp_x - bw_step / 2, y,
-                      color=PURPLE, dashed=True, lw=1.6)
-            add_box(ax, samp_x, bw_step, bh, y, PALE_PURPLE, PURPLE,
-                    "sample", r"diffusion + v$_{}$".format(i),
-                    title_size=10.2, sub_size=8.4)
-            # SMARTS gate
-            add_arrow(ax, samp_x + bw_step / 2, y, gate_x - bw_step / 2, y,
-                      lw=1.6)
-            add_box(ax, gate_x, bw_step, bh, y, PALE_RED, RED,
-                    "SMARTS gate",
-                    "false-positive\nfilter",
-                    title_size=10.2, sub_size=8.0)
-            # output (mined hard negatives)
-            add_arrow(ax, gate_x + bw_step / 2, y, out_x - bw_step / 2, y,
-                      color=RED, dashed=True, lw=1.6)
-            add_box(ax, out_x, bw_step, bh, y, *out_specs[i][1:3],
-                    f"mine\n{out_specs[i][0]}",
-                    "encode via LIMO",
-                    title_size=10.2, sub_size=8.0)
-            # vertical feedback to next round's train data
+            # 3) SAMPLE (purple, stochastic)
+            add_arrow(ax, probe_x + bw / 2, y, samp_x - bw / 2, y,
+                      color=PURPLE, dashed=True, lw=1.5)
+            add_box(ax, samp_x, bw, bh, y, PALE_PURPLE, PURPLE,
+                    "SAMPLE",
+                    f"diffusion + v{i} guide",
+                    title_size=10.0, sub_size=8.0)
+            # 4) MINE (red) with zoom annotation
+            add_arrow(ax, samp_x + bw / 2, y, mine_x - bw / 2, y, lw=1.5)
+            add_box(ax, mine_x, bw, bh, y, PALE_RED, RED,
+                    "MINE",
+                    f"+{mined_per_round[i]} false pos.",
+                    title_size=10.0, sub_size=8.0)
+            # tiny "false-positive iff" zoom label below MINE
+            ax.text(mine_x, y - bh / 2 - 0.32,
+                    "FP iff Viab > 0.7  AND  SMARTS rejects",
+                    ha="center", va="center", fontsize=7.4,
+                    fontstyle="italic", color=RED, family="serif")
+            # 5) ENCODE (red dashed -> hard-neg latents)
+            add_arrow(ax, mine_x + bw / 2, y, encode_x - bw / 2, y,
+                      color=RED, dashed=True, lw=1.5)
+            add_box(ax, encode_x, bw, bh, y, PALE_GOLD, GOLD,
+                    "ENCODE",
+                    "via frozen LIMO; viab = 0",
+                    title_size=10.0, sub_size=7.8)
+            # feedback arrow into next round's TRAIN
             ax.annotate("", xy=(train_x, rows_y[i + 1] + bh / 2 + 0.05),
-                        xytext=(out_x - bw_step / 2, y - bh / 2 - 0.05),
+                        xytext=(encode_x - bw / 2 - 0.10,
+                                y - bh / 2 - 0.05),
                         arrowprops=dict(arrowstyle="-|>", color=RED, lw=1.6,
                                         linestyle=(0, (4, 3)),
                                         shrinkA=0, shrinkB=0,
-                                        connectionstyle="arc3,rad=0.18",
+                                        connectionstyle="arc3,rad=0.22",
                                         mutation_scale=12),
                         zorder=4)
-            # label on feedback arrow
-            ax.text((out_x + train_x) / 2 + 1.5,
-                    (y + rows_y[i + 1]) / 2 + 0.5,
-                    f"feed back as viab=0",
-                    ha="center", va="center", fontsize=8.6,
-                    fontstyle="italic", color=RED,
-                    family="serif", zorder=5)
+            ax.text((encode_x + train_x) / 2 + 0.4,
+                    (y + rows_y[i + 1]) / 2 + 0.55,
+                    "feed back as viab=0 latents",
+                    ha="center", va="center", fontsize=8.2,
+                    fontstyle="italic", color=RED, family="serif", zorder=5)
+        else:
+            # round 2: SAMPLE/MINE/ENCODE replaced by a "STOP" badge
+            add_arrow(ax, probe_x + bw / 2, y, samp_x - bw / 2, y,
+                      color=GREEN, lw=1.6)
+            add_box(ax, samp_x, bw, bh, y, PALE_GREEN, GREEN,
+                    "STOP",
+                    "anchors >= 0.86; cheats <= 0.84",
+                    title_size=10.0, sub_size=7.6)
+            # arrow into the right-margin checkpoint pointer
+            add_arrow(ax, samp_x + bw / 2, y, mine_x - bw / 2, y,
+                      color=GREEN, lw=1.5)
+            add_box(ax, mine_x, bw, bh, y, "#fff8d8", GOLD,
+                    "v2 = production",
+                    "score model frozen here",
+                    title_size=10.0, sub_size=7.6)
 
-    # Right margin: anchor/cheat probe note
+    # ── Hard-negative growth ticker (right side, vertical bar) ────────────
+    tk_x, tk_y, tk_w, tk_h = 26.7, 4.4, 4.6, 9.0
     ax.add_patch(FancyBboxPatch(
-        (24.3, 0.4), 4.4, 1.4,
-        boxstyle="round,pad=0.04,rounding_size=0.12",
-        linewidth=1.2, facecolor=PALE_GREEN, edgecolor=GREEN, zorder=2,
-    ))
-    ax.text(26.5, 1.4, "stop criterion",
-            ha="center", va="center", fontsize=9.6, fontweight="bold",
+        (tk_x + 0.05, tk_y - 0.05), tk_w, tk_h,
+        boxstyle="round,pad=0.03,rounding_size=0.14",
+        linewidth=0, facecolor="#0a1620", alpha=0.08, zorder=1))
+    ax.add_patch(FancyBboxPatch(
+        (tk_x, tk_y), tk_w, tk_h,
+        boxstyle="round,pad=0.03,rounding_size=0.14",
+        linewidth=1.4, facecolor=CREAM, edgecolor=NAVY, zorder=2))
+    ax.text(tk_x + tk_w / 2, tk_y + tk_h - 0.45,
+            "Hard-negative growth",
+            ha="center", va="center", fontsize=10.0, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    # bars: cumulative count per round, scale max=918 -> bar length max=3.6
+    bar_xs = [tk_x + 1.0, tk_x + 2.4, tk_x + 3.8]
+    bar_lbls = ["R0", "R1", "R2"]
+    max_bar_h = 5.8
+    cum_max = 918.0
+    bar_base_y = tk_y + 1.05
+    for k, (cnt, bx, lbl) in enumerate(zip(cumulative, bar_xs, bar_lbls)):
+        h = max_bar_h * (cnt / cum_max) if cnt > 0 else 0.04
+        ax.add_patch(Rectangle((bx - 0.40, bar_base_y), 0.80, h,
+                               facecolor=RED if cnt > 0 else PALE_GREY,
+                               edgecolor=NAVY, linewidth=1.0, zorder=3))
+        ax.text(bx, bar_base_y + h + 0.30, str(cnt),
+                ha="center", va="center", fontsize=9.4, fontweight="bold",
+                color=RED if cnt > 0 else TEXT_SLATE, family="serif",
+                zorder=3)
+        ax.text(bx, bar_base_y - 0.30, lbl,
+                ha="center", va="center", fontsize=9.2,
+                color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(tk_x + tk_w / 2, tk_y + 0.30,
+            r"0  $\rightarrow$  137  $\rightarrow$  918",
+            ha="center", va="center", fontsize=9.2, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── Stop-criterion box (right margin, below ticker) ───────────────────
+    sc_x, sc_y, sc_w, sc_h = 26.7, 1.6, 4.6, 2.4
+    ax.add_patch(FancyBboxPatch(
+        (sc_x + 0.05, sc_y - 0.05), sc_w, sc_h,
+        boxstyle="round,pad=0.03,rounding_size=0.12",
+        linewidth=0, facecolor="#0a1620", alpha=0.08, zorder=1))
+    ax.add_patch(FancyBboxPatch(
+        (sc_x, sc_y), sc_w, sc_h,
+        boxstyle="round,pad=0.03,rounding_size=0.12",
+        linewidth=1.4, facecolor=PALE_GREEN, edgecolor=GREEN, zorder=2))
+    ax.text(sc_x + sc_w / 2, sc_y + sc_h - 0.40,
+            r"$\checkmark$ STOP criterion",
+            ha="center", va="center", fontsize=10.0, fontweight="bold",
             color=GREEN, family="serif", zorder=3)
-    ax.text(26.5, 0.85,
-            r"7 anchors $\geq 0.86$;  5 cheats $\leq 0.84$",
+    ax.text(sc_x + sc_w / 2, sc_y + sc_h - 1.10,
+            "held-out probe shows:",
             ha="center", va="center", fontsize=8.6, fontstyle="italic",
             color=TEXT_SLATE, family="serif", zorder=3)
+    ax.text(sc_x + sc_w / 2, sc_y + sc_h - 1.55,
+            r"7 anchors $\geq$ 0.86",
+            ha="center", va="center", fontsize=9.0,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(sc_x + sc_w / 2, sc_y + sc_h - 1.95,
+            r"AND   5 cheats $\leq$ 0.84",
+            ha="center", va="center", fontsize=9.0,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(sc_x + sc_w / 2, sc_y + 0.20,
+            r"(reached at round 2: production checkpoint)",
+            ha="center", va="center", fontsize=7.8, fontstyle="italic",
+            color=GREEN, family="serif", zorder=3)
 
     base = os.path.join(OUT_DIR, "fig4f_self_distillation")
     save(fig, base)
