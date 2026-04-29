@@ -614,124 +614,170 @@ def fig4b_train_loop():
 # 4c  Sampling: DDIM denoise with multi-head guidance
 # ──────────────────────────────────────────────────────────────────────────
 def fig4c_sampling_guidance():
-    fig, ax = plt.subplots(figsize=(12.0, 5.0), dpi=300)
-    setup_axes(ax, xmax=22.5, ymax=10.0)
+    """Sampling: z_T -> 40 DDIM steps -> z_0 -> LIMO decode -> SMILES pool.
+    Three ACTIVE steering heads (Viability, Sensitivity, Hazard) feed a single
+    steering bus into the DDIM denoise step. Three auxiliary heads
+    (Performance, SA, SC) appear as dashed ghost-boxes labelled INACTIVE.
+    """
+    fig, ax = plt.subplots(figsize=(13.4, 7.5), dpi=300)
+    setup_axes(ax, xmax=26.8, ymax=15.0)
 
-    # Title intentionally omitted; the HTML figcaption carries the label.
-
-    # Heads (top row): viab, sens, hazard, perf — all unified under a single
-    # enclosing "4-head classifier" frame.
-    head_y = 7.6
-    head_specs = [
-        (4.0,  "Viability",   "decoded validity"),
-        (8.4,  "Sensitivity", r"$h_{50}$ Huang-Massa"),
-        (12.8, "Hazard",      "SMARTS-aware"),
-        (17.2, "Performance", r"$\rho,\ D,\ P$ regressors"),
+    # ── Active steering heads (top, solid) ───────────────────────────────
+    head_y = 12.0
+    active_specs = [
+        (4.4,  "Viability",   r"BCE; $s_{\mathrm{viab}} = 1.0$",   GREEN, PALE_GREEN),
+        (10.0, "Sensitivity", r"SmoothL1; $s_{\mathrm{sens}} = 0.3$", GOLD,  PALE_GOLD),
+        (15.6, "Hazard",      r"BCE; $s_{\mathrm{haz}} = 1.0$",     RED,   PALE_RED),
     ]
-    # Enclosing frame
-    frame_x_l = head_specs[0][0]  - 1.95
-    frame_x_r = head_specs[-1][0] + 1.95
+    # Enclosing frame for active heads
+    frame_x_l = active_specs[0][0] - 2.2
+    frame_x_r = active_specs[-1][0] + 2.2
     frame_w   = frame_x_r - frame_x_l
-    frame_h   = 2.6
+    frame_h   = 2.8
     frame_y_c = head_y + 0.05
     frame_x_c = (frame_x_l + frame_x_r) / 2
-    sh = FancyBboxPatch(
-        (frame_x_l + 0.05, frame_y_c - frame_h / 2 - 0.05),
-        frame_w, frame_h,
+    ax.add_patch(FancyBboxPatch(
+        (frame_x_l + 0.05, frame_y_c - frame_h / 2 - 0.05), frame_w, frame_h,
         boxstyle="round,pad=0.04,rounding_size=0.18",
         linewidth=0, facecolor="#0a1620", alpha=0.08, zorder=1,
-    )
-    ax.add_patch(sh)
-    frame = FancyBboxPatch(
-        (frame_x_l, frame_y_c - frame_h / 2),
-        frame_w, frame_h,
+    ))
+    ax.add_patch(FancyBboxPatch(
+        (frame_x_l, frame_y_c - frame_h / 2), frame_w, frame_h,
         boxstyle="round,pad=0.04,rounding_size=0.18",
-        linewidth=1.6, facecolor="#f4faf5", edgecolor=GREEN, zorder=2,
-    )
-    ax.add_patch(frame)
-    # Frame caption sits inside the frame, above the head-box row
+        linewidth=1.8, facecolor="#f4faf5", edgecolor=GREEN, zorder=2,
+    ))
     ax.text(frame_x_c, frame_y_c + frame_h / 2 - 0.32,
-            "4-head classifier (multi-head guidance)",
+            "active steering heads (3 of 6)",
             ha="center", va="center", fontsize=10.0, fontweight="bold",
             color=GREEN, family="serif", zorder=3)
-    # Heads, slightly smaller and lowered to fit inside the frame caption
-    for x_c, t, sub in head_specs:
-        add_box(ax, x_c, 3.4, 1.4, head_y - 0.20, PALE_GREEN, GREEN, t, sub,
-                title_size=10.2, sub_size=8.4)
+    for x_c, t, sub, edge, fill in active_specs:
+        add_box(ax, x_c, 4.0, 1.5, head_y - 0.30, fill, edge, t, sub,
+                title_size=10.6, sub_size=8.6)
 
-    # Trajectory row
-    traj_y = 3.0
-    add_box(ax, 2.2, 2.8, 1.7, traj_y, CREAM, NAVY,
-            r"$z_T$", r"$\mathcal{N}(0,\ I_{1024})$")
-    # DDIM box: title + per-step formula + protocol annotation.
-    ddim_x_c = 10.6
-    ddim_w   = 8.0
-    ddim_h   = 2.5
+    # ── Auxiliary (inactive) ghost-boxes (top right, dashed/pale) ────────
+    aux_specs = [
+        (20.6, "Performance",  r"$\rho, D, P, \mathrm{HOF}$"),
+        (23.6, "SA",           "Ertl"),
+        (26.0, "SC",           "Coley"),
+    ]
+    ghost_y = head_y + 0.20
+    for x_c, t, sub in aux_specs:
+        gw, gh = 2.2, 1.30
+        x = x_c - gw / 2
+        yb = ghost_y - gh / 2
+        ax.add_patch(FancyBboxPatch(
+            (x, yb), gw, gh,
+            boxstyle="round,pad=0.02,rounding_size=0.12",
+            linewidth=1.2, facecolor="#fafafa", edgecolor=TEXT_LIGHT,
+            linestyle="--", zorder=2,
+        ))
+        ax.text(x_c, ghost_y + 0.30, t, ha="center", va="center",
+                fontsize=8.6, fontweight="bold", color=TEXT_SLATE,
+                family="serif", zorder=3)
+        ax.text(x_c, ghost_y - 0.10, sub, ha="center", va="center",
+                fontsize=7.6, fontstyle="italic", color=TEXT_LIGHT,
+                family="serif", zorder=3)
+        ax.text(x_c, ghost_y - 0.45, "INACTIVE", ha="center", va="center",
+                fontsize=6.8, fontweight="bold", color=TEXT_LIGHT,
+                family="serif", zorder=3)
+    ax.text((aux_specs[0][0] + aux_specs[-1][0]) / 2, ghost_y + 0.95,
+            "auxiliary heads (not invoked at sample time)",
+            ha="center", va="center", fontsize=8.4, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── Trajectory row ───────────────────────────────────────────────────
+    traj_y = 3.6
+    add_box(ax, 2.0, 2.6, 1.6, traj_y, CREAM, NAVY,
+            r"$z_T$", r"$\mathcal{N}(0,\ I_{1024})$",
+            title_size=10.6, sub_size=8.4)
+
+    # DDIM box
+    ddim_x_c = 11.2
+    ddim_w   = 11.6
+    ddim_h   = 3.4
     x = ddim_x_c - ddim_w / 2
     y = traj_y - ddim_h / 2
-    sh = FancyBboxPatch(
+    ax.add_patch(FancyBboxPatch(
         (x + 0.04, y - 0.04), ddim_w, ddim_h,
         boxstyle="round,pad=0.02,rounding_size=0.16",
         linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
-    )
-    ax.add_patch(sh)
-    box = FancyBboxPatch(
+    ))
+    ax.add_patch(FancyBboxPatch(
         (x, y), ddim_w, ddim_h,
         boxstyle="round,pad=0.02,rounding_size=0.16",
         linewidth=1.5, facecolor=PALE_GREY, edgecolor=NAVY, zorder=2,
-    )
-    ax.add_patch(box)
-    ax.text(ddim_x_c, traj_y + ddim_h * 0.30, "DDIM denoise step",
-            ha="center", va="center", fontsize=11.0, fontweight=600,
+    ))
+    ax.text(ddim_x_c, traj_y + ddim_h * 0.34,
+            "40 DDIM denoise steps",
+            ha="center", va="center", fontsize=11.4, fontweight=600,
             color=TEXT_NAVY, family="serif", zorder=3)
-    ax.text(ddim_x_c, traj_y + 0.08,
-            r"$z_{t-1} = \frac{1}{\sqrt{\alpha_t}}\!\left(z_t - \frac{1-\alpha_t}{\sqrt{1-\bar\alpha_t}}\,(\hat\varepsilon_\theta - g_t)\right) + \sigma_t\,\eta$",
+    # Per-step trajectory: 40 small circles
+    n_steps = 40
+    traj_x0 = ddim_x_c - ddim_w / 2 + 0.6
+    traj_x1 = ddim_x_c + ddim_w / 2 - 0.6
+    xs = np.linspace(traj_x0, traj_x1, n_steps)
+    inner_y = traj_y + 0.20
+    ax.plot([traj_x0, traj_x1], [inner_y, inner_y],
+            color=NAVY, lw=1.0, alpha=0.4, zorder=3)
+    for xx in xs:
+        ax.plot([xx], [inner_y], marker="o", markersize=2.2,
+                markerfacecolor=NAVY, markeredgecolor=NAVY,
+                alpha=0.55, zorder=4)
+    # Steering bus formula
+    ax.text(ddim_x_c, traj_y - 0.45,
+            r"$\hat\varepsilon = \varepsilon_\theta^{\mathrm{cfg}} - \sigma_t\!\sum_{h \in \{\mathrm{viab},\mathrm{sens},\mathrm{haz}\}} s_h \, \nabla_{z_t} \mathcal{L}_h(z_t)$",
             ha="center", va="center", fontsize=9.6, color=TEXT_NAVY,
             family="serif", zorder=3)
-    ax.text(ddim_x_c, traj_y - ddim_h * 0.32,
-            r"$t = T \to 1$,  40 steps,  $\eta = 0.1$",
-            ha="center", va="center", fontsize=8.8, fontstyle="italic",
+    ax.text(ddim_x_c, traj_y - ddim_h * 0.40,
+            r"production: $\sigma_{\max}=0$ (anneal off), $C_g=50$ (clamp loose)",
+            ha="center", va="center", fontsize=8.6, fontstyle="italic",
             color=TEXT_SLATE, family="serif", zorder=3)
-    add_box(ax, 19.4, 2.8, 1.7, traj_y, PALE_GOLD, GOLD,
-            r"$z_0$", "denoised latent")
 
-    add_arrow(ax, 3.6, traj_y, 6.5, traj_y)
-    add_arrow(ax, 14.7, traj_y, 18.0, traj_y)
+    # z_0 box
+    add_box(ax, 18.4, 2.4, 1.6, traj_y, PALE_GOLD, GOLD,
+            r"$z_0$", "denoised latent",
+            title_size=10.6, sub_size=8.4)
+    # LIMO decode
+    add_box(ax, 22.0, 2.6, 1.6, traj_y, PALE_GREY, NAVY,
+            "LIMO decode", "z $\\to$ SMILES",
+            title_size=10.0, sub_size=8.2)
+    # SMILES pool / Pool fusion handoff
+    add_box(ax, 25.4, 2.4, 1.6, traj_y, CREAM, NAVY,
+            "SMILES pool", r"$\to$ \S4.11",
+            title_size=10.0, sub_size=8.2)
 
-    # Guidance bus: each head drops to a horizontal bus, bus drops as a
-    # single bundled gold-dashed arrow into DDIM top.
-    bus_y = 5.9
+    add_arrow(ax, 3.3, traj_y, ddim_x_c - ddim_w / 2 - 0.05, traj_y)
+    add_arrow(ax, ddim_x_c + ddim_w / 2 + 0.05, traj_y, 17.2, traj_y)
+    add_arrow(ax, 19.6, traj_y, 20.7, traj_y)
+    add_arrow(ax, 23.3, traj_y, 24.2, traj_y)
+
+    # ── Steering bus: 3 active heads -> bus -> DDIM top ──────────────────
+    bus_y = 8.4
     ddim_top = traj_y + ddim_h / 2
-    bus_x_left  = head_specs[0][0]
-    bus_x_right = head_specs[-1][0]
-    for x_c, *_ in head_specs:
-        ax.plot([x_c, x_c], [head_y - 0.78, bus_y + 0.02],
-                color=GOLD, lw=1.3, linestyle=(0, (4, 3)), zorder=4)
-        ax.plot([x_c], [bus_y], marker="o", markersize=3.6,
+    bus_x_left  = active_specs[0][0]
+    bus_x_right = active_specs[-1][0]
+    for x_c, *_ in active_specs:
+        ax.plot([x_c, x_c], [head_y - 1.10, bus_y + 0.02],
+                color=GOLD, lw=1.4, linestyle=(0, (4, 3)), zorder=4)
+        ax.plot([x_c], [bus_y], marker="o", markersize=3.8,
                 markerfacecolor=GOLD, markeredgecolor=GOLD, zorder=5)
     ax.plot([bus_x_left, bus_x_right], [bus_y, bus_y],
-            color=GOLD, lw=2.0, zorder=4)
+            color=GOLD, lw=2.2, zorder=4)
     bundle_x = ddim_x_c
-    # Sigma glyph at convergence point on the bus
-    ax.plot([bundle_x], [bus_y], marker="o", markersize=11,
+    # Bus extends from rightmost head down/over to the DDIM top
+    ax.plot([bus_x_right, bundle_x], [bus_y, bus_y],
+            color=GOLD, lw=2.2, zorder=4)
+    ax.plot([bundle_x], [bus_y], marker="o", markersize=12,
             markerfacecolor="white", markeredgecolor=GOLD,
             markeredgewidth=1.8, zorder=5)
     ax.text(bundle_x, bus_y, r"$\Sigma$", ha="center", va="center",
-            fontsize=10.5, color=GOLD, fontweight="bold",
+            fontsize=11, color=GOLD, fontweight="bold",
             family="serif", zorder=6)
-    add_arrow(ax, bundle_x, bus_y - 0.20, bundle_x, ddim_top + 0.05,
+    add_arrow(ax, bundle_x, bus_y - 0.22, bundle_x, ddim_top + 0.05,
               color=GOLD, dashed=True, lw=2.0)
-    # Gradient label sits to the right of the vertical bundled arrow, in the
-    # gap between bus and DDIM box top.
-    add_label(ax, bundle_x + 0.35,
-              (bus_y + ddim_top) / 2 - 0.05,
-              r"$g_t = \sum_h s_h\,\nabla_{z_t}\log p_h(c\!\mid\!z_t)$",
-              color=GOLD, size=9.0, italic=True, bold=True)
-
-    # Color legend intentionally omitted per user spec.
-
-    # Bottom text labels intentionally omitted; the HTML figcaption carries
-    # the protocol detail (n=40 steps, eta, conditioning vector).
+    add_label(ax, bundle_x + 0.45, (bus_y + ddim_top) / 2 - 0.05,
+              "steering bus",
+              color=GOLD, size=9.4, italic=True, bold=True)
 
     base = os.path.join(OUT_DIR, "fig4c_sampling_guidance")
     save(fig, base)
@@ -824,190 +870,203 @@ def fig4d_decode_rerank():
 # 4e1  Data labeling: how per-row training labels are produced
 # ──────────────────────────────────────────────────────────────────────────
 def fig4e1_data_labeling():
-    """Three-stage diagram: shared input column (SMILES + LIMO encoder + cached
-    latent z) feeds four label-source models, which produce four per-row label
-    vectors consumed by the score-model trainer in 4(e2)."""
-    fig, ax = plt.subplots(figsize=(20.0, 9.6), dpi=300)
-    setup_axes(ax, xmax=52.0, ymax=24.0)
+    """Three-stage diagram: shared input column (SMILES + cached LIMO latent z)
+    feeds SIX label-source pipelines, which produce six per-row label vectors.
+    Three pipelines (Viab, Sens, Haz) are ACTIVE STEERING (solid, full-saturation);
+    three pipelines (Perf, SA, SC) are AUXILIARY multi-task (dashed, pale)."""
+    fig, ax = plt.subplots(figsize=(16.0, 9.0), dpi=300)
+    setup_axes(ax, xmax=64.0, ymax=36.0)
 
     # ── Stage A (left): shared input column ──────────────────────────────
-    col_x    = 4.2
-    col_w    = 6.4
-    smiles_y = 19.6
-    enc_y    = 16.4
-    latent_y = 13.2
-    bypass_y = 10.6
+    col_x    = 5.0
+    col_w    = 8.0
+    smiles_y = 28.0
+    latent_y = 20.0
 
-    add_box(ax, col_x, col_w, 1.8, smiles_y, CREAM, NAVY,
+    add_box(ax, col_x, col_w, 2.4, smiles_y, CREAM, NAVY,
             "326k energetic SMILES",
-            "labelled corpus", title_size=11.0, sub_size=8.6)
+            "labelled corpus", title_size=11.6, sub_size=9.0)
+    add_box(ax, col_x, col_w, 2.4, latent_y, PALE_GOLD, GOLD,
+            r"cached LIMO $z = \mu \in \mathbb{R}^{1024}$",
+            "(stored)", title_size=11.0, sub_size=8.8)
+    add_arrow(ax, col_x, smiles_y - 1.25, col_x, latent_y + 1.25, lw=1.8)
 
-    add_box(ax, col_x, col_w, 1.8, enc_y, PALE_GREY, NAVY,
-            "LIMO encoder",
-            "frozen, fine-tuned", title_size=11.0, sub_size=8.6)
-    ax.text(col_x + col_w / 2 - 0.55, enc_y + 0.32, "*",
-            ha="center", va="center", fontsize=16, color=NAVY,
-            family="serif", zorder=4)
+    # ── Stage B (middle): SIX label-generator pipelines, one per row ─────
+    # Active column on left (full-sat, solid), Auxiliary column on right
+    # (pale, dashed). Each row carries a single pipeline + a single output
+    # label box on the right edge. 6 rows total.
+    pipe_h = 3.4
+    pipe_w = 13.0
+    col_active_x = 22.0
+    col_aux_x    = 39.0
 
-    add_box(ax, col_x, col_w, 1.8, latent_y, PALE_GOLD, GOLD,
-            r"$z = \mu \in \mathbb{R}^{1024}$",
-            "(cached)", title_size=11.0, sub_size=8.6)
+    # Row centres: 6 evenly spaced rows from top to bottom
+    row_top = 30.5
+    row_bot = 4.5
+    rows_y = list(np.linspace(row_top, row_bot, 6))
 
-    add_arrow(ax, col_x, smiles_y - 0.95, col_x, enc_y + 0.95, lw=1.8)
-    add_arrow(ax, col_x, enc_y - 0.95,    col_x, latent_y + 0.95, lw=1.8)
-
-    bypass_x = col_x + col_w / 2 + 0.6
-    ax.plot([col_x + col_w / 2, bypass_x], [smiles_y, smiles_y],
-            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=4)
-    ax.plot([bypass_x, bypass_x], [smiles_y, bypass_y],
-            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=4)
-    add_label(ax, bypass_x + 0.25, (smiles_y + bypass_y) / 2,
-              "SMILES (bypasses z)",
-              color=GOLD, size=8.6, italic=True, bold=True)
-
-    ax.text(col_x, latent_y - 1.55,
-            r"$z$ is NOT consumed by label sources",
-            ha="center", va="center", fontsize=8.8, fontstyle="italic",
-            color=TEXT_SLATE, family="serif", zorder=3)
-
-    # ── Stage B (middle): four label-source models ───────────────────────
-    src_y_c   = 5.8
-    src_w     = 6.4
-    src_h     = 7.6
-    src_centres = [14.0, 21.4, 28.8, 36.2]
-    edge_cols = [GREEN, GOLD, RED, PURPLE]
-    fill_cols = [PALE_GREEN, PALE_GOLD, PALE_RED, PALE_PURPLE]
-
-    src_titles = [
-        "Random Forest",
-        r"Politzer-Murray BDE fit",
-        "SMARTS + Bruns-Watson",
-        "3D-CNN smoke ensemble",
-    ]
-    src_arch = [
-        "arch: Random Forest",
-        "arch: linear fit",
-        "arch: SMARTS rules",
-        "arch: Uni-Mol v1 ensemble",
-    ]
-    src_inputs = [
-        "input: Morgan FP\n+ RDKit descriptors\nof SMILES",
-        "input: chemotype class\nof weakest bond",
-        "input: SMILES patterns",
-        "input: 3D conformer\nvoxel grid",
-    ]
-    src_subset = [
-        "training subset:\n66k energetic vs 80k ZINC",
-        "training subset: 306 pairs\n(Huang & Massa)",
-        "no training subset;\nrules-based",
-        "training subset:\n9k Tier-A/B rows",
-    ]
-    src_eq = [
-        r"$\to P(\mathrm{viable})$",
-        r"$h_{50} = 1.93\!\cdot\!\mathrm{BDE} - 52.4$",
-        r"pattern match $\to$ hazard",
-        r"8 outputs ($\rho, D, P, T,$ ...)",
-    ]
-    src_metrics = [
-        "AUC = 0.9986",
-        r"Pearson $r = +0.71$",
-        "(rules; no metric)",
-        r"$R^2 = 0.84{-}0.92$",
+    pipelines = [
+        # (row_idx, col, title, sub, edge, fill, label, active)
+        (0, "active", "Viability",
+         "Random Forest on Morgan FP + RDKit (gated by SMARTS)",
+         GREEN, PALE_GREEN, r"$y_{\mathrm{viab}} \in [0,1]$", True),
+        (1, "active", "Sensitivity",
+         r"Politzer-Murray BDE chemotype fit ($h_{50}$)",
+         GOLD, PALE_GOLD, r"$y_{\mathrm{sens}} \in \mathbb{R}$", True),
+        (2, "active", "Hazard",
+         "Chemist-curated SMARTS + Bruns-Watson catalog",
+         RED, PALE_RED, r"$y_{\mathrm{haz}} \in \{0,1\}$", True),
+        (3, "aux", "Performance",
+         "3D-CNN / Uni-Mol smoke ensemble (8 outputs)",
+         PURPLE, PALE_PURPLE, r"$y_{\mathrm{perf}} \in \mathbb{R}^4$", False),
+        (4, "aux", "SA",
+         "RDKit sascorer.py (Ertl drug-domain)",
+         TEXT_SLATE, "#f0f1f3", r"$y_{\mathrm{SA}} \in \mathbb{R}$", False),
+        (5, "aux", "SC",
+         "Coley pretrained SCScorer (drug-domain)",
+         TEXT_SLATE, "#f0f1f3", r"$y_{\mathrm{SC}} \in \mathbb{R}$", False),
     ]
 
-    for i, cx in enumerate(src_centres):
-        edge = edge_cols[i]
-        fill = fill_cols[i]
-        x  = cx - src_w / 2
-        yb = src_y_c - src_h / 2
+    label_x = 55.0
+    label_w = 5.6
+    label_h = 1.8
+
+    for (ri, col, title, sub, edge, fill, lab, active) in pipelines:
+        cy = rows_y[ri]
+        cx = col_active_x if active else col_aux_x
+        x = cx - pipe_w / 2
+        yb = cy - pipe_h / 2
+
+        # Shadow + box
         ax.add_patch(FancyBboxPatch(
-            (x + 0.04, yb - 0.04), src_w, src_h,
+            (x + 0.04, yb - 0.04), pipe_w, pipe_h,
             boxstyle="round,pad=0.02,rounding_size=0.18",
-            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+            linewidth=0, facecolor="#0a1620",
+            alpha=0.10 if active else 0.04, zorder=1,
         ))
         ax.add_patch(FancyBboxPatch(
-            (x, yb), src_w, src_h,
+            (x, yb), pipe_w, pipe_h,
             boxstyle="round,pad=0.02,rounding_size=0.18",
-            linewidth=1.8, facecolor=fill, edgecolor=edge, zorder=2,
+            linewidth=2.0 if active else 1.3,
+            facecolor=fill, edgecolor=edge,
+            linestyle="-" if active else "--", zorder=2,
         ))
-        ax.text(cx, src_y_c + src_h / 2 - 0.55, src_titles[i],
-                ha="center", va="center", fontsize=10.0,
-                fontweight="bold", color=edge, family="serif", zorder=3)
-        ax.text(cx, src_y_c + src_h / 2 - 1.30, src_arch[i],
-                ha="center", va="center", fontsize=8.2,
-                fontstyle="italic", color=TEXT_NAVY, family="serif", zorder=3)
-        ax.text(cx, src_y_c + 1.05, src_inputs[i],
-                ha="center", va="center", fontsize=8.0,
-                color=TEXT_NAVY, family="serif",
-                linespacing=1.20, zorder=3)
-        ax.text(cx, src_y_c - 0.55, src_eq[i],
-                ha="center", va="center", fontsize=8.4,
-                color=edge, family="serif", zorder=3)
-        ax.text(cx, src_y_c - 1.85, src_subset[i],
-                ha="center", va="center", fontsize=7.8,
-                color=TEXT_SLATE, family="serif",
-                linespacing=1.20, zorder=3)
-        ax.text(cx, src_y_c - src_h / 2 + 0.45, src_metrics[i],
-                ha="center", va="center", fontsize=8.4,
-                fontstyle="italic", color=TEXT_SLATE, family="serif",
-                zorder=3)
-
-        ax.plot([bypass_x, cx], [bypass_y, bypass_y],
-                color=GOLD, lw=1.2, linestyle=(0, (5, 3)), zorder=3)
-        add_arrow(ax, cx, bypass_y, cx, src_y_c + src_h / 2 + 0.05,
-                  color=GOLD, dashed=True, lw=1.4)
-
-    # ── Stage C (right): per-row label vectors ───────────────────────────
-    label_x  = 47.4
-    label_w  = 5.6
-    label_h  = 1.6
-    label_specs = [
-        (GREEN,  PALE_GREEN,  r"$y_{\mathrm{viab}} \in [0, 1]$"),
-        (GOLD,   PALE_GOLD,   r"$y_{\mathrm{sens}} \in \mathbb{R}$"),
-        (RED,    PALE_RED,    r"$y_{\mathrm{haz}} \in \{0, 1\}$"),
-        (PURPLE, PALE_PURPLE, r"$y_{\mathrm{perf}} \in \mathbb{R}^4$"),
-    ]
-    label_y_centres = np.linspace(src_y_c + 2.7, src_y_c - 2.7, 4)
-
-    for i, (edge, fill, txt) in enumerate(label_specs):
-        ly = label_y_centres[i]
-        x = label_x - label_w / 2
-        yb = ly - label_h / 2
-        ax.add_patch(FancyBboxPatch(
-            (x + 0.04, yb - 0.04), label_w, label_h,
-            boxstyle="round,pad=0.02,rounding_size=0.16",
-            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
-        ))
-        ax.add_patch(FancyBboxPatch(
-            (x, yb), label_w, label_h,
-            boxstyle="round,pad=0.02,rounding_size=0.16",
-            linewidth=1.6, facecolor=fill, edgecolor=edge, zorder=2,
-        ))
-        ax.text(label_x, ly, txt, ha="center", va="center",
-                fontsize=10.4, fontweight=600, color=TEXT_NAVY,
+        ax.text(cx, cy + pipe_h / 2 - 0.55, title,
+                ha="center", va="center",
+                fontsize=12.4 if active else 11.4,
+                fontweight="bold",
+                color=edge if active else TEXT_SLATE,
+                family="serif", zorder=3)
+        ax.text(cx, cy - 0.10, sub,
+                ha="center", va="center",
+                fontsize=9.2 if active else 8.6,
+                color=TEXT_NAVY if active else TEXT_LIGHT,
+                family="serif", linespacing=1.25, zorder=3)
+        tag = "ACTIVE STEERING" if active else "AUXILIARY (multi-task only)"
+        ax.text(cx, cy - pipe_h / 2 + 0.45, tag,
+                ha="center", va="center",
+                fontsize=8.0, fontweight="bold", fontstyle="italic",
+                color=edge if active else TEXT_LIGHT,
                 family="serif", zorder=3)
 
-        cx = src_centres[i]
-        add_arrow(ax, cx + src_w / 2 + 0.05, src_y_c,
-                  label_x - label_w / 2 - 0.05, ly,
-                  color=edge_cols[i], lw=1.8)
+        # Per-row output label box
+        lx = label_x - label_w / 2
+        lyb = cy - label_h / 2
+        ax.add_patch(FancyBboxPatch(
+            (lx + 0.04, lyb - 0.04), label_w, label_h,
+            boxstyle="round,pad=0.02,rounding_size=0.14",
+            linewidth=0, facecolor="#0a1620",
+            alpha=0.08 if active else 0.03, zorder=1,
+        ))
+        ax.add_patch(FancyBboxPatch(
+            (lx, lyb), label_w, label_h,
+            boxstyle="round,pad=0.02,rounding_size=0.14",
+            linewidth=1.6 if active else 1.2,
+            facecolor=fill, edgecolor=edge,
+            linestyle="-" if active else "--", zorder=2,
+        ))
+        ax.text(label_x, cy, lab, ha="center", va="center",
+                fontsize=10.6, fontweight=600,
+                color=TEXT_NAVY if active else TEXT_SLATE,
+                family="serif", zorder=3)
 
-    ax.text(label_x, label_y_centres[-1] - 1.7,
-            r"$\to$ used in 4(e2) for",
+        # Arrow from pipeline to label
+        pipe_right_x = cx + pipe_w / 2 + 0.05
+        add_arrow(ax, pipe_right_x, cy, lx - 0.05, cy,
+                  color=edge if active else TEXT_LIGHT,
+                  lw=1.8 if active else 1.2,
+                  dashed=not active)
+
+        # Latent feed into pipeline (from cached LIMO z box)
+        latent_right_x = col_x + col_w / 2 + 0.05
+        add_arrow(ax,
+                  latent_right_x, latent_y,
+                  cx - pipe_w / 2 - 0.05, cy,
+                  color=NAVY, lw=1.3)
+
+    # SMILES side-channel: a single gold-dashed vertical bus down the left
+    # margin (SMILES is the canonical reference consumed by all six
+    # pipelines for fingerprints, SMARTS, chemotype lookup, etc.). One
+    # consolidated arrow into the latent box marks "SMILES informs labels".
+    sm_right_x = col_x + col_w / 2 + 0.05
+    bypass_x = col_x + col_w / 2 + 0.8
+    ax.plot([sm_right_x, bypass_x], [smiles_y, smiles_y],
+            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=3)
+    ax.plot([bypass_x, bypass_x], [smiles_y, latent_y - 1.6],
+            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=3)
+    add_arrow(ax, bypass_x, latent_y - 1.6,
+              col_x + 1.5, latent_y - 1.0,
+              color=GOLD, dashed=True, lw=1.2)
+    add_label(ax, bypass_x + 0.30, (smiles_y + latent_y) / 2,
+              "SMILES side-channel",
+              color=GOLD, size=8.4, italic=True, bold=True)
+
+    # ── Cached training labels stack icon ────────────────────────────────
+    stack_x = label_x + label_w / 2 + 2.4
+    stack_y = (rows_y[0] + rows_y[-1]) / 2
+    stack_w = 3.0
+    stack_h = 1.4
+    for k in range(3):
+        sx = stack_x - stack_w / 2 + k * 0.20
+        sy = stack_y - stack_h / 2 - k * 0.20
+        ax.add_patch(FancyBboxPatch(
+            (sx, sy), stack_w, stack_h,
+            boxstyle="round,pad=0.02,rounding_size=0.10",
+            linewidth=1.4, facecolor=CREAM, edgecolor=NAVY, zorder=2 + k,
+        ))
+    ax.text(stack_x + 0.20, stack_y - 0.20,
+            "cached training\nlabels (6 cols)",
+            ha="center", va="center", fontsize=9.0, fontweight="bold",
+            color=TEXT_NAVY, family="serif",
+            linespacing=1.2, zorder=6)
+    # Arrows from each label box into the stack
+    for cy in rows_y:
+        add_arrow(ax,
+                  label_x + label_w / 2 + 0.05, cy,
+                  stack_x - stack_w / 2 - 0.05, stack_y,
+                  color=NAVY, lw=1.0)
+
+    ax.text(stack_x, rows_y[-1] - 3.0,
+            r"$\to$ Fig 11: score-model",
             ha="center", va="center", fontsize=9.4, fontweight="bold",
             color=TEXT_NAVY, family="serif", zorder=3)
-    ax.text(label_x, label_y_centres[-1] - 2.3,
-            r"score-model head training",
+    ax.text(stack_x, rows_y[-1] - 3.7,
+            r"head training",
             ha="center", va="center", fontsize=9.4, fontweight="bold",
             color=TEXT_NAVY, family="serif", zorder=3)
 
-    add_label(ax, col_x, 23.0, "Stage A: shared input",
-              color=TEXT_NAVY, size=11.0, italic=True, bold=True, ha="center")
-    add_label(ax, (src_centres[0] + src_centres[-1]) / 2, 23.0,
-              "Stage B: four label-source models",
-              color=TEXT_NAVY, size=11.0, italic=True, bold=True, ha="center")
-    add_label(ax, label_x, 23.0, "Stage C: per-row labels",
-              color=TEXT_NAVY, size=11.0, italic=True, bold=True, ha="center")
+    # ── Stage labels (top banner) ────────────────────────────────────────
+    banner_y = 34.6
+    add_label(ax, col_x, banner_y, "Stage A: shared input",
+              color=TEXT_NAVY, size=10.6, italic=True, bold=True, ha="center")
+    add_label(ax, col_active_x, banner_y,
+              "Stage B (active steering)",
+              color=GREEN, size=10.6, italic=True, bold=True, ha="center")
+    add_label(ax, col_aux_x, banner_y,
+              "Stage B (auxiliary multi-task)",
+              color=TEXT_SLATE, size=10.6, italic=True, bold=True, ha="center")
+    add_label(ax, label_x, banner_y, "Stage C: per-row labels",
+              color=TEXT_NAVY, size=10.6, italic=True, bold=True, ha="center")
 
     base = os.path.join(OUT_DIR, "fig4e1_data_labeling")
     save(fig, base)
@@ -1017,15 +1076,17 @@ def fig4e1_data_labeling():
 # 4e2  Score-model head training
 # ──────────────────────────────────────────────────────────────────────────
 def fig4e2_score_training():
-    """Cached (z, sigma_t) -> trunk -> 4 heads -> 4 losses -> sum loss; with a
-    hard-negative self-distillation feedback loop on the right margin and a
-    gold-dashed handoff to the guidance bus / 4(c)."""
-    fig, ax = plt.subplots(figsize=(16.0, 10.4), dpi=300)
+    """Cached z + forward diffusion -> shared 4-block FiLM-MLP trunk ->
+    SIX heads in two visually distinct groups (3 active steering + 3 auxiliary
+    multi-task) -> per-head losses -> single L_score = Sum_k a_k w_k L_k.
+    Saved as `fig4e1_guide_train` (the basename consumed by index.html).
+    """
+    fig, ax = plt.subplots(figsize=(16.0, 9.88), dpi=300)
     setup_axes(ax, xmax=40.0, ymax=26.0)
 
-    y_in = 23.0
+    y_in = 23.4
     add_box(ax, 4.0, 4.0, 1.8, y_in, CREAM, NAVY,
-            r"cached $z$",
+            r"cached $\mu$",
             "LIMO latent (1024-d)", title_size=10.8, sub_size=8.4)
     add_box(ax, 12.0, 6.0, 2.2, y_in, PALE_PURPLE, PURPLE,
             "Forward diffusion",
@@ -1033,16 +1094,16 @@ def fig4e2_score_training():
             title_size=10.6, sub_size=8.8)
     add_box(ax, 20.6, 6.4, 2.2, y_in, PALE_PURPLE, PURPLE,
             r"$\sigma_t = \sqrt{1 - \bar\alpha_t}$",
-            "128-d sinusoidal embed", title_size=10.6, sub_size=8.6)
+            "$\\sigma$-FiLM modulation", title_size=10.6, sub_size=8.6)
 
     add_arrow(ax, 4.0 + 2.0, y_in, 12.0 - 3.0, y_in, lw=1.8)
     add_arrow(ax, 12.0 + 3.0, y_in, 20.6 - 3.2, y_in,
               color=PURPLE, dashed=True, lw=1.6)
 
     trunk_x_c = 14.4
-    trunk_y_c = 18.4
+    trunk_y_c = 19.0
     trunk_w   = 16.4
-    trunk_h   = 2.8
+    trunk_h   = 2.6
     tx = trunk_x_c - trunk_w / 2
     ty = trunk_y_c - trunk_h / 2
     ax.add_patch(FancyBboxPatch(
@@ -1071,168 +1132,214 @@ def fig4e2_score_training():
               trunk_x_c + 3.0, trunk_y_c + trunk_h / 2 + 0.05,
               color=PURPLE, lw=1.8)
 
-    bus_y = trunk_y_c - trunk_h / 2 - 1.0
-    head_centres = [5.4, 12.6, 19.8, 27.0]
+    # 6 heads spread across the trunk-feature bus
+    bus_y = trunk_y_c - trunk_h / 2 - 0.9
+    head_centres = [3.6, 9.2, 14.8, 20.6, 26.4, 32.2]
+    head_active  = [True, True, True, False, False, False]
+    head_names   = ["Viability", "Sensitivity", "Hazard",
+                    "Performance", "SA", "SC"]
+    head_arch    = [
+        "Lin(1024$\\to$256)$\\to$SiLU\nLin(256$\\to$1) + sigmoid",
+        "Lin(1024$\\to$256)$\\to$SiLU\nLin(256$\\to$1)",
+        "Lin(1024$\\to$256)$\\to$SiLU\nLin(256$\\to$1) + sigmoid",
+        "Lin(1024$\\to$256)$\\to$SiLU\nLin(256$\\to$4)",
+        "Lin(1024$\\to$256)$\\to$SiLU\nLin(256$\\to$1)",
+        "Lin(1024$\\to$256)$\\to$SiLU\nLin(256$\\to$1)",
+    ]
+    head_out     = [
+        r"$\hat y_{\mathrm{viab}}$",
+        r"$\hat y_{\mathrm{sens}}$",
+        r"$\hat y_{\mathrm{haz}}$",
+        r"$\hat y_{\mathrm{perf}}{=}(\rho,D,P,\mathrm{HOF})$",
+        r"$\hat y_{\mathrm{SA}}$",
+        r"$\hat y_{\mathrm{SC}}$",
+    ]
+    head_loss    = [
+        r"$\mathcal{L}_{\mathrm{viab}}{=}\mathrm{BCE}$",
+        r"$\mathcal{L}_{\mathrm{sens}}{=}\mathrm{SmoothL1}$",
+        r"$\mathcal{L}_{\mathrm{haz}}{=}\mathrm{BCE}$",
+        r"$\mathcal{L}_{\mathrm{perf}}{=}\mathrm{SmoothL1}$",
+        r"$\mathcal{L}_{\mathrm{SA}}{=}\mathrm{SmoothL1}$",
+        r"$\mathcal{L}_{\mathrm{SC}}{=}\mathrm{SmoothL1}$",
+    ]
+    head_w_lbl   = ["$w$=1.0", "$w$=1.0", "$w$=1.0",
+                    "$w$=0.5", "$w$=0.25", "$w$=0.25"]
+    edge_cols    = [GREEN, GOLD, RED, PURPLE, TEXT_SLATE, TEXT_SLATE]
+    fill_cols    = [PALE_GREEN, PALE_GOLD, PALE_RED,
+                    PALE_PURPLE, "#f0f1f3", "#f0f1f3"]
+
+    # bus line spanning all 6 heads
     ax.plot([trunk_x_c, trunk_x_c],
             [trunk_y_c - trunk_h / 2 - 0.05, bus_y],
             color=NAVY, lw=2.4, zorder=4)
     ax.plot([head_centres[0], head_centres[-1]], [bus_y, bus_y],
             color=NAVY, lw=2.4, zorder=4)
-    add_label(ax, trunk_x_c, bus_y + 0.40,
-              "1024-d feature bus", color=TEXT_SLATE, size=9.0,
-              italic=True, ha="center")
+    add_label(ax, trunk_x_c, bus_y + 0.35,
+              "1024-d shared feature bus",
+              color=TEXT_SLATE, size=9.0, italic=True, ha="center")
 
-    head_y_c = 12.4
-    head_w   = 5.2
-    head_h   = 2.4
-    head_names = ["Viability", "Sensitivity", "Hazard", "Performance"]
-    head_arch  = [
-        r"Linear(1024 $\to$ 1) + sigmoid",
-        r"Linear(1024 $\to$ 1)",
-        r"Linear(1024 $\to$ 1) + sigmoid",
-        r"Linear(1024 $\to$ 4)",
-    ]
-    head_outputs = [
-        r"$\hat y_{\mathrm{viab}}$",
-        r"$\hat y_{\mathrm{sens}}$  ($h_{50}$)",
-        r"$\hat y_{\mathrm{haz}}$",
-        r"$\hat y_{\mathrm{perf}} = (\rho, D, P, \mathrm{HOF})$",
-    ]
-    edge_cols2 = [GREEN, GOLD, RED, PURPLE]
-    fill_cols2 = [PALE_GREEN, PALE_GOLD, PALE_RED, PALE_PURPLE]
+    head_y_c = 14.0
+    head_w   = 5.0
+    head_h   = 3.0
+    loss_y_c = 9.0
+    loss_w   = 5.0
+    loss_h   = 1.7
 
     for i, cx in enumerate(head_centres):
-        edge = edge_cols2[i]
-        fill = fill_cols2[i]
+        edge = edge_cols[i]
+        fill = fill_cols[i]
+        active = head_active[i]
+        ls   = "-" if active else "--"
+        lw_b = 2.0 if active else 1.3
+
         add_arrow(ax, cx, bus_y, cx, head_y_c + head_h / 2 + 0.05,
-                  color=NAVY, lw=1.8)
+                  color=NAVY, lw=1.6, dashed=not active)
         x = cx - head_w / 2
         yb = head_y_c - head_h / 2
         ax.add_patch(FancyBboxPatch(
             (x + 0.04, yb - 0.04), head_w, head_h,
             boxstyle="round,pad=0.02,rounding_size=0.18",
-            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+            linewidth=0, facecolor="#0a1620",
+            alpha=0.10 if active else 0.04, zorder=1,
         ))
         ax.add_patch(FancyBboxPatch(
             (x, yb), head_w, head_h,
             boxstyle="round,pad=0.02,rounding_size=0.18",
-            linewidth=1.8, facecolor=fill, edgecolor=edge, zorder=2,
+            linewidth=lw_b, facecolor=fill, edgecolor=edge,
+            linestyle=ls, zorder=2,
         ))
-        ax.text(cx, head_y_c + 0.65, head_names[i] + " head",
-                ha="center", va="center", fontsize=11.2,
-                fontweight="bold", color=TEXT_NAVY, family="serif", zorder=3)
-        ax.text(cx, head_y_c + 0.05, head_arch[i],
-                ha="center", va="center", fontsize=8.4,
-                color=TEXT_SLATE, family="serif", zorder=3)
-        ax.text(cx, head_y_c - 0.65, head_outputs[i],
-                ha="center", va="center", fontsize=8.8,
-                fontstyle="italic", color=edge, family="serif", zorder=3)
+        ax.text(cx, head_y_c + head_h / 2 - 0.40,
+                head_names[i] + " head",
+                ha="center", va="center",
+                fontsize=10.6 if active else 9.6,
+                fontweight="bold",
+                color=edge if active else TEXT_SLATE,
+                family="serif", zorder=3)
+        ax.text(cx, head_y_c + 0.30, head_arch[i],
+                ha="center", va="center",
+                fontsize=6.8, linespacing=1.20,
+                color=TEXT_NAVY if active else TEXT_LIGHT,
+                family="serif", zorder=3)
+        ax.text(cx, head_y_c - 0.65, head_out[i],
+                ha="center", va="center",
+                fontsize=8.0, fontstyle="italic",
+                color=edge if active else TEXT_LIGHT,
+                family="serif", zorder=3)
+        tag = "ACTIVE STEERING" if active else "AUX (multi-task)"
+        ax.text(cx, head_y_c - head_h / 2 + 0.30, tag,
+                ha="center", va="center",
+                fontsize=7.4, fontweight="bold", fontstyle="italic",
+                color=edge if active else TEXT_LIGHT,
+                family="serif", zorder=3)
 
-    loss_y_c = 7.6
-    loss_w   = 5.2
-    loss_h   = 1.6
-    loss_specs = [
-        r"$\mathcal{L}_{\mathrm{viab}} = \mathrm{BCE}$",
-        r"$\mathcal{L}_{\mathrm{sens}} = \mathrm{SmoothL1}$",
-        r"$\mathcal{L}_{\mathrm{haz}} = \mathrm{BCE}$",
-        r"$\mathcal{L}_{\mathrm{perf}} = \mathrm{SmoothL1}$",
-    ]
-    for i, cx in enumerate(head_centres):
+        # loss box
         add_arrow(ax, cx, head_y_c - head_h / 2 - 0.05,
                   cx, loss_y_c + loss_h / 2 + 0.05,
-                  color=RED, dashed=True, lw=1.5)
-        x = cx - loss_w / 2
-        yb = loss_y_c - loss_h / 2
+                  color=RED, dashed=not active, lw=1.4)
+        lx = cx - loss_w / 2
+        lyb = loss_y_c - loss_h / 2
         ax.add_patch(FancyBboxPatch(
-            (x + 0.04, yb - 0.04), loss_w, loss_h,
-            boxstyle="round,pad=0.02,rounding_size=0.16",
-            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+            (lx + 0.04, lyb - 0.04), loss_w, loss_h,
+            boxstyle="round,pad=0.02,rounding_size=0.14",
+            linewidth=0, facecolor="#0a1620",
+            alpha=0.10 if active else 0.04, zorder=1,
         ))
         ax.add_patch(FancyBboxPatch(
-            (x, yb), loss_w, loss_h,
-            boxstyle="round,pad=0.02,rounding_size=0.16",
-            linewidth=1.5, facecolor=PALE_RED, edgecolor=RED, zorder=2,
+            (lx, lyb), loss_w, loss_h,
+            boxstyle="round,pad=0.02,rounding_size=0.14",
+            linewidth=1.4 if active else 1.1,
+            facecolor=PALE_RED if active else "#fbf3f3",
+            edgecolor=RED, linestyle="-" if active else "--", zorder=2,
         ))
-        ax.text(cx, loss_y_c, loss_specs[i],
-                ha="center", va="center", fontsize=9.4,
-                color=TEXT_NAVY, family="serif", zorder=3)
+        ax.text(cx, loss_y_c + 0.30, head_loss[i],
+                ha="center", va="center", fontsize=8.6,
+                color=TEXT_NAVY if active else TEXT_SLATE,
+                family="serif", zorder=3)
+        ax.text(cx, loss_y_c - 0.30, head_w_lbl[i],
+                ha="center", va="center", fontsize=8.2,
+                fontweight="bold",
+                color=RED if active else TEXT_SLATE,
+                family="serif", zorder=3)
 
-    sum_x_c = trunk_x_c
+    # Loss summing block
+    sum_x_c = trunk_x_c + 3.0
     sum_y_c = 3.6
-    sum_w   = 14.0
-    sum_h   = 1.8
-    x = sum_x_c - sum_w / 2
-    yb = sum_y_c - sum_h / 2
+    sum_w   = 22.0
+    sum_h   = 2.0
+    sx = sum_x_c - sum_w / 2
+    syb = sum_y_c - sum_h / 2
     ax.add_patch(FancyBboxPatch(
-        (x + 0.04, yb - 0.04), sum_w, sum_h,
+        (sx + 0.04, syb - 0.04), sum_w, sum_h,
         boxstyle="round,pad=0.04,rounding_size=0.20",
         linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
     ))
     ax.add_patch(FancyBboxPatch(
-        (x, yb), sum_w, sum_h,
+        (sx, syb), sum_w, sum_h,
         boxstyle="round,pad=0.04,rounding_size=0.20",
         linewidth=2.0, facecolor=PALE_RED, edgecolor=RED, zorder=2,
     ))
-    ax.text(sum_x_c, sum_y_c + 0.20,
-            r"$\mathcal{L}_{\mathrm{score}} = \sum_k a_k \, w_k \, \mathcal{L}_k$",
-            ha="center", va="center", fontsize=12.0, fontweight="bold",
+    ax.text(sum_x_c, sum_y_c + 0.40,
+            r"$\mathcal{L}_{\mathrm{score}} = \sum_{k=1}^{6} a_k \, w_k \, \mathcal{L}_k$",
+            ha="center", va="center", fontsize=12.4, fontweight="bold",
             color=TEXT_NAVY, family="serif", zorder=3)
-    ax.text(sum_x_c, sum_y_c - 0.40,
-            "AdamW, LR 1e-4 cosine, batch 1024, ~40k steps, EMA 0.999",
+    ax.text(sum_x_c, sum_y_c - 0.55,
+            r"availability mask $a \in \{0,1\}^6$;  $a_k{=}1$ iff row carries label for head $k$",
             ha="center", va="center", fontsize=8.6, fontstyle="italic",
             color=TEXT_SLATE, family="serif", zorder=3)
 
-    for cx in head_centres:
+    for i, cx in enumerate(head_centres):
         add_arrow(ax, cx, loss_y_c - loss_h / 2 - 0.05,
                   sum_x_c, sum_y_c + sum_h / 2 + 0.05,
-                  color=RED, lw=1.5)
+                  color=RED, lw=1.4 if head_active[i] else 1.0,
+                  dashed=not head_active[i])
 
-    hn_x = 35.6
-    ax.plot([trunk_x_c + trunk_w / 2 + 0.05, hn_x],
-            [trunk_y_c, trunk_y_c],
-            color=GOLD, lw=1.4, linestyle=(0, (2, 3)), zorder=4)
-    ax.plot([hn_x, hn_x], [trunk_y_c, y_in + 1.4],
-            color=GOLD, lw=1.4, linestyle=(0, (2, 3)), zorder=4)
-    ax.plot([hn_x, 4.0 + 2.1], [y_in + 1.4, y_in + 1.4],
-            color=GOLD, lw=1.4, linestyle=(0, (2, 3)), zorder=4)
-    add_arrow(ax, 4.0 + 2.1, y_in + 1.4, 4.0 + 2.1, y_in + 0.95,
-              color=GOLD, dashed=True, lw=1.4)
-    ax.text(hn_x + 0.4, (trunk_y_c + y_in) / 2 + 0.4,
-            "self-distillation:",
-            ha="left", va="center", fontsize=8.6, fontweight="bold",
-            color=GOLD, family="serif", zorder=3)
-    ax.text(hn_x + 0.4, (trunk_y_c + y_in) / 2 - 0.10,
-            r"137 $\to$ 918 hard negatives",
-            ha="left", va="center", fontsize=8.4,
-            color=GOLD, family="serif", zorder=3)
-    ax.text(hn_x + 0.4, (trunk_y_c + y_in) / 2 - 0.55,
-            "encoded as viab=0",
-            ha="left", va="center", fontsize=8.4, fontstyle="italic",
-            color=GOLD, family="serif", zorder=3)
-    ax.text(hn_x + 0.4, (trunk_y_c + y_in) / 2 - 1.10,
-            "3 rounds; anchor/cheat probe stops",
-            ha="left", va="center", fontsize=8.0, fontstyle="italic",
+    # Optimiser block (bottom strip)
+    opt_x_c = sum_x_c
+    opt_y_c = 1.4
+    opt_w   = 22.0
+    opt_h   = 1.1
+    ox = opt_x_c - opt_w / 2
+    oyb = opt_y_c - opt_h / 2
+    ax.add_patch(FancyBboxPatch(
+        (ox, oyb), opt_w, opt_h,
+        boxstyle="round,pad=0.02,rounding_size=0.14",
+        linewidth=1.4, facecolor=PALE_PURPLE, edgecolor=PURPLE, zorder=2,
+    ))
+    ax.text(opt_x_c, opt_y_c,
+            "AdamW;  LR 1e-4 cosine;  batch 1024;  ~40k steps;  EMA 0.999",
+            ha="center", va="center", fontsize=9.4, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    add_arrow(ax, sum_x_c, sum_y_c - sum_h / 2 - 0.05,
+              opt_x_c, opt_y_c + opt_h / 2 + 0.05,
+              color=PURPLE, lw=1.6)
+
+    # Per-row label feed (left margin) - small annotation, no arrow into the
+    # first loss box (would visually clash with the loss/arrow stack).
+    add_label(ax, 0.4, loss_y_c + 1.20,
+              r"per-row labels  $y_k$  from Fig 10",
+              color=RED, size=8.4, italic=True, bold=True)
+
+    # Trunk-regularisation caption
+    ax.text(20.0, 0.4,
+            "auxiliary heads (dashed) are trained for multi-task trunk "
+            "regularisation; only Viab + Sens + Hazard are invoked at "
+            "sample time (Fig 13)",
+            ha="center", va="center", fontsize=8.6, fontstyle="italic",
             color=TEXT_SLATE, family="serif", zorder=3)
 
-    handoff_y = head_y_c
-    add_arrow(ax, head_centres[-1] + head_w / 2 + 0.05, handoff_y,
-              hn_x - 0.4, handoff_y, color=GOLD, dashed=True, lw=1.8)
-    ax.text(hn_x + 0.4, handoff_y + 0.55,
-            r"$\to$ guidance bus",
-            ha="left", va="center", fontsize=10.0, fontweight="bold",
-            color=GOLD, family="serif", zorder=3)
-    ax.text(hn_x + 0.4, handoff_y - 0.05,
-            r"$\to$ 4(c)",
-            ha="left", va="center", fontsize=10.0, fontweight="bold",
-            color=GOLD, family="serif", zorder=3)
+    # Group dividers / row banners between active and aux heads
+    ax.text(head_centres[1], head_y_c + head_h / 2 + 0.55,
+            "ACTIVE STEERING (3 of 6) - invoked at sample time",
+            ha="center", va="center", fontsize=9.4, fontweight="bold",
+            color=GREEN, family="serif", zorder=3)
+    ax.text((head_centres[3] + head_centres[5]) / 2,
+            head_y_c + head_h / 2 + 0.55,
+            "AUXILIARY MULTI-TASK (3 of 6) - trunk regularisation only",
+            ha="center", va="center", fontsize=9.4, fontweight="bold",
+            color=TEXT_SLATE, family="serif", zorder=3)
 
-    add_label(ax, 0.6, loss_y_c + 1.05,
-              r"per-row labels  $y_k$  from 4(e1)",
-              color=RED, size=9.0, italic=True, bold=True)
-    add_arrow(ax, 2.4, loss_y_c, head_centres[0] - loss_w / 2 - 0.05,
-              loss_y_c, color=RED, dashed=True, lw=1.4)
-
-    base = os.path.join(OUT_DIR, "fig4e2_score_training")
+    # Save under the basename used by index.html (fig4e1_guide_train).
+    base = os.path.join(OUT_DIR, "fig4e1_guide_train")
     save(fig, base)
 
 
@@ -2683,20 +2790,45 @@ def fig4_1_pipeline_overview():
     print("Saved:", base + ".{png,svg}")
 
 
+def _quantise_png(path, max_w=1600, max_kb=140):
+    """Resize (if huge) and palette-256 quantise PNG in place to keep size small."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return
+    if not os.path.exists(path):
+        return
+    img = Image.open(path).convert("RGBA")
+    if img.size[0] > max_w:
+        ratio = max_w / img.size[0]
+        new_size = (max_w, int(round(img.size[1] * ratio)))
+        img = img.resize(new_size, Image.LANCZOS)
+    bg = Image.new("RGBA", img.size, (255, 255, 255, 255))
+    bg.alpha_composite(img)
+    flat = bg.convert("RGB")
+    pal = flat.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=0)
+    pal.save(path, format="PNG", optimize=True)
+    sz_kb = os.path.getsize(path) / 1024.0
+    print(f"  quantised: {os.path.basename(path)} -> {img.size} {sz_kb:.1f} KB")
+
+
 if __name__ == "__main__":
-    # NOTE: fig4a_data_prep(), fig4c_sampling_guidance(), and
-    # fig4d_decode_rerank() are intentionally NOT called here. Their PNGs are
-    # sourced from hand-authored assets:
-    #   assets/4a_LIMO_TRAIN.png        -> figs/fig4a_data_prep.png
-    #   assets/4C_classifier_guide.png  -> figs/fig4c_sampling_guidance.png
-    #   assets/_4d sampling.png         -> figs/fig4d_decode_rerank.png
-    # Re-running the matplotlib renderer would clobber those assets. The
-    # functions are preserved as documentation of alternative layouts.
-    # fig4e1_data_labeling() is also asset-sourced now:
-    #   assets/4e1_score_labels.png -> figs/fig4e1_data_labeling.png
+    # Re-enabled: the three score-model figures are now matplotlib-rendered
+    # to reflect the verified 6-head-on-shared-trunk architecture (3 active
+    # steering heads + 3 auxiliary multi-task heads).
     fig4b_train_loop()
-    fig4e2_score_training()
+    fig4c_sampling_guidance()       # 3 active steering signals
+    fig4e1_data_labeling()          # 6 label pipelines (3 active + 3 aux)
+    fig4e2_score_training()         # 6 heads, saved as fig4e1_guide_train
     fig4g_mask_sampling()
     fig4f_self_distillation()
     fig4g_pool_fusion()
+
+    # Palette-256 quantise the three regenerated figures to keep file size
+    # under ~120 KB each (acceptance criterion 4).
+    for name in ("fig4c_sampling_guidance",
+                 "fig4e1_data_labeling",
+                 "fig4e1_guide_train",
+                 "fig4b_sampling"):       # alias copy of fig4c
+        _quantise_png(os.path.join(OUT_DIR, name + ".png"))
     fig4_1_pipeline_overview()
