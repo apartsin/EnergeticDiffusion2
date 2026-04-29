@@ -500,10 +500,11 @@ def fig4b_train_loop():
             r"inputs: $(z_t,\; t,\; p,\; m)$",
             title_size=11.5, sub_size=9.5)
 
-    # Loss (RED) — show m elementwise multiplied with (eps - hat eps)
+    # Loss (RED) — plain full-latent-dim MSE; m gates FiLM, not the loss.
+    # Optional row-weight omega from tier weights w (see Fig 4(g)).
     add_box(ax, cx_loss, BW_MAIN, BH_MAIN, mid_y, PALE_RED, RED,
-            "masked MSE",
-            r"$\mathcal{L} = \Vert\, m \odot (\varepsilon - \hat\varepsilon)\,\Vert^2$",
+            "MSE loss",
+            r"$\mathcal{L} = \frac{1}{1024}\,\Vert\varepsilon - \hat\varepsilon\Vert^2$",
             title_size=11.0, sub_size=10.0)
 
     # EMA (purple)
@@ -582,18 +583,10 @@ def fig4b_train_loop():
               r"true $\varepsilon$ (target)",
               color=PURPLE, size=9.5, italic=True, ha="center")
 
-    # ── m skip into the loss (gold dashed) — explicit gating ──────────
-    # m is also fed into the masked-MSE box (it appears as m in the
-    # formula); show this with a short gold-dashed branch from the
-    # gold conditioning route up into the loss box.
-    branch_x = cx_loss
-    ax.plot([branch_x, branch_x], [cond_y, mid_y - BH_MAIN / 2 - 0.05],
-            color=GOLD, lw=1.4, linestyle=(0, (5, 3)), zorder=4)
-    add_arrow(ax, branch_x, mid_y - BH_MAIN / 2 - 0.45,
-              branch_x, mid_y - BH_MAIN / 2 - 0.05,
-              color=GOLD, dashed=True, lw=1.4)
-    add_label(ax, branch_x + 0.20, (cond_y + mid_y - BH_MAIN / 2) / 2,
-              r"$m$", color=GOLD, size=10.5, italic=True, ha="left")
+    # NOTE: m does NOT enter the loss; it only gates the property vector p
+    # at the FiLM input of eps_theta (gold dashed route above). The loss is
+    # plain full-latent-dim MSE between epsilon and hat-epsilon. Optional
+    # row-weight omega = alpha + (1-alpha)*mean(w*m) is described in caption.
 
     # ── Loss -> EMA (red gradient) ────────────────────────────────────
     add_arrow(ax, cx_loss + HM + SH, mid_y, cx_ema - 1.40 - SH, mid_y,
