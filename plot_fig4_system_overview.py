@@ -1520,8 +1520,358 @@ def fig4e_head_training():
 # 4f  Mask construction: per-property inputs (value, availability, tier)
 #                       -> binary eligibility mask + tier weight
 # ──────────────────────────────────────────────────────────────────────────
-def fig4f_mask_construction():
-    """Per-property derivation diagram.
+def fig4g_mask_sampling():
+    """Per-step training mask construction (Fig 4g).
+
+    Five-stage left-to-right pipeline showing how the per-step
+    conditioning mask m is sampled fresh each gradient step from the
+    fixed per-row eligibility c and tier weight w:
+
+      Stage 1: subset_size k ~ Categorical(subset_size_probs)
+      Stage 2: chosen ~ multinomial(w[eligible], k)  [or uniform]
+      Stage 3: tentative mask m_hat = onehot(chosen)
+      Stage 4: property dropout (per entry, p=0.30)
+      Stage 5: cfg dropout (whole row to 0, p=0.10)
+      Output : m + row weight omega = alpha + (1-alpha) mean(w*m)
+    """
+    fig, ax = plt.subplots(figsize=(18.0, 7.5), dpi=300)
+    setup_axes(ax, xmax=42.0, ymax=14.0)
+
+    # Stage anchor x-centres (gap of ~5.6, box ~4.4 -> arrow gap ~1.2)
+    in_x = 3.4
+    s1_x = 9.4
+    s2_x = 15.0
+    s3_x = 20.6
+    s4_x = 26.4
+    s5_x = 32.0
+    out_x = 38.4
+
+    # Common box dims
+    box_w = 4.4
+    box_h = 3.6
+    bar_y = 9.0   # main row of stage boxes (centre y)
+
+    def stage_box(x, fill, edge, title, y=bar_y, w=box_w, h=box_h):
+        sh = FancyBboxPatch((x - w / 2 + 0.04, y - h / 2 - 0.04), w, h,
+                            boxstyle="round,pad=0.02,rounding_size=0.18",
+                            linewidth=0, facecolor="#0a1620", alpha=0.10,
+                            zorder=1)
+        ax.add_patch(sh)
+        b = FancyBboxPatch((x - w / 2, y - h / 2), w, h,
+                           boxstyle="round,pad=0.02,rounding_size=0.18",
+                           linewidth=1.5, facecolor=fill, edgecolor=edge,
+                           zorder=2)
+        ax.add_patch(b)
+        ax.text(x, y + h / 2 - 0.30, title, ha="center", va="center",
+                fontsize=10.0, fontweight=700, color=TEXT_NAVY,
+                family="serif", zorder=3)
+
+    def vec_cells(xc, y, vals, fill_fn, edge_fn, color_fn, label=None,
+                  cell_w=0.55, cell_h=0.55, gap=0.04, size=8.6):
+        n = len(vals)
+        total_w = n * cell_w + (n - 1) * gap
+        x0 = xc - total_w / 2 + cell_w / 2
+        for i, v in enumerate(vals):
+            xi = x0 + i * (cell_w + gap)
+            f = fill_fn(v, i)
+            e = edge_fn(v, i)
+            c = color_fn(v, i)
+            b = FancyBboxPatch((xi - cell_w / 2, y - cell_h / 2),
+                               cell_w, cell_h,
+                               boxstyle="round,pad=0.01,rounding_size=0.06",
+                               linewidth=0.9, facecolor=f, edgecolor=e,
+                               zorder=3)
+            ax.add_patch(b)
+            ax.text(xi, y, str(v), ha="center", va="center",
+                    fontsize=size, color=c, family="serif", zorder=4)
+        if label is not None:
+            ax.text(xc - total_w / 2 - 0.18, y, label, ha="right",
+                    va="center", fontsize=9.0, color=TEXT_NAVY,
+                    family="serif", zorder=3, fontstyle="italic")
+
+    # ── INPUTS column (c, w) ──
+    in_w, in_h = 3.4, 4.6
+    sh = FancyBboxPatch((in_x - in_w / 2 + 0.04, bar_y - in_h / 2 - 0.04),
+                        in_w, in_h,
+                        boxstyle="round,pad=0.02,rounding_size=0.18",
+                        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1)
+    ax.add_patch(sh)
+    b = FancyBboxPatch((in_x - in_w / 2, bar_y - in_h / 2), in_w, in_h,
+                       boxstyle="round,pad=0.02,rounding_size=0.18",
+                       linewidth=1.5, facecolor=CREAM, edgecolor=NAVY,
+                       zorder=2)
+    ax.add_patch(b)
+    ax.text(in_x, bar_y + in_h / 2 - 0.32, "fixed per-row inputs",
+            ha="center", va="center", fontsize=10.6, fontweight=700,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(in_x, bar_y + in_h / 2 - 0.78,
+            "(cached at data prep)", ha="center", va="center",
+            fontsize=8.6, fontstyle="italic", color=TEXT_SLATE,
+            family="serif", zorder=3)
+
+    # property-name header above the input vectors (aligned with cell centres)
+    ax.text(in_x + 0.50, bar_y + 0.95, r"$\rho$    HOF    $D$    $P$",
+            ha="center", va="center", fontsize=9.5, fontweight=700,
+            color=TEXT_NAVY, family="serif", zorder=3)
+
+    # c vector
+    c_vals = [1, 1, 0, 0]
+    vec_cells(in_x + 0.50, bar_y + 0.40, c_vals,
+              fill_fn=lambda v, i: PALE_GREEN if v == 1 else PALE_GREY,
+              edge_fn=lambda v, i: GREEN if v == 1 else TEXT_LIGHT,
+              color_fn=lambda v, i: GREEN if v == 1 else TEXT_SLATE,
+              label=r"$c$")
+    # w vector
+    w_vals = ["1.0", "1.0", "0.3", "0.1"]
+    vec_cells(in_x + 0.50, bar_y - 0.30, w_vals,
+              fill_fn=lambda v, i: PALE_GOLD if float(v) >= 0.5 else PALE_GREY,
+              edge_fn=lambda v, i: GOLD if float(v) >= 0.5 else TEXT_LIGHT,
+              color_fn=lambda v, i: GOLD if float(v) >= 0.5 else TEXT_SLATE,
+              label=r"$w$")
+    # legends below (kept inside the input box footprint)
+    ax.text(in_x + 0.50, bar_y - 1.20,
+            r"$c$: Tier-A/B $\wedge$ present",
+            ha="center", va="center", fontsize=8.0,
+            fontstyle="italic", color=GREEN, family="serif", zorder=3)
+    ax.text(in_x + 0.50, bar_y - 1.55,
+            r"$w$: A 1.0 / B 0.7 / C 0.3 / D 0.1",
+            ha="center", va="center", fontsize=8.0,
+            fontstyle="italic", color=GOLD, family="serif", zorder=3)
+
+    # ── STAGE 1: subset-size sampler (purple stochastic) ──
+    stage_box(s1_x, PALE_PURPLE, PURPLE,
+              "Stage 1: subset size")
+    # Categorical bars (k = 0..4)
+    cat_x0 = s1_x - 1.40
+    cat_y0 = bar_y - 0.95
+    cat_dx = 0.62
+    cat_probs = [0.10, 0.25, 0.30, 0.25, 0.10]
+    cat_max_h = 1.40
+    for i, p in enumerate(cat_probs):
+        bx = cat_x0 + i * cat_dx
+        h = cat_max_h * (p / 0.30)
+        rect = Rectangle((bx - 0.20, cat_y0), 0.40, h,
+                         facecolor=PURPLE, edgecolor=PURPLE,
+                         linewidth=0.5, alpha=0.85, zorder=3)
+        ax.add_patch(rect)
+        ax.text(bx, cat_y0 - 0.22, f"{i}", ha="center", va="center",
+                fontsize=8.4, color=TEXT_SLATE, family="serif", zorder=3)
+        ax.text(bx, cat_y0 + h + 0.18, f"{p:.2f}", ha="center", va="center",
+                fontsize=7.4, color=TEXT_SLATE, family="serif", zorder=3)
+    ax.text(s1_x, cat_y0 - 0.62,
+            r"$k \sim \mathrm{Cat}(0.10, 0.25, 0.30, 0.25, 0.10)$",
+            ha="center", va="center", fontsize=8.6, color=PURPLE,
+            family="serif", fontstyle="italic", zorder=3)
+    # sampled k callout (placed below title, above bars)
+    ax.text(s1_x, bar_y + 0.95, r"sampled  $k = 2$",
+            ha="center", va="center", fontsize=9.6, fontweight=700,
+            color=PURPLE, family="serif", zorder=3)
+
+    # ── STAGE 2: weighted pick (gold conditioning) ──
+    stage_box(s2_x, PALE_GOLD, GOLD,
+              "Stage 2: weighted pick")
+    # NOTE: shortened titles below keep within box width.
+    # Show formula and resulting indices
+    ax.text(s2_x, bar_y + 0.65,
+            r"chosen $\sim$ Multinom",
+            ha="center", va="center", fontsize=9.2, color=TEXT_NAVY,
+            family="serif", zorder=3)
+    ax.text(s2_x, bar_y + 0.25,
+            r"$(w[c{=}1],\, k)$",
+            ha="center", va="center", fontsize=9.2, color=TEXT_NAVY,
+            family="serif", zorder=3)
+    ax.text(s2_x, bar_y - 0.10,
+            r"(uniform if unweighted)",
+            ha="center", va="center", fontsize=8.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+    # eligible set graphic: positions where c=1 -> {0, 1}
+    ax.text(s2_x, bar_y - 0.55,
+            r"eligible $= \{0, 1\}$",
+            ha="center", va="center", fontsize=8.6, color=GREEN,
+            family="serif", zorder=3)
+    ax.text(s2_x, bar_y - 0.95,
+            r"chosen $= \{0, 1\}$",
+            ha="center", va="center", fontsize=9.4, fontweight=700,
+            color=GOLD, family="serif", zorder=3)
+    ax.text(s2_x, bar_y - 1.40,
+            r"($w$ favours Tier-A)",
+            ha="center", va="center", fontsize=8.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── STAGE 3: tentative mask m_hat ──
+    stage_box(s3_x, PALE_GREY, NAVY,
+              r"Stage 3: tentative $\hat m$")
+    mhat_vals = [1, 1, 0, 0]
+    vec_cells(s3_x, bar_y + 0.10, mhat_vals,
+              fill_fn=lambda v, i: PALE_GREEN if v == 1 else "#ffffff",
+              edge_fn=lambda v, i: NAVY if v == 1 else TEXT_LIGHT,
+              color_fn=lambda v, i: NAVY if v == 1 else TEXT_LIGHT,
+              cell_w=0.62, cell_h=0.62, size=9.6)
+    ax.text(s3_x, bar_y - 0.55,
+            r"$\hat m_i = \mathbb{1}[i \in \mathrm{chosen}]$",
+            ha="center", va="center", fontsize=9.0, color=TEXT_NAVY,
+            family="serif", zorder=3)
+    ax.text(s3_x, bar_y - 1.05,
+            "one-hot over chosen", ha="center", va="center",
+            fontsize=8.2, fontstyle="italic", color=TEXT_SLATE,
+            family="serif", zorder=3)
+
+    # ── STAGE 4: property dropout (purple stochastic) ──
+    stage_box(s4_x, PALE_PURPLE, PURPLE,
+              "Stage 4: prop dropout")
+    # show coin flips per entry, then result
+    coin_vals = ["1", "0", "1", "1"]   # rand >= 0.30 ? (per-entry retain)
+    ax.text(s4_x, bar_y + 0.95, r"per entry: $u_i \sim U[0,1)$",
+            ha="center", va="center", fontsize=8.6, color=PURPLE,
+            family="serif", fontstyle="italic", zorder=3)
+    vec_cells(s4_x, bar_y + 0.40,
+              [r"$u\!\geq\!.3$", r"$u\!<\!.3$", r"$u\!\geq\!.3$", r"$u\!\geq\!.3$"],
+              fill_fn=lambda v, i: PALE_PURPLE,
+              edge_fn=lambda v, i: PURPLE,
+              color_fn=lambda v, i: PURPLE,
+              cell_w=0.78, cell_h=0.45, size=7.0)
+    # outgoing intermediate mask after dropout: 1*1, 1*0, 0*1, 0*1 -> [1,0,0,0]
+    after_vals = [1, 0, 0, 0]
+    vec_cells(s4_x, bar_y - 0.30, after_vals,
+              fill_fn=lambda v, i: PALE_GREEN if v == 1 else "#ffffff",
+              edge_fn=lambda v, i: NAVY if v == 1 else TEXT_LIGHT,
+              color_fn=lambda v, i: NAVY if v == 1 else TEXT_LIGHT,
+              cell_w=0.62, cell_h=0.55, size=9.0)
+    ax.text(s4_x, bar_y - 0.95,
+            r"$\hat m_i \;\leftarrow\; \hat m_i \cdot \mathbb{1}[u_i \geq 0.30]$",
+            ha="center", va="center", fontsize=8.6, color=TEXT_NAVY,
+            family="serif", zorder=3)
+    ax.text(s4_x, bar_y - 1.35,
+            "(zero each entry w.p. 0.30)",
+            ha="center", va="center", fontsize=8.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── STAGE 5: cfg-dropout (purple stochastic) ──
+    stage_box(s5_x, PALE_PURPLE, PURPLE,
+              "Stage 5: CFG dropout")
+    # short title fits 4.4-wide box at fontsize 10
+    ax.text(s5_x, bar_y + 0.95,
+            r"$v \sim U[0,1)$",
+            ha="center", va="center", fontsize=9.0, color=PURPLE,
+            family="serif", fontstyle="italic", zorder=3)
+    ax.text(s5_x, bar_y + 0.40,
+            r"if $v < 0.10$:  $m \leftarrow 0$",
+            ha="center", va="center", fontsize=9.0, color=TEXT_NAVY,
+            family="serif", zorder=3)
+    ax.text(s5_x, bar_y - 0.10,
+            r"else:  $m \leftarrow \hat m$",
+            ha="center", va="center", fontsize=9.0, color=TEXT_NAVY,
+            family="serif", zorder=3)
+    ax.text(s5_x, bar_y - 0.70,
+            "(whole row unconditional)",
+            ha="center", va="center", fontsize=8.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+    ax.text(s5_x, bar_y - 1.20,
+            "trains the unconditional branch",
+            ha="center", va="center", fontsize=8.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── OUTPUT: final m + omega callout (red/loss colour for grad weight) ──
+    out_w, out_h = 3.4, 4.6
+    sh = FancyBboxPatch((out_x - out_w / 2 + 0.04, bar_y - out_h / 2 - 0.04),
+                        out_w, out_h,
+                        boxstyle="round,pad=0.02,rounding_size=0.18",
+                        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1)
+    ax.add_patch(sh)
+    b = FancyBboxPatch((out_x - out_w / 2, bar_y - out_h / 2), out_w, out_h,
+                       boxstyle="round,pad=0.02,rounding_size=0.18",
+                       linewidth=1.5, facecolor=PALE_RED, edgecolor=RED,
+                       zorder=2)
+    ax.add_patch(b)
+    ax.text(out_x, bar_y + out_h / 2 - 0.32, "output (this step)",
+            ha="center", va="center", fontsize=10.6, fontweight=700,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    # final m (assume CFG kept it: v >= 0.1)
+    ax.text(out_x, bar_y + 0.95, r"final mask  $m$",
+            ha="center", va="center", fontsize=9.6, fontweight=700,
+            color=NAVY, family="serif", zorder=3)
+    final_m = [1, 0, 0, 0]
+    vec_cells(out_x, bar_y + 0.40, final_m,
+              fill_fn=lambda v, i: PALE_GREEN if v == 1 else "#ffffff",
+              edge_fn=lambda v, i: NAVY if v == 1 else TEXT_LIGHT,
+              color_fn=lambda v, i: NAVY if v == 1 else TEXT_LIGHT,
+              cell_w=0.62, cell_h=0.62, size=10.0)
+    ax.text(out_x, bar_y - 0.20, r"$m \in \{0,1\}^4$  to FiLM",
+            ha="center", va="center", fontsize=8.6, fontstyle="italic",
+            color=NAVY, family="serif", zorder=3)
+    # omega
+    ax.text(out_x, bar_y - 0.80,
+            r"row weight  $\omega$",
+            ha="center", va="center", fontsize=9.6, fontweight=700,
+            color=RED, family="serif", zorder=3)
+    ax.text(out_x, bar_y - 1.30,
+            r"$\omega = \alpha + (1{-}\alpha)\,\overline{w \odot m}$",
+            ha="center", va="center", fontsize=8.8, color=TEXT_NAVY,
+            family="serif", zorder=3)
+    ax.text(out_x, bar_y - 1.75,
+            r"$\alpha{=}1$: $\omega{=}1$ (plain MSE)",
+            ha="center", va="center", fontsize=8.0, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── connecting arrows between stages ──
+    arrow_pairs = [
+        (in_x + in_w / 2,  s1_x - box_w / 2,  NAVY),
+        (s1_x + box_w / 2, s2_x - box_w / 2,  PURPLE),
+        (s2_x + box_w / 2, s3_x - box_w / 2,  GOLD),
+        (s3_x + box_w / 2, s4_x - box_w / 2,  NAVY),
+        (s4_x + box_w / 2, s5_x - box_w / 2,  PURPLE),
+        (s5_x + box_w / 2, out_x - out_w / 2, PURPLE),
+    ]
+    for (x0, x1, col) in arrow_pairs:
+        add_arrow(ax, x0, bar_y, x1, bar_y, color=col,
+                  dashed=(col != NAVY), lw=1.6, shrink=0.10)
+
+    # arrow labels (data passing along)
+    ax.text((in_x + in_w / 2 + s1_x - box_w / 2) / 2, bar_y + 0.30,
+            r"$c, w$", ha="center", va="center", fontsize=8.6,
+            color=TEXT_SLATE, family="serif", fontstyle="italic", zorder=3)
+    ax.text((s1_x + box_w / 2 + s2_x - box_w / 2) / 2, bar_y + 0.30,
+            r"$k$", ha="center", va="center", fontsize=8.6,
+            color=PURPLE, family="serif", fontstyle="italic", zorder=3)
+    ax.text((s2_x + box_w / 2 + s3_x - box_w / 2) / 2, bar_y + 0.30,
+            "chosen", ha="center", va="center", fontsize=8.4,
+            color=GOLD, family="serif", fontstyle="italic", zorder=3)
+    ax.text((s3_x + box_w / 2 + s4_x - box_w / 2) / 2, bar_y + 0.30,
+            r"$\hat m$", ha="center", va="center", fontsize=8.6,
+            color=NAVY, family="serif", fontstyle="italic", zorder=3)
+    ax.text((s4_x + box_w / 2 + s5_x - box_w / 2) / 2, bar_y + 0.30,
+            r"$\hat m'$", ha="center", va="center", fontsize=8.6,
+            color=PURPLE, family="serif", fontstyle="italic", zorder=3)
+    ax.text((s5_x + box_w / 2 + out_x - out_w / 2) / 2, bar_y + 0.30,
+            r"$m$", ha="center", va="center", fontsize=8.6,
+            color=PURPLE, family="serif", fontstyle="italic", zorder=3)
+
+    # ── Title and legend strip ──
+    ax.text(21.0, 13.3,
+            "Per-step training mask construction (Fig 4g)",
+            ha="center", va="center", fontsize=14.0, fontweight=700,
+            color=TEXT_NAVY, family="serif", zorder=5)
+    ax.text(21.0, 12.55,
+            r"per gradient step: sample fresh $m \in \{0,1\}^4$ "
+            r"from fixed $(c, w)$; $m$ feeds FiLM, $\omega$ scales the row's MSE",
+            ha="center", va="center", fontsize=10.2, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=5)
+
+    # color key strip near bottom-left
+    add_color_legend(ax, x=1.0, y=2.4,
+                     items=[
+                         (NAVY,   False, "data flow"),
+                         (GOLD,   True,  "conditioning (weighted pick)"),
+                         (PURPLE, True,  "stochastic samplers"),
+                         (RED,    False, "loss / row weight"),
+                     ])
+
+    base = os.path.join(OUT_DIR, "fig4g_mask_sampling")
+    save(fig, base)
+
+
+def fig4f_mask_construction_DEPRECATED():
+    """DEPRECATED: replaced by fig4g_mask_sampling. Kept for archival.
 
     Reads top-to-bottom for ONE example row across the 4 properties:
     value -> avail -> trust -> eligibility c_k, then a parallel
@@ -1829,5 +2179,5 @@ if __name__ == "__main__":
     #   assets/4e1_score_labels.png -> figs/fig4e1_data_labeling.png
     fig4b_train_loop()
     fig4e2_score_training()
-    fig4f_mask_construction()
+    fig4g_mask_sampling()
     fig4f_self_distillation()
