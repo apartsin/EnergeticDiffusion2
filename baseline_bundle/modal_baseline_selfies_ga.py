@@ -63,9 +63,11 @@ image = (
         index_url="https://download.pytorch.org/whl/cu124",
     )
     # unimol_tools manages rdkit, numpy, etc.; selfies and pyyaml are extras
+    # huggingface_hub is required by unimol_tools 0.1.x to download backbone weights
     .pip_install(
         "unimol_tools==0.1.5",
         "selfies==2.1.1",
+        "huggingface_hub",
     )
     # Mount local Python source files (no image rebuild on edit)
     .add_local_dir(
