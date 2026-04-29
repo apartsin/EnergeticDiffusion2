@@ -218,8 +218,8 @@ Classifier-free guidance avoids the separately-trained property predictor requir
 </figure>
 
 <figure id="fig-4c">
-  <img src="figs/fig4b_train_loop.png" width="1600" height="814" alt="DGLD training Phase 2: per-step denoiser update loop" loading="lazy" style="max-width:1050px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 4(c). Denoiser training.</strong> Stochastic samplers draw \(t, \varepsilon\); forward diffusion gives \(z_t\); the FiLM-ResNet \(\varepsilon_\theta(z_t, t, p, m)\) sees property vector \(p\) gated by \(m\) (from (b)). Loss is plain full-latent-dim MSE \(\mathcal{L} = \tfrac{1}{1024}\Vert\varepsilon - \hat\varepsilon\Vert^2\); \(m\) gates only the FiLM input, never the loss. EMA feeds back to \(\varepsilon_\theta\); hyperparameters in Table&nbsp;C.1.</figcaption>
+  <img src="figs/fig4c_denoiser_train.png" width="1672" height="941" alt="DGLD denoiser training: per-step update loop with mask-gated conditioning" loading="lazy" style="max-width:1050px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 4(c). Denoiser training.</strong> Per-row inputs are the cached latent \(z_0\), property vector \(p = (\rho, \mathrm{HOF}, D, P)\), conditioning mask \(m \in \{0,1\}^4\) (from (b)) and row weight \(\omega\). Six stages per gradient step: <strong>(1)</strong> sample timestep \(t \sim U(1, T)\); <strong>(2)</strong> sample target noise \(\varepsilon \sim \mathcal{N}(0, I)\); <strong>(3)</strong> forward diffusion \(z_t = \sqrt{\bar\alpha_t}\,z_0 + \sqrt{1-\bar\alpha_t}\,\varepsilon\); <strong>(4)</strong> noise predictor \(\hat\varepsilon = \varepsilon_\theta(z_t, t, p \odot m, \omega)\) (conditioning is enabled only on the \(m\)-selected A/B properties); <strong>(5)</strong> per-sample loss \(\mathcal{L} = \Vert\varepsilon - \hat\varepsilon\Vert^2\), weighted by \(\omega\); <strong>(6)</strong> AdamW update \(\nabla_\theta \mathcal{L}_{\text{weighted}}\) with EMA \(\bar\theta \leftarrow 0.999\,\bar\theta + 0.001\,\theta\). Hyperparameters in Table&nbsp;C.1.</figcaption>
 </figure>
 
 <figure id="fig-4d">
