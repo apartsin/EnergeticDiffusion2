@@ -208,51 +208,6 @@ Classifier-free guidance avoids the separately-trained property predictor requir
 <!-- ─────────────────────────── 4. Methodology ─────────────────────────── -->
 <h2 id="sec-method">4.&nbsp;Methodology</h2>
 
-<figure id="fig-6">
-  <img src="figs/fig4a_data_prep.png" width="1600" height="321" alt="DGLD LIMO VAE fine-tuning loop" loading="lazy" style="max-width:900px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 6. LIMO training.</strong> Property-agnostic SELFIES VAE fine-tuned on the 326k energetic corpus (\(\sim\)8.5k steps, ELBO with \(\beta = 0.01\)). The cached latent mean \(\mu\) is the \(z_0\) consumed by Figure 8 (Denoiser training) and Figures 9, 11 (Labeling, Self-distillation). Hyperparameters in Table&nbsp;C.1.</figcaption>
-</figure>
-
-<figure id="fig-7">
-  <img src="figs/fig4b_mask_construction.png" width="1671" height="941" alt="DGLD per-step training mask construction: subset-size sampling, weighted pick, tentative mask, property dropout, CFG dropout, output" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 7. Per-step training mask construction.</strong> From cached eligibility \(c\in\{0,1\}^4\) and tier weight \(w\), five stochastic stages produce the per-step mask \(m\): subset-size sampling, weighted pick, tentative one-hot, property dropout (0.30), CFG dropout (0.10). Output \(m\) feeds the FiLM input in Figure 8 (Denoiser training); details and probabilities in &sect;4.4 and Table&nbsp;C.1.</figcaption>
-</figure>
-
-<figure id="fig-8">
-  <img src="figs/fig4c_denoiser_train.png" width="1672" height="941" alt="DGLD denoiser training: per-step update loop with mask-gated conditioning" loading="lazy" style="max-width:1050px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 8. Denoiser training.</strong> Sample \(t, \varepsilon\); form \(z_t = \sqrt{\bar\alpha_t}\,z_0 + \sqrt{1-\bar\alpha_t}\,\varepsilon\); the FiLM-ResNet predicts \(\hat\varepsilon\) from \((z_t, t, p\odot m)\) where \(m\) (from Figure 7) gates the property vector. Loss is per-sample MSE \(\Vert\varepsilon - \hat\varepsilon\Vert^2\) weighted by \(\omega\); AdamW + EMA. Hyperparameters in Table&nbsp;C.1.</figcaption>
-</figure>
-
-<figure id="fig-9">
-  <img src="figs/fig4e1_data_labeling.png" width="1600" height="900" alt="DGLD score-model data labeling: SMILES + LIMO latent + four label-source models" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 9. Labeling for guidance head training (base labels).</strong> Four offline pipelines (run once per corpus) generate per-row labels: Random Forest \(\to y_{\text{viab}}\); Politzer&ndash;Murray BDE \(\to y_{\text{sens}}\); SMARTS + Bruns&ndash;Watson \(\to y_{\text{haz}}\); 3D-CNN/Uni-Mol smoke ensemble \(\to y_{\text{perf}} \in \mathbb{R}^4\). Cached LIMO \(z\) is held for Figure 11 (Self-distillation). Sources in Table&nbsp;C.1.</figcaption>
-</figure>
-
-<figure id="fig-10">
-  <img src="figs/fig4e1_guide_train.png" width="1671" height="941" alt="DGLD guidance training: shared FiLM-MLP trunk + 4 heads + per-head losses" loading="lazy" style="max-width:1050px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 10. Guidance training.</strong> Forward-diffused latent \(z_t\) and the \(\sigma_t\) sinusoidal embedding feed a shared 4-block FiLM-MLP trunk (1024-d) to four production heads: Viability and Hazard (sigmoid/BCE), Sensitivity and Performance (SmoothL1, \(\rho/D/P/\)HOF). Loss is the head-availability-gated sum \(\sum_k a_k w_k \mathcal{L}_k\); AdamW + EMA. Trains on Figure 9 base labels; the Viability head is then refined via Figure 11 (Self-distillation). Two drug-domain transfer heads (SA, SC) are trained for ablation only (Appendix&nbsp;C.4).</figcaption>
-</figure>
-
-<figure id="fig-11">
-  <img src="figs/fig4f_self_distillation.png" width="1672" height="941" alt="DGLD viability-head self-distillation: 3 rounds of mine-then-retrain, with frozen-component banner and hard-negative growth ticker" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 11. Self-distillation refinement.</strong> Three rounds of mine-then-retrain that refine the <strong>Viability head only</strong> of the Figure 10 score model; the denoiser (Figure 8) and LIMO VAE (Figure 6) are frozen. Each round samples, gates with Figure 13 (Filtering), encodes false-positives through frozen LIMO as viab\(=\)0 hard negatives, and folds them into the next round's training set (137 \(\to\) 918 negatives). Stopping criterion in Appendix&nbsp;C.1.</figcaption>
-</figure>
-
-<figure id="fig-12">
-  <img src="figs/fig4c_sampling_guidance.png" width="1600" height="900" alt="DGLD sampling: DDIM denoise with multi-head guidance" loading="lazy" style="max-width:1000px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 12. Sampling / generation.</strong> A latent \(z_T\sim\mathcal{N}(0, I_{1024})\) is denoised over 40 DDIM steps with a guidance bus \(\sum_h s_h \nabla_{z_t}\log p_h\) from the active heads of Figure 10 perturbing \(\varepsilon_\theta\) at every step. The final \(z_0\) decodes through frozen LIMO to a SMILES pool consumed by Figure 14 (Pool fusion). Per-head scales \(s_h\) in Appendix&nbsp;C.</figcaption>
-</figure>
-
-<figure id="fig-13">
-  <img src="figs/fig4d_decode_rerank.png" width="1600" height="900" alt="DGLD post-sampling: decode, filter, rerank" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 13. Filtering.</strong> Four-stage funnel on the Figure 14 Pool fusion output: Stage&nbsp;1 SMARTS gate, Stage&nbsp;2 Pareto reranker (&sect;4.7), Stage&nbsp;3 xTB triage (&sect;5.4), Stage&nbsp;4 DFT audit (&sect;5.5). Illustrative survivors: 40k \(\to\) 8k chem-pass \(\to\) 100 \(\to\) 12.</figcaption>
-</figure>
-
-<figure id="fig-14">
-  <img src="figs/fig4g_pool_fusion.png" width="1672" height="941" alt="DGLD pool fusion across sampling runs: 4 lanes (2 guided production, 2 unguided baseline) varying denoiser and guidance, fanned into Union + canonical-SMILES dedupe" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 14. Pool fusion across sampling runs.</strong> Four independent end-to-end sampling lanes, each defined by a (denoiser, guidance) tuple at the headline target conditions: lanes 1-2 are guided (DGLD-H and DGLD-P at viab+sens+hazard) and form the production methodology recipe; lanes 3-4 are unguided baselines (DGLD-H and DGLD-P at CFG-only). Each lane runs end-to-end (\(z_T\) draw &rarr; 40 DDIM &rarr; LIMO decode); the four pools converge to a single Union + canonical-SMILES dedupe step that feeds the &sect;4.7 reranker (Figure 13).</figcaption>
-</figure>
-
 <h3>4.1&nbsp;Overview and pipeline map</h3>
 <p>DGLD is a four-stage pipeline (Figs&nbsp;6&ndash;14): an encode-once LIMO VAE (Fig&nbsp;6) feeds a conditional latent DDPM denoiser (Fig&nbsp;8), whose sampling trajectory (Fig&nbsp;12) is steered by a multi-head score model trained offline (Fig&nbsp;10), and whose decoded candidates are filtered by a SMARTS+Pareto rerank funnel (Fig&nbsp;13). The rest of §4 is organised one subsection per diagram panel; small panels are paired (§4.5 covers Figs&nbsp;9 and 10, §4.7 covers Figs&nbsp;12, 13, and 14). LIMO encoding is run once and cached, so all training and sampling happens in latent space; the decoder is invoked only at the end to read candidates back as SMILES. The conditional gradient is restricted to Tier-A and Tier-B rows; Tier-C and Tier-D rows drive the unconditional CFG branch only (§3.1, §4.3). Every numeric constant introduced in §4.2&ndash;§4.7 is selected via the procedure described in §4.8.</p>
 
@@ -261,6 +216,11 @@ Classifier-free guidance avoids the separately-trained property predictor requir
 $$\mathcal{L}(x) \;=\; -\mathbb{E}_{q(z|x)}[\log p(x|z)] \;+\; \beta \cdot \mathrm{KL}(q(z|x) \,\|\, \mathcal{N}(0,I)),$$
 with \(\beta=0.01\) and free-bits clipping disabled. After fine-tuning, validation token-accuracy is 64.5&nbsp;%. The latent posterior is concentrated: \(\|\mu\|\approx 8\) on average, well below the \(\sqrt{1024}\approx 32\) expected of \(\mathcal{N}(0,I)\); §6 discusses how this contraction affects diffusion-time decoding.</p>
 
+<figure id="fig-6">
+  <img src="figs/fig4a_data_prep.png" width="1600" height="321" alt="DGLD LIMO VAE fine-tuning loop" loading="lazy" style="max-width:900px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 6. LIMO training.</strong> Property-agnostic SELFIES VAE fine-tuned on the 326k energetic corpus (\(\sim\)8.5k steps, ELBO with \(\beta = 0.01\)). The cached latent mean \(\mu\) is the \(z_0\) consumed by Figure 8 (Denoiser training) and Figures 9, 11 (Labeling, Self-distillation). Hyperparameters in Table&nbsp;C.1.</figcaption>
+</figure>
+
 <p>After fine-tuning the encoder is frozen and every row of the data corpus (§3) is passed through it once to produce a deterministic latent mean \(\mu \in \mathbb{R}^{1024}\). The cached tensor stores, per row, the latent \(\mu\), a property matrix (the four conditioning targets \(\rho\), HOF, \(D\), \(P\)), a tier matrix, a per-row trust mask, and per-property normalisation statistics. The encoder posterior variance is discarded by design; \(\mu\) is treated as a deterministic anchor in latent space, and no SMILES is ever re-encoded at sample time. The denoiser of §4.3 and the score model of §4.5 read from this cached tensor only.</p>
 
 <h3>4.3&nbsp;Conditional latent diffusion: training objective and CFG</h3>
@@ -268,9 +228,19 @@ with \(\beta=0.01\) and free-bits clipping disabled. After fine-tuning, validati
 
 <p>Figure&nbsp;7 walks the per-step mask construction. From cached eligibility \(c\in\{0,1\}^4\) and the tier weight \(\omega\) of §3.1, five stochastic stages produce \(m\): the <em>subset-size</em> box samples \(k\) from a Categorical with probabilities \(\{0{:}.10,\,1{:}.25,\,2{:}.30,\,3{:}.25,\,4{:}.10\}\); the <em>weighted pick</em> box samples \(k\) properties from \(c\) using \(\omega\)-weighted multinomial draws to form a tentative one-hot; <em>property dropout</em> at rate 0.30 then independently zeros each entry of the tentative mask; <em>CFG dropout</em> at rate 0.10 zeros the entire mask to feed the unconditional branch; the output \(m\) and the row weight \(\omega = \alpha + (1{-}\alpha)\cdot\mathrm{mean}(\omega \odot m)\) are emitted to Figure&nbsp;8.</p>
 
+<figure id="fig-7">
+  <img src="figs/fig4b_mask_construction.png" width="1671" height="941" alt="DGLD per-step training mask construction: subset-size sampling, weighted pick, tentative mask, property dropout, CFG dropout, output" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 7. Per-step training mask construction.</strong> From cached eligibility \(c\in\{0,1\}^4\) and tier weight \(w\), five stochastic stages produce the per-step mask \(m\): subset-size sampling, weighted pick, tentative one-hot, property dropout (0.30), CFG dropout (0.10). Output \(m\) feeds the FiLM input in Figure 8 (Denoiser training); details and probabilities in &sect;4.4 and Table&nbsp;C.1.</figcaption>
+</figure>
+
 <p>Figure&nbsp;8 walks denoiser training. Per step: sample \(t \sim \mathcal{U}\{1{:}T\}\) and \(\varepsilon \sim \mathcal{N}(0,I)\); form \(z_t = \sqrt{\bar\alpha_t}\,z_0 + \sqrt{1-\bar\alpha_t}\,\varepsilon\) on the cosine \(T=1000\) DDPM schedule of Ho et&nbsp;al. <a class="cite" href="#ref-ho2020ddpm">[18]</a>; FiLM injects \((t,\,p\odot m)\); the network predicts \(\hat\varepsilon\); the loss is the per-sample MSE \(\Vert\varepsilon - \hat\varepsilon\Vert^2\) tier-weighted by \(\omega\). Optimiser AdamW, peak LR \(10^{-4}\), cosine decay, batch 128, 20 epochs, EMA decay 0.999. At sample time we use the standard guided estimate
 $$\hat\epsilon_{\theta}(z_t, c) \;=\; \epsilon_{\theta}(z_t, t, \emptyset) \;+\; w\,\big(\epsilon_{\theta}(z_t, t, c) - \epsilon_{\theta}(z_t, t, \emptyset)\big);$$
 the production scale \(w = 7\) is selected per §4.8 (Figure&nbsp;15).</p>
+
+<figure id="fig-8">
+  <img src="figs/fig4c_denoiser_train.png" width="1672" height="941" alt="DGLD denoiser training: per-step update loop with mask-gated conditioning" loading="lazy" style="max-width:1050px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 8. Denoiser training.</strong> Sample \(t, \varepsilon\); form \(z_t = \sqrt{\bar\alpha_t}\,z_0 + \sqrt{1-\bar\alpha_t}\,\varepsilon\); the FiLM-ResNet predicts \(\hat\varepsilon\) from \((z_t, t, p\odot m)\) where \(m\) (from Figure 7) gates the property vector. Loss is per-sample MSE \(\Vert\varepsilon - \hat\varepsilon\Vert^2\) weighted by \(\omega\); AdamW + EMA. Hyperparameters in Table&nbsp;C.1.</figcaption>
+</figure>
 
 <h3>4.4&nbsp;Two complementary denoisers</h3>
 <p>The headline pipeline targets \(\rho\), \(D\), \(P\), and HOF simultaneously. Their labelled-corpus marginals have sharply different population statistics: the high-HOF tail and the high-\(\rho DP\) tail barely overlap in latent space. A single denoiser must compromise between these tails. Either tail can be trained to saturate, but not both at once with one loss-weighting schedule. We therefore train two complementary denoisers, each tilted toward one tail via training-time oversampling, so that each saturates its own tail.</p>
@@ -284,9 +254,19 @@ the production scale \(w = 7\) is selected per §4.8 (Figure&nbsp;15).</p>
 
 <p>Figure&nbsp;9 walks the base label pipelines. Four offline label sources run once over the labelled corpus, before any score-model training: a Random Forest on Morgan FP + RDKit descriptors yields \(y_{\text{viab}}\); a Politzer&ndash;Murray BDE chemotype-class fit on Huang &amp; Massa <a class="cite" href="#ref-huang2021applying">[58a]</a> \(h_{50}\) data yields \(y_{\text{sens}}\); the chemist-curated SMARTS catalog plus the Bruns&ndash;Watson demerit list yields \(y_{\text{haz}}\); and a 3D-CNN/Uni-Mol smoke ensemble yields \(y_{\text{perf}} \in \mathbb{R}^4\) over \((\rho, D, P, \mathrm{HOF})\). The cached LIMO \(\mu\) is held separately for the noised-latent training of the score model. RF probability is portable, smooth, and decoupled; see Appendix&nbsp;C.1.</p>
 
+<figure id="fig-9">
+  <img src="figs/fig4e1_data_labeling.png" width="1600" height="900" alt="DGLD score-model data labeling: SMILES + LIMO latent + four label-source models" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 9. Labeling for guidance head training (base labels).</strong> Four offline pipelines (run once per corpus) generate per-row labels: Random Forest \(\to y_{\text{viab}}\); Politzer&ndash;Murray BDE \(\to y_{\text{sens}}\); SMARTS + Bruns&ndash;Watson \(\to y_{\text{haz}}\); 3D-CNN/Uni-Mol smoke ensemble \(\to y_{\text{perf}} \in \mathbb{R}^4\). Cached LIMO \(z\) is held for Figure 11 (Self-distillation). Sources in Table&nbsp;C.1.</figcaption>
+</figure>
+
 <p>Figure&nbsp;10 walks score-model training. A shared 4-block FiLM-MLP trunk (1024-d hidden) consumes \((z_t, \sigma_t)\), where \(\sigma_t = \sqrt{1-\bar\alpha_t}\) is embedded into a 128-d sinusoidal token. Four production heads branch off the trunk: Viability and Hazard are sigmoid heads trained with binary cross-entropy; Sensitivity is a smooth-L1 regressor; Performance is a 4-vector smooth-L1 regressor on \((\rho, D, P, \mathrm{HOF})\). Crucially, training data are <em>noised</em> latents at uniform \(t\), not clean \(\mu\), so the gradient is queried at every \(\sigma_t\) along the sampling trajectory. The total loss is
 $$\mathcal{L}_{\text{score}} = \sum_k a_k \cdot w_k \cdot \mathcal{L}_k\bigl(\hat y_k(z_t, \sigma_t),\ y_k\bigr),$$
 where \(a \in \{0,1\}^6\) is the per-head <em>availability</em> mask (distinct from the denoiser's per-property conditioning mask \(m \in \{0,1\}^4\) of Figs&nbsp;7 and 8) and \(w_k\) are static head weights chosen so each \(\mathcal{L}_k\) sits at \(\mathcal{O}(1)\) at convergence (values in Table&nbsp;C.1). Optimiser AdamW, peak LR \(10^{-4}\), cosine decay, batch 1024, \(\sim\)40k steps, EMA decay 0.999.</p>
+
+<figure id="fig-10">
+  <img src="figs/fig4e1_guide_train.png" width="1671" height="941" alt="DGLD guidance training: shared FiLM-MLP trunk + 4 heads + per-head losses" loading="lazy" style="max-width:1050px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 10. Guidance training.</strong> Forward-diffused latent \(z_t\) and the \(\sigma_t\) sinusoidal embedding feed a shared 4-block FiLM-MLP trunk (1024-d) to four production heads: Viability and Hazard (sigmoid/BCE), Sensitivity and Performance (SmoothL1, \(\rho/D/P/\)HOF). Loss is the head-availability-gated sum \(\sum_k a_k w_k \mathcal{L}_k\); AdamW + EMA. Trains on Figure 9 base labels; the Viability head is then refined via Figure 11 (Self-distillation). Two drug-domain transfer heads (SA, SC) are trained for ablation only (Appendix&nbsp;C.4).</figcaption>
+</figure>
 
 <p>Two further drug-domain transfer heads (SA, SC) share the same architecture and are trained for ablation only; they are not in the production sample-time gradient bus (Appendix&nbsp;C.4).</p>
 
@@ -295,6 +275,11 @@ where \(a \in \{0,1\}^6\) is the per-head <em>availability</em> mask (distinct f
 
 <p>Each round is sample &rarr; mine &rarr; encode &rarr; retrain. (i) Train the score model on (corpus + accumulated hard negatives). (ii) Sample with the current diffusion model. (iii) Mine false positives: high Viability score (\(>\) 0.7) but rejected by the SMARTS gate. (iv) Encode the false-positive SMILES through the frozen LIMO encoder, label viab\(=\)0, and add to the cumulative hard-negative set. (v) Repeat. The hard-negative ticker on Figure&nbsp;11 shows 0&nbsp;\(\to\)&nbsp;137&nbsp;\(\to\)&nbsp;918 cumulative negatives over rounds 0/1/2.</p>
 
+<figure id="fig-11">
+  <img src="figs/fig4f_self_distillation.png" width="1672" height="941" alt="DGLD viability-head self-distillation: 3 rounds of mine-then-retrain, with frozen-component banner and hard-negative growth ticker" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 11. Self-distillation refinement.</strong> Three rounds of mine-then-retrain that refine the <strong>Viability head only</strong> of the Figure 10 score model; the denoiser (Figure 8) and LIMO VAE (Figure 6) are frozen. Each round samples, gates with Figure 13 (Filtering), encodes false-positives through frozen LIMO as viab\(=\)0 hard negatives, and folds them into the next round's training set (137 \(\to\) 918 negatives). Stopping criterion in Appendix&nbsp;C.1.</figcaption>
+</figure>
+
 <p>The stopping criterion is shown in the right-margin box of Figure&nbsp;11: a held-out probe (7 anchors {RDX, HMX, TNT, FOX-7, PETN, TATB, NTO} and 5 cheats) must show every anchor at \(\ge\)&nbsp;0.86 AND every cheat at \(\le\)&nbsp;0.84. Empirically 3 rounds satisfy this; round&nbsp;2 (corpus + 918 hard negatives) is the production checkpoint. Pseudocode in Appendix&nbsp;C.1.</p>
 
 <h3>4.7&nbsp;Sampling, filtering, and pool fusion</h3>
@@ -302,11 +287,21 @@ where \(a \in \{0,1\}^6\) is the per-head <em>availability</em> mask (distinct f
 $$\hat\epsilon \;=\; \epsilon_\theta^{\text{cfg}}(z_t, t, c) \;-\; \sigma_t \sum_{h\in\{\text{viab},\text{sens},\text{hazard}\}} s_h\,\nabla_{z_t}\,\mathcal{L}_h\big(z_t,\sigma_t\big),$$
 where \(\epsilon_\theta^{\text{cfg}}\) is the standard CFG noise estimate over the frozen denoiser of §4.4 (Figure&nbsp;8). The per-head losses are \(-\log P_{\text{viab}}\) (ascend), \(\mathrm{sens}_z\) (descend), and \(-\log(1-P_{\text{hazard}})\) (descend hazard). Production scales are \(s_{\text{viab}}=1.0\), \(s_{\text{sens}}=0.3\), \(s_{\text{hazard}}=1.0\) (selection rationale in §4.8). The final \(z_0\) decodes through the frozen LIMO decoder to a SMILES pool consumed by Figure&nbsp;14.</p>
 
+<figure id="fig-12">
+  <img src="figs/fig4c_sampling_guidance.png" width="1600" height="900" alt="DGLD sampling: DDIM denoise with multi-head guidance" loading="lazy" style="max-width:1000px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 12. Sampling / generation.</strong> A latent \(z_T\sim\mathcal{N}(0, I_{1024})\) is denoised over 40 DDIM steps with a guidance bus \(\sum_h s_h \nabla_{z_t}\log p_h\) from the active heads of Figure 10 perturbing \(\varepsilon_\theta\) at every step. The final \(z_0\) decodes through frozen LIMO to a SMILES pool consumed by Figure 14 (Pool fusion). Per-head scales \(s_h\) in Appendix&nbsp;C.</figcaption>
+</figure>
+
 <p>The standard image-domain classifier-guidance recipe applies an alpha-anneal that zeros the gradient at high noise levels; in our small-step (\(n=40\)), frozen-decoder regime this silently mutes guidance and produces bit-identical SMILES across all head-scale settings. Production therefore disables the anneal (\(\sigma_{\max}=0\)); the four-test diagnostic protocol that surfaced this is in Appendix&nbsp;E.5.</p>
 
 <p>Figure&nbsp;13 walks the four-stage filtering funnel. Each pool is canonicalised, deduplicated, and stripped of charged species and over-large molecules. <strong>Stage&nbsp;1: SMARTS gate (rules + redflags).</strong> A chemist-curated SMARTS <a class="cite" href="#ref-daylight-smarts">[daylight-smarts]</a> catalog removes radicals, sulphur, halogens, mixed valence states, and other red flags; survivors are scored by the 3D-CNN smoke ensemble. SA <a class="cite" href="#ref-ertl2009sa">[19]</a>&nbsp;\(\le\)&nbsp;5.0 and SCScore <a class="cite" href="#ref-coley2018scscore">[20]</a>&nbsp;\(\le\)&nbsp;3.5 caps are applied. Tanimoto similarity to the nearest training-set neighbour is required to lie within \([0.20, 0.55]\). <strong>Stage&nbsp;2: Pareto reranker.</strong> The composite
 $$S(x) \;=\; 0.45\,S_{\text{perf}}^{\text{band}}(x) + 0.20\,S_{\text{viab}}(x) + 0.15\,S_{\text{novel}}(x) + 0.20\,(1-S_{\text{sens}}(x)) - 0.10\,S_{\text{alerts}}(x)$$
 is computed, then a Pareto front over (\(-\)perf, \(-\)viab, sens, alerts) is used as the outer stratifier with the composite as within-stratum tiebreak. Default top-\(K=100\). <strong>Stage&nbsp;3: xTB triage.</strong> GFN2-xTB optimisation, HOMO&ndash;LUMO gap \(\ge\)&nbsp;1.5&nbsp;eV (§5.4). <strong>Stage&nbsp;4: DFT audit.</strong> B3LYP/6-31G(d) optimisation + \(\omega\)B97X-D3BJ/def2-TZVP single-point + 6-anchor calibration + Kamlet&ndash;Jacobs (§5.5). Illustrative survivors: 40k \(\to\) 8k chem-pass \(\to\) 100 \(\to\) 12 DFT-validated.</p>
+
+<figure id="fig-13">
+  <img src="figs/fig4d_decode_rerank.png" width="1600" height="900" alt="DGLD post-sampling: decode, filter, rerank" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 13. Filtering.</strong> Four-stage funnel on the Figure 14 Pool fusion output: Stage&nbsp;1 SMARTS gate, Stage&nbsp;2 Pareto reranker (&sect;4.7), Stage&nbsp;3 xTB triage (&sect;5.4), Stage&nbsp;4 DFT audit (&sect;5.5). Illustrative survivors: 40k \(\to\) 8k chem-pass \(\to\) 100 \(\to\) 12.</figcaption>
+</figure>
 
 <p>The Pareto-front procedure in Stage&nbsp;2 is the four-step sweep:</p>
 <ol style="margin:0.5em 0 1em 1.4em; line-height:1.55;">
@@ -317,6 +312,11 @@ is computed, then a Pareto front over (\(-\)perf, \(-\)viab, sens, alerts) is us
 </ol>
 
 <p>Figure&nbsp;14 walks pool fusion. A single sampling lane = one (denoiser, conditions, guidance) tuple, run end-to-end (\(z_T\) draw \(\to\) 40 DDIM with that lane's config \(\to\) LIMO decode \(\to\) SMILES pool). The production methodology recipe is two lanes, one per denoiser (DGLD-H and DGLD-P), both at the headline target conditions, both at viab+sens+hazard guidance, both at CFG \(w=7\), pool \(\ge\)&nbsp;40k each. Fusion is post-decode: the lanes' pools are unioned, canonical-SMILES deduplicated, and fed into the Stage-1 reranker. The three orthogonal diversity axes are conditions, denoisers, and guidance; each breaks a different correlated failure mode. The §5.3.4 four-pool merge (which adds two unguided ablation lanes) is a presentation choice for the merged top-100 result, not the production methodology recipe.</p>
+
+<figure id="fig-14">
+  <img src="figs/fig4g_pool_fusion.png" width="1672" height="941" alt="DGLD pool fusion across sampling runs: 4 lanes (2 guided production, 2 unguided baseline) varying denoiser and guidance, fanned into Union + canonical-SMILES dedupe" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 14. Pool fusion across sampling runs.</strong> Four independent end-to-end sampling lanes, each defined by a (denoiser, guidance) tuple at the headline target conditions: lanes 1-2 are guided (DGLD-H and DGLD-P at viab+sens+hazard) and form the production methodology recipe; lanes 3-4 are unguided baselines (DGLD-H and DGLD-P at CFG-only). Each lane runs end-to-end (\(z_T\) draw &rarr; 40 DDIM &rarr; LIMO decode); the four pools converge to a single Union + canonical-SMILES dedupe step that feeds the &sect;4.7 reranker (Figure 13).</figcaption>
+</figure>
 
 <h3>4.8&nbsp;Training and hyperparameter selection</h3>
 <p>Every numeric constant introduced in §4.2&ndash;§4.7 falls into one of four buckets, distinguished by <em>how</em> the value was set.</p>
