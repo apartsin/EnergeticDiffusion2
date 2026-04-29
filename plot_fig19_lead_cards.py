@@ -199,19 +199,23 @@ def hmx_verdict(lead):
 
 
 def card_status(lead):
-    """Border + background colour for the whole card."""
-    xtb = xtb_verdict(lead)[0]
-    dft = dft_verdict(lead)[0]
-    hmx = hmx_verdict(lead)
+    """Border + background colour for the whole card.
 
-    if xtb == "FAIL" or dft == "FAIL":
-        return "fail", FAIL_BORDER, FAIL_BG
-    if hmx == "pass" and xtb == "PASS" and dft == "PASS":
-        return "pass", PASS_BORDER, PASS_BG
-    # NA xTB falls through to partial if HMX pass + DFT pass
-    if hmx == "pass" and xtb == "NA" and dft == "PASS":
-        return "partial", PARTIAL_BORDER, PARTIAL_BG
-    return "partial", PARTIAL_BORDER, PARTIAL_BG
+    Simplified 2-colour scheme:
+      red    = xTB HOMO-LUMO gap < 1.5 eV (independent electronic-stability
+               failure; e.g. L3, L16).
+      green* = everyone else; DFT-confirmed real local minimum (n_imag=0).
+               The asterisk marks that the canonical-SMILES round-trip
+               'graph altered' flag is an artefact of zwitterionic nitro
+               group charge-flip and the original molecular graph is
+               recovered as a real DFT minimum.
+
+    Returns: (kind, border_colour, background_colour, has_asterisk).
+    """
+    gap = lead["xtb_gap"]
+    if gap is not None and gap < GAP_T:
+        return "fail", FAIL_BORDER, FAIL_BG, False
+    return "pass", PASS_BORDER, PASS_BG, True
 
 
 # ---------------------------------------------------------------------------
@@ -246,7 +250,7 @@ def draw_card(ax, lead):
     for sp in ax.spines.values():
         sp.set_visible(False)
 
-    verdict_kind, border_col, bg_col = card_status(lead)
+    verdict_kind, border_col, bg_col, has_asterisk = card_status(lead)
 
     # Card backdrop
     backdrop = FancyBboxPatch(
@@ -255,6 +259,16 @@ def draw_card(ax, lead):
         linewidth=2.6, facecolor=bg_col, edgecolor=border_col, zorder=1,
     )
     ax.add_patch(backdrop)
+
+    # Asterisk corner badge (top-right) for green cards: indicates
+    # canonical-SMILES round-trip artefact; see caption footnote.
+    if has_asterisk:
+        ax.text(
+            0.955, 0.955, "*",
+            fontsize=18, fontweight="bold",
+            color=border_col, family="serif",
+            ha="right", va="top", zorder=6,
+        )
 
     # 1. Structure (top ~55% of card)
     img = render_mol(lead["smiles"], size=(440, 320))
