@@ -2293,6 +2293,284 @@ def fig4f_self_distillation():
 
 
 # ──────────────────────────────────────────────────────────────────────────
+def fig4g_pool_fusion():
+    """Fig 4(g): Pool fusion across sampling runs.
+
+    Four parallel sampling lanes (2 production solid, 2 ablation dashed)
+    share the same conditions (headline target tuple) but vary on the
+    denoiser axis (DGLD-H vs DGLD-P) and the guidance axis
+    (viab+sens+hazard vs unguided vs SA-on). Each lane runs end-to-end
+    (z_T -> 40 DDIM steps -> z_0 -> LIMO decode -> pool_i) and the four
+    pools fan in to a Union + canonical-SMILES dedupe block, then a
+    fused pool box that points downstream to the (h) reranker.
+    """
+    fig, ax = plt.subplots(figsize=(16.0, 8.0), dpi=300)
+    setup_axes(ax, xmax=32.0, ymax=16.0)
+
+    # ── Title strip ──────────────────────────────────────────────────────
+    ax.text(16.0, 15.45,
+            "Pool fusion across sampling runs",
+            ha="center", va="center", fontsize=13.6, fontweight="bold",
+            color=TEXT_NAVY, family="serif")
+    ax.text(16.0, 14.85,
+            "3 diversity axes:  conditions  /  denoisers  /  guidance",
+            ha="center", va="center", fontsize=10.2, fontstyle="italic",
+            color=TEXT_SLATE, family="serif")
+
+    # ── Lane configs (top to bottom) ────────────────────────────────────
+    # (y_centre, lane_label, colour, dashed?, condition_tag,
+    #  denoiser_tag, guidance_tag, role)
+    lanes = [
+        (12.6, "Lane 1",  NAVY,   False,
+         "headline target",  "DGLD-H", "viab+sens+hazard", "production"),
+        (10.2, "Lane 2",  PURPLE, False,
+         "headline target",  "DGLD-P", "viab+sens+hazard", "production"),
+        (7.8,  "Lane 3",  GOLD,   True,
+         "headline target",  "DGLD-H", "unguided (CFG only)", "ablation"),
+        (5.4,  "Lane 4",  RED,    True,
+         "headline target",  "DGLD-H", "SA-on  ($s_{SA}=0.15$)", "ablation"),
+    ]
+
+    # x-coordinates of axis-tags column and the per-step boxes.
+    tag_x   = 4.4   # centre of axis-tag stack (left edge of each lane)
+    step_xs = [9.4, 12.6, 15.4, 18.4, 21.6]
+    step_widths = [1.8, 2.4, 1.6, 2.2, 2.4]
+    step_titles = [
+        ("$z_T$ draw", r"$\sim\mathcal{N}(0,I_{1024})$"),
+        ("40 DDIM steps", "denoiser + guidance"),
+        ("$z_0$", ""),
+        ("LIMO decode", "frozen VAE"),
+        ("pool$_i$", "SMILES set"),
+    ]
+
+    pool_centres = []  # collect (x, y, colour) of each pool icon for fan-in
+
+    for (y, lane_label, colour, dashed, cond_tag, den_tag, guide_tag,
+         role) in lanes:
+        # ── Axis-tag stack at the left edge of the lane ─────────────────
+        # three small chips: conditions / denoiser / guidance
+        chip_h = 0.55
+        # Lane label (e.g., "Lane 1  (production)")
+        ax.text(tag_x, y + 1.20,
+                f"{lane_label}  ({role})",
+                ha="center", va="center", fontsize=9.0, fontweight="bold",
+                color=colour, family="serif", zorder=3)
+        # condition chip
+        ax.add_patch(FancyBboxPatch(
+            (tag_x - 2.0, y + 0.55 - chip_h / 2), 4.0, chip_h,
+            boxstyle="round,pad=0.02,rounding_size=0.10",
+            linewidth=1.0, facecolor=PALE_GOLD, edgecolor=GOLD, zorder=2))
+        ax.text(tag_x, y + 0.55, f"cond:  {cond_tag}",
+                ha="center", va="center", fontsize=8.4,
+                color=TEXT_NAVY, family="serif", zorder=3)
+        # denoiser chip
+        ax.add_patch(FancyBboxPatch(
+            (tag_x - 2.0, y - chip_h / 2), 4.0, chip_h,
+            boxstyle="round,pad=0.02,rounding_size=0.10",
+            linewidth=1.0, facecolor=PALE_GREY, edgecolor=NAVY, zorder=2))
+        ax.text(tag_x, y, f"den:  {den_tag}",
+                ha="center", va="center", fontsize=8.4,
+                color=TEXT_NAVY, family="serif", zorder=3)
+        # guidance chip
+        ax.add_patch(FancyBboxPatch(
+            (tag_x - 2.0, y - 0.55 - chip_h / 2), 4.0, chip_h,
+            boxstyle="round,pad=0.02,rounding_size=0.10",
+            linewidth=1.0, facecolor=PALE_GREEN, edgecolor=GREEN, zorder=2))
+        ax.text(tag_x, y - 0.55, f"guide:  {guide_tag}",
+                ha="center", va="center", fontsize=8.4,
+                color=TEXT_NAVY, family="serif", zorder=3)
+
+        # ── Per-step boxes along the lane ────────────────────────────────
+        for i, (sx, sw, (title, sub)) in enumerate(zip(step_xs, step_widths,
+                                                       step_titles)):
+            # boxes drawn in lane colour outline; pool icon highlighted
+            if i == 4:
+                # pool icon: a stack of 4 short lines inside a rounded box
+                ax.add_patch(FancyBboxPatch(
+                    (sx - sw / 2 + 0.04, y - 0.55 - 0.04), sw, 1.10,
+                    boxstyle="round,pad=0.02,rounding_size=0.12",
+                    linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1))
+                ax.add_patch(FancyBboxPatch(
+                    (sx - sw / 2, y - 0.55), sw, 1.10,
+                    boxstyle="round,pad=0.02,rounding_size=0.12",
+                    linewidth=1.6, facecolor="white", edgecolor=colour,
+                    zorder=2))
+                # SMILES-stack glyph (4 short horizontal lines)
+                for j in range(4):
+                    yy = y + 0.30 - j * 0.20
+                    ax.plot([sx - sw / 2 + 0.20, sx + sw / 2 - 0.20],
+                            [yy, yy], color=colour, lw=1.0,
+                            alpha=0.7, zorder=3)
+                ax.text(sx, y - 0.78, "pool$_i$",
+                        ha="center", va="center", fontsize=8.6,
+                        fontstyle="italic", color=colour,
+                        family="serif", zorder=3)
+                pool_centres.append((sx + sw / 2, y, colour, dashed))
+            else:
+                # generic step box
+                ax.add_patch(FancyBboxPatch(
+                    (sx - sw / 2 + 0.03, y - 0.45 - 0.03), sw, 0.90,
+                    boxstyle="round,pad=0.02,rounding_size=0.10",
+                    linewidth=0, facecolor="#0a1620", alpha=0.08, zorder=1))
+                ax.add_patch(FancyBboxPatch(
+                    (sx - sw / 2, y - 0.45), sw, 0.90,
+                    boxstyle="round,pad=0.02,rounding_size=0.10",
+                    linewidth=1.4, facecolor="white", edgecolor=colour,
+                    zorder=2))
+                if sub:
+                    ax.text(sx, y + 0.13, title, ha="center", va="center",
+                            fontsize=8.6, fontweight=600, color=TEXT_NAVY,
+                            family="serif", zorder=3)
+                    ax.text(sx, y - 0.20, sub, ha="center", va="center",
+                            fontsize=7.4, fontstyle="italic",
+                            color=TEXT_SLATE, family="serif", zorder=3)
+                else:
+                    ax.text(sx, y, title, ha="center", va="center",
+                            fontsize=9.0, fontweight=600, color=TEXT_NAVY,
+                            family="serif", zorder=3)
+
+        # ── Lane connector arrows (left axis-tag-stack to first step,
+        # then between steps) ───────────────────────────────────────────
+        # axis-tag column right edge -> first step box left edge
+        add_arrow(ax, tag_x + 2.0, y,
+                  step_xs[0] - step_widths[0] / 2, y,
+                  color=colour, dashed=dashed, lw=1.6)
+        for i in range(len(step_xs) - 1):
+            x_from = step_xs[i] + step_widths[i] / 2
+            x_to   = step_xs[i + 1] - step_widths[i + 1] / 2
+            add_arrow(ax, x_from, y, x_to, y,
+                      color=colour, dashed=dashed, lw=1.6)
+
+    # ── Union + canonical-SMILES dedupe box (centre-right) ───────────────
+    union_xc, union_yc = 25.6, 9.0
+    union_w, union_h = 4.4, 2.4
+    ax.add_patch(FancyBboxPatch(
+        (union_xc - union_w / 2 + 0.05, union_yc - union_h / 2 - 0.05),
+        union_w, union_h,
+        boxstyle="round,pad=0.03,rounding_size=0.18",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1))
+    ax.add_patch(FancyBboxPatch(
+        (union_xc - union_w / 2, union_yc - union_h / 2), union_w, union_h,
+        boxstyle="round,pad=0.03,rounding_size=0.18",
+        linewidth=1.8, facecolor=PALE_GOLD, edgecolor=GOLD, zorder=2))
+    ax.text(union_xc, union_yc + 0.55,
+            "Union",
+            ha="center", va="center", fontsize=11.4, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(union_xc, union_yc + 0.05,
+            "+ canonical-SMILES",
+            ha="center", va="center", fontsize=9.4,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(union_xc, union_yc - 0.40,
+            "dedupe",
+            ha="center", va="center", fontsize=9.4, fontstyle="italic",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(union_xc, union_yc - 0.85,
+            r"$\bigcup_i\,\mathrm{pool}_i$",
+            ha="center", va="center", fontsize=9.6,
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── Fan-in arrows from each pool_i to the union box ─────────────────
+    for (px, py, pcol, pdash) in pool_centres:
+        add_arrow(ax, px, py,
+                  union_xc - union_w / 2, union_yc + (py - 9.0) * 0.25,
+                  color=pcol, dashed=pdash, lw=1.4)
+
+    # ── Output box: fused pool -> §4.5 reranker (points toward 4(h)) ────
+    out_xc, out_yc = 25.6, 4.6
+    out_w, out_h = 6.0, 2.0
+    ax.add_patch(FancyBboxPatch(
+        (out_xc - out_w / 2 + 0.05, out_yc - out_h / 2 - 0.05),
+        out_w, out_h,
+        boxstyle="round,pad=0.03,rounding_size=0.16",
+        linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1))
+    ax.add_patch(FancyBboxPatch(
+        (out_xc - out_w / 2, out_yc - out_h / 2), out_w, out_h,
+        boxstyle="round,pad=0.03,rounding_size=0.16",
+        linewidth=1.8, facecolor="white", edgecolor=NAVY, zorder=2))
+    ax.text(out_xc, out_yc + 0.45,
+            "fused pool",
+            ha="center", va="center", fontsize=11.0, fontweight="bold",
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(out_xc, out_yc - 0.05,
+            r"$\to$ §4.5 reranker",
+            ha="center", va="center", fontsize=9.6,
+            color=TEXT_NAVY, family="serif", zorder=3)
+    ax.text(out_xc, out_yc - 0.55,
+            "Stage 1 SMARTS gate, Stage 2 Pareto",
+            ha="center", va="center", fontsize=8.4, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+    # arrow union -> fused pool
+    add_arrow(ax, union_xc, union_yc - union_h / 2,
+              out_xc, out_yc + out_h / 2,
+              color=NAVY, lw=2.0)
+    # short arrow off the right side of the output box, pointing toward (h)
+    add_arrow(ax, out_xc + out_w / 2, out_yc,
+              out_xc + out_w / 2 + 0.7, out_yc,
+              color=NAVY, lw=1.6)
+    ax.text(out_xc + out_w / 2 + 0.85, out_yc, "to (h)",
+            ha="left", va="center", fontsize=8.4, fontstyle="italic",
+            color=TEXT_SLATE, family="serif", zorder=3)
+
+    # ── Bottom legend strip 1: production vs ablation lane styles ───────
+    leg1_y = 3.0
+    ax.text(2.0, leg1_y, "Lane styles:",
+            ha="left", va="center", fontsize=9.0, fontweight="bold",
+            color=TEXT_NAVY, family="serif")
+    ax.plot([6.0, 7.8], [leg1_y, leg1_y], color=NAVY, lw=2.0, zorder=3)
+    ax.text(8.0, leg1_y, "production (used in §4.6 recipe)",
+            ha="left", va="center", fontsize=8.6,
+            color=TEXT_SLATE, family="serif", fontstyle="italic")
+    ax.plot([15.6, 17.4], [leg1_y, leg1_y], color=GOLD, lw=2.0,
+            linestyle=(0, (5, 3)), zorder=3)
+    ax.text(17.6, leg1_y,
+            "ablation (in §5.3.4 extended merge, not production)",
+            ha="left", va="center", fontsize=8.6,
+            color=TEXT_SLATE, family="serif", fontstyle="italic")
+
+    # ── Bottom legend strip 2: axis explanations ────────────────────────
+    leg2_y = 1.7
+    ax.text(2.0, leg2_y + 0.4, "Diversity axes:",
+            ha="left", va="center", fontsize=9.0, fontweight="bold",
+            color=TEXT_NAVY, family="serif")
+    # axis 1: conditions
+    ax.add_patch(Rectangle((6.0, leg2_y + 0.18), 0.4, 0.4,
+                           facecolor=PALE_GOLD, edgecolor=GOLD, lw=1.0,
+                           zorder=2))
+    ax.text(6.6, leg2_y + 0.4, "conditions",
+            ha="left", va="center", fontsize=8.6, fontweight="bold",
+            color=TEXT_NAVY, family="serif")
+    ax.text(6.6, leg2_y - 0.05,
+            r"target tuple ($\rho^\star, D^\star, P^\star, \mathrm{HOF}^\star$) into FiLM",
+            ha="left", va="center", fontsize=7.8,
+            color=TEXT_SLATE, family="serif", fontstyle="italic")
+    # axis 2: denoiser
+    ax.add_patch(Rectangle((14.6, leg2_y + 0.18), 0.4, 0.4,
+                           facecolor=PALE_GREY, edgecolor=NAVY, lw=1.0,
+                           zorder=2))
+    ax.text(15.2, leg2_y + 0.4, "denoiser",
+            ha="left", va="center", fontsize=8.6, fontweight="bold",
+            color=TEXT_NAVY, family="serif")
+    ax.text(15.2, leg2_y - 0.05,
+            "DGLD-H (HOF tilt)  vs  DGLD-P ($\\rho$/D/P tilt)",
+            ha="left", va="center", fontsize=7.8,
+            color=TEXT_SLATE, family="serif", fontstyle="italic")
+    # axis 3: guidance
+    ax.add_patch(Rectangle((23.2, leg2_y + 0.18), 0.4, 0.4,
+                           facecolor=PALE_GREEN, edgecolor=GREEN, lw=1.0,
+                           zorder=2))
+    ax.text(23.8, leg2_y + 0.4, "guidance",
+            ha="left", va="center", fontsize=8.6, fontweight="bold",
+            color=TEXT_NAVY, family="serif")
+    ax.text(23.8, leg2_y - 0.05,
+            "head bus on/off + per-head scales $s_h$",
+            ha="left", va="center", fontsize=7.8,
+            color=TEXT_SLATE, family="serif", fontstyle="italic")
+
+    base = os.path.join(OUT_DIR, "fig4g_pool_fusion")
+    save(fig, base)
+
+
 if __name__ == "__main__":
     # NOTE: fig4a_data_prep(), fig4c_sampling_guidance(), and
     # fig4d_decode_rerank() are intentionally NOT called here. Their PNGs are
@@ -2308,3 +2586,4 @@ if __name__ == "__main__":
     fig4e2_score_training()
     fig4g_mask_sampling()
     fig4f_self_distillation()
+    fig4g_pool_fusion()
