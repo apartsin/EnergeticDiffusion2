@@ -52,21 +52,21 @@ image = (
     modal.Image.from_registry(
         "nvidia/cuda:12.4.1-devel-ubuntu22.04", add_python="3.11"
     )
-    .apt_install("git", "build-essential")
+    .apt_install(
+        "git", "build-essential",
+        # X11 rendering libs needed by rdkit >= 2024 in headless containers
+        "libxrender1", "libxext6",
+    )
     # PyTorch first so unimol_tools links against the correct CUDA ABI
     .pip_install(
         "torch==2.4.1",
         index_url="https://download.pytorch.org/whl/cu124",
     )
+    # unimol_tools manages rdkit, numpy, etc.; selfies and pyyaml are extras
     .pip_install(
-        "rdkit-pypi",
-        "numpy<2",
-        "pandas",
+        "unimol_tools==0.1.5",
         "selfies==2.1.1",
-        "pyyaml",
     )
-    # unimol_tools brings in the Uni-Mol backbone weights automatically
-    .pip_install("unimol_tools==0.1.5")
     # Mount local Python source files (no image rebuild on edit)
     .add_local_dir(
         str(HERE),
