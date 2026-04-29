@@ -1,0 +1,68 @@
+{
+  "per_condition": [
+    {
+      "condition": "m1_sweep_C0_unguided",
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.671417,
+      "uniqueness_std": 0.0018,
+      "novelty_vs_LM_mean": 0.99923,
+      "novelty_vs_LM_std": 0.000154,
+      "int_div1_mean": 0.838157,
+      "int_div1_std": 0.001457,
+      "snn_to_LM_mean": 0.22115,
+      "snn_to_LM_std": 0.004604,
+      "scaffold_count_mean": 1261.666667,
+      "scaffold_count_std": 10.208929
+    },
+    {
+      "condition": "m1_sweep_C1_viab",
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.659767,
+      "uniqueness_std": 0.003295,
+      "novelty_vs_LM_mean": 0.999343,
+      "novelty_vs_LM_std": 9.6e-05,
+      "int_div1_mean": 0.829645,
+      "int_div1_std": 0.001603,
+      "snn_to_LM_mean": 0.220958,
+      "snn_to_LM_std": 0.001492,
+      "scaffold_count_mean": 1113.0,
+      "scaffold_count_std": 21.275965
+    },
+    {
+      "condition": "m1_sweep_C2_viab_sens",
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.6573,
+      "uniqueness_std": 0.003001,
+      "novelty_vs_LM_mean": 0.99967,
+      "novelty_vs_LM_std": 3.6e-05,
+      "int_div1_mean": 0.821869,
+      "int_div1_std": 0.00065,
+      "snn_to_LM_mean": 0.223402,
+      "snn_to_LM_std": 0.009195,
+      "scaffold_count_mean": 815.0,
+      "scaffold_count_std": 23.366643
+    },
+    {
+      "condition": "m1_sweep_C3_viab_sens_sa",
+      "n_seeds": 3,
+      "validity_mean": 1.0,
+      "validity_std": 0.0,
+      "uniqueness_mean": 0.61735,
+      "uniqueness_std": 0.002158,
+      "novelty_vs_LM_mean": 0.999703,
+      "novelty_vs_LM_std": 7.7e-05,
+      "int_div1_mean": 0.817607,
+      "int_div1_std": 0.002354,
+      "snn_to_LM_mean": 0.210176,
+      "snn_to_LM_std": 0.005206,
+      "scaffold_count_mean": 659.0,
+      "scaffold_count_std": 17.79513
+    }
+  ]
+}
