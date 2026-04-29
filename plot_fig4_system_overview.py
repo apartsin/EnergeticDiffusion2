@@ -2571,6 +2571,118 @@ def fig4g_pool_fusion():
     save(fig, base)
 
 
+PALE_NAVY = "#dee6ec"
+
+
+def fig4_1_pipeline_overview():
+    """Compact 4-step pipeline preview for paper section 4.1."""
+    # Wider + taller canvas so text inside each box has room.
+    fig, ax = plt.subplots(figsize=(14.0, 4.4), dpi=200)
+    ax.set_xlim(0, 32.0)
+    ax.set_ylim(0, 10.0)
+    ax.set_aspect("auto")
+    ax.axis("off")
+
+    # Subtitle / header (top of canvas)
+    ax.text(16.0, 9.20,
+            "DGLD pipeline overview: encode  $\\to$  generate  $\\to$  guide  $\\to$  filter",
+            ha="center", va="center", fontsize=12.0, fontweight=600,
+            color=TEXT_NAVY, family="serif", zorder=3)
+
+    # Box geometry: four boxes spaced wider so contents fit.
+    y_main = 5.2
+    box_w = 6.6
+    box_h = 4.4
+    gap = 1.4
+    span = 4 * box_w + 3 * gap            # = 30.6
+    x0 = (32.0 - span) / 2 + box_w / 2    # first centre
+    centers = [x0 + i * (box_w + gap) for i in range(4)]
+
+    stages = [
+        ("1. ENCODE",   NAVY,   PALE_NAVY,
+         "LIMO VAE",
+         "SMILES $\\to\\,\\mu$",
+         "encode-once,\ncached",
+         "Fig 6"),
+        ("2. GENERATE", PURPLE, PALE_PURPLE,
+         "latent DDPM",
+         "$z_T\\to z_0$",
+         "40 DDIM steps",
+         "Figs 7, 8, 12"),
+        ("3. GUIDE",    GOLD,   PALE_GOLD,
+         "score model",
+         "per-step\\,$\\nabla$\\,bus",
+         "viab+sens+haz",
+         "Figs 9, 10, 11"),
+        ("4. FILTER",   RED,    PALE_RED,
+         "physics funnel",
+         "SMARTS$\\cdot$Pareto$\\cdot$xTB$\\cdot$DFT",
+         "40k $\\to$ 12 leads",
+         "Figs 13, 14"),
+    ]
+
+    for x_c, (title, edge, fill, sub, math, tag, figref) in zip(centers, stages):
+        # Drop shadow
+        ax.add_patch(FancyBboxPatch(
+            (x_c - box_w / 2 + 0.10, y_main - box_h / 2 - 0.10), box_w, box_h,
+            boxstyle="round,pad=0.02,rounding_size=0.30",
+            linewidth=0, facecolor="#0a1620", alpha=0.10, zorder=1,
+        ))
+        # Box itself
+        ax.add_patch(FancyBboxPatch(
+            (x_c - box_w / 2, y_main - box_h / 2), box_w, box_h,
+            boxstyle="round,pad=0.02,rounding_size=0.30",
+            linewidth=1.8, facecolor=fill, edgecolor=edge, zorder=2,
+        ))
+        # Stage title (top of box)
+        ax.text(x_c, y_main + box_h / 2 - 0.55, title,
+                ha="center", va="center",
+                fontsize=13.5, fontweight=700, color=edge,
+                family="serif", zorder=3)
+        # Subtitle: italic descriptor (just under title)
+        ax.text(x_c, y_main + box_h / 2 - 1.30, sub,
+                ha="center", va="center",
+                fontsize=10.5, fontstyle="italic", color=TEXT_SLATE,
+                family="serif", zorder=3)
+        # Math / key content (centred)
+        ax.text(x_c, y_main + 0.05, math,
+                ha="center", va="center",
+                fontsize=11.2, fontweight=600, color=TEXT_NAVY,
+                family="serif", zorder=3)
+        # Tagline
+        ax.text(x_c, y_main - 1.00, tag,
+                ha="center", va="center",
+                fontsize=9.8, color=TEXT_NAVY,
+                family="serif", zorder=3)
+        # Figure pointer (bottom of box)
+        ax.text(x_c, y_main - box_h / 2 + 0.40, figref,
+                ha="center", va="center",
+                fontsize=9.2, fontstyle="italic", color=TEXT_LIGHT,
+                family="serif", zorder=3)
+
+    # Arrows between boxes
+    for i in range(3):
+        ax_x0 = centers[i] + box_w / 2 + 0.05
+        ax_x1 = centers[i + 1] - box_w / 2 - 0.05
+        add_arrow(ax, ax_x0, y_main, ax_x1, y_main, color=NAVY, lw=2.2, shrink=0.05)
+
+    # Trust gating annotation under the row
+    ax.text(16.0, 1.80,
+            "Tier-A/B labels drive the conditional gradient; "
+            "Tier-C/D drive the unconditional CFG branch only",
+            ha="center", va="center",
+            fontsize=9.4, fontstyle="italic", color=TEXT_SLATE,
+            family="serif", zorder=3)
+
+    base = os.path.join(OUT_DIR, "fig4_1_pipeline_overview")
+    # Save manually with a tuned dpi so the rendered PNG lands inside the
+    # 1600x400 .. 3200x800 native-pixel band (300 dpi overshoots width).
+    fig.savefig(base + ".png", dpi=240, bbox_inches="tight", facecolor="white")
+    fig.savefig(base + ".svg", bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print("Saved:", base + ".{png,svg}")
+
+
 if __name__ == "__main__":
     # NOTE: fig4a_data_prep(), fig4c_sampling_guidance(), and
     # fig4d_decode_rerank() are intentionally NOT called here. Their PNGs are
@@ -2587,3 +2699,4 @@ if __name__ == "__main__":
     fig4g_mask_sampling()
     fig4f_self_distillation()
     fig4g_pool_fusion()
+    fig4_1_pipeline_overview()
