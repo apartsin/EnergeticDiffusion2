@@ -246,8 +246,8 @@ Classifier-free guidance avoids the separately-trained property predictor requir
 </figure>
 
 <figure id="fig-4g">
-  <img src="figs/fig4g_pool_fusion.png" width="3756" height="1907" alt="DGLD pool fusion across sampling runs: 4 lanes (2 production, 2 ablation) varying conditions, denoiser, and guidance, fanned into Union + canonical-SMILES dedupe" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
-  <figcaption><strong>Figure 4(g). Pool fusion across sampling runs.</strong> Each lane is one independent end-to-end sampling run defined by three diversity axes: conditions (target property tuple fed to FiLM), denoiser (DGLD-H vs DGLD-P), and guidance (which score-model heads are on). Lanes sample in parallel; their pools are unioned and canonical-SMILES deduplicated before the §4.5 reranker. The production methodology uses two solid-line lanes (one per denoiser, both at viab+sens+hazard); ablation lanes (dashed) are added for the §5.3.4 extended merge.</figcaption>
+  <img src="figs/fig4g_pool_fusion.png" width="1672" height="941" alt="DGLD pool fusion across sampling runs: 4 lanes (2 guided production, 2 unguided baseline) varying denoiser and guidance, fanned into Union + canonical-SMILES dedupe" loading="lazy" style="max-width:1100px; width:100%; height:auto; display:block; margin:0 auto;">
+  <figcaption><strong>Figure 4(g). Pool fusion across sampling runs.</strong> Four independent end-to-end sampling lanes, each defined by a (denoiser, guidance) tuple at the headline target conditions: lanes 1-2 are guided (DGLD-H and DGLD-P at viab+sens+hazard) and form the production methodology recipe; lanes 3-4 are unguided baselines (DGLD-H and DGLD-P at CFG-only). Each lane runs end-to-end (\(z_T\) draw &rarr; 40 DDIM &rarr; LIMO decode); the four pools converge to a single Union + canonical-SMILES dedupe step that feeds the &sect;4.5 reranker.</figcaption>
 </figure>
 
 <figure id="fig-4h">
