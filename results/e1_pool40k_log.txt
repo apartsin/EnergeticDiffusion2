@@ -1,0 +1,12 @@
+[train] GPU: NVIDIA GeForce RTX 4090
+[train] Loading models
+[train] 4 cells = {anneal=0|2} x {clamp=5|50}
+  1/4 loss=0.0000 cell=anneal0_clamp5 anneal=0.0 clamp=5.0
+[train] anneal0_clamp5: n=80000 elapsed=35.9s
+  2/4 loss=0.0000 cell=anneal0_clamp50 anneal=0.0 clamp=50.0
+[train] anneal0_clamp50: n=80000 elapsed=36.0s
+  3/4 loss=0.0000 cell=anneal2_clamp5 anneal=2.0 clamp=5.0
+[train] anneal2_clamp5: n=80000 elapsed=36.3s
+  4/4 loss=0.0000 cell=anneal2_clamp50 anneal=2.0 clamp=50.0
+[train] anneal2_clamp50: n=80000 elapsed=36.3s
+[train] === DONE === (4 cells)

@@ -1,0 +1,47 @@
+{
+  "cells": [
+    {
+      "cell": "anneal0_clamp5",
+      "anneal": 0.0,
+      "clamp": 5.0,
+      "n": 20000,
+      "elapsed_s": 11.091275453567505,
+      "out_path": "results/m1_anneal_clamp_anneal0_clamp5.txt"
+    },
+    {
+      "cell": "anneal0_clamp50",
+      "anneal": 0.0,
+      "clamp": 50.0,
+      "n": 20000,
+      "elapsed_s": 10.253481388092041,
+      "out_path": "results/m1_anneal_clamp_anneal0_clamp50.txt"
+    },
+    {
+      "cell": "anneal2_clamp5",
+      "anneal": 2.0,
+      "clamp": 5.0,
+      "n": 20000,
+      "elapsed_s": 10.560581922531128,
+      "out_path": "results/m1_anneal_clamp_anneal2_clamp5.txt"
+    },
+    {
+      "cell": "anneal2_clamp50",
+      "anneal": 2.0,
+      "clamp": 50.0,
+      "n": 20000,
+      "elapsed_s": 10.576974868774414,
+      "out_path": "results/m1_anneal_clamp_anneal2_clamp50.txt"
+    }
+  ],
+  "args": {
+    "v4b_ckpt": "v4b_best_fp16.pt",
+    "v3_ckpt": "v3_best_fp16.pt",
+    "limo_ckpt": "limo_best_fp16.pt",
+    "score_model": "score_model_v3f.pt",
+    "meta_json": "meta.json",
+    "vocab_json": "vocab.json",
+    "pool_per_run": 10000,
+    "seed": 0,
+    "results_dir": "results"
+  }
+}

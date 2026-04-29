@@ -1,0 +1,103 @@
+{
+  "runs": [
+    {
+      "condition": "C0_unguided",
+      "seed": 0,
+      "n": 20000,
+      "elapsed_s": 7.565691709518433,
+      "out_path": "results/m1_3seed_C0_unguided_seed0.txt"
+    },
+    {
+      "condition": "C0_unguided",
+      "seed": 1,
+      "n": 20000,
+      "elapsed_s": 7.512580394744873,
+      "out_path": "results/m1_3seed_C0_unguided_seed1.txt"
+    },
+    {
+      "condition": "C0_unguided",
+      "seed": 2,
+      "n": 20000,
+      "elapsed_s": 7.565051317214966,
+      "out_path": "results/m1_3seed_C0_unguided_seed2.txt"
+    },
+    {
+      "condition": "C1_viab_sens",
+      "seed": 0,
+      "n": 20000,
+      "elapsed_s": 9.079209089279175,
+      "out_path": "results/m1_3seed_C1_viab_sens_seed0.txt"
+    },
+    {
+      "condition": "C1_viab_sens",
+      "seed": 1,
+      "n": 20000,
+      "elapsed_s": 9.05227017402649,
+      "out_path": "results/m1_3seed_C1_viab_sens_seed1.txt"
+    },
+    {
+      "condition": "C1_viab_sens",
+      "seed": 2,
+      "n": 20000,
+      "elapsed_s": 8.998809576034546,
+      "out_path": "results/m1_3seed_C1_viab_sens_seed2.txt"
+    },
+    {
+      "condition": "C2_viab_sens_hazard",
+      "seed": 0,
+      "n": 20000,
+      "elapsed_s": 9.292173862457275,
+      "out_path": "results/m1_3seed_C2_viab_sens_hazard_seed0.txt"
+    },
+    {
+      "condition": "C2_viab_sens_hazard",
+      "seed": 1,
+      "n": 20000,
+      "elapsed_s": 9.284375667572021,
+      "out_path": "results/m1_3seed_C2_viab_sens_hazard_seed1.txt"
+    },
+    {
+      "condition": "C2_viab_sens_hazard",
+      "seed": 2,
+      "n": 20000,
+      "elapsed_s": 9.229976654052734,
+      "out_path": "results/m1_3seed_C2_viab_sens_hazard_seed2.txt"
+    },
+    {
+      "condition": "C3_hazard_only",
+      "seed": 0,
+      "n": 20000,
+      "elapsed_s": 8.858694076538086,
+      "out_path": "results/m1_3seed_C3_hazard_only_seed0.txt"
+    },
+    {
+      "condition": "C3_hazard_only",
+      "seed": 1,
+      "n": 20000,
+      "elapsed_s": 8.914926528930664,
+      "out_path": "results/m1_3seed_C3_hazard_only_seed1.txt"
+    },
+    {
+      "condition": "C3_hazard_only",
+      "seed": 2,
+      "n": 20000,
+      "elapsed_s": 8.930103778839111,
+      "out_path": "results/m1_3seed_C3_hazard_only_seed2.txt"
+    }
+  ],
+  "args": {
+    "v4b_ckpt": "v4b_best_fp16.pt",
+    "v3_ckpt": "v3_best_fp16.pt",
+    "limo_ckpt": "limo_best_fp16.pt",
+    "score_model": "score_model_v3f.pt",
+    "meta_json": "meta.json",
+    "vocab_json": "vocab.json",
+    "pool_per_run": 10000,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "results_dir": "results"
+  }
+}

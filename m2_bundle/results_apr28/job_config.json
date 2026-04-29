@@ -1,0 +1,5 @@
+{
+  "experiment_cmd": "bash run.sh",
+  "results_pattern": "results/*",
+  "job_id": "experiment-20260428-061709"
+}

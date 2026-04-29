@@ -1,0 +1,5 @@
+{
+  "experiment_cmd": "bash dft_smoke_run.sh",
+  "results_pattern": "results/*",
+  "job_id": "dft-smoke-v3-20260428-100454"
+}

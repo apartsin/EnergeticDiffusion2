@@ -1,0 +1,14 @@
+{
+  "comment": "Extension run: 9 chem-pass DGLD leads not covered by the original aizynth_results.json (which has L1, L4, L5). Same 200 MCTS / 300 s protocol, USPTO templates + ZINC stock.",
+  "leads": [
+    {"id": "L2",  "name": "oxime-nitrate-imidazoline",      "smiles": "O=[N+]([O-])N=C1NC(O)ON=C1[N+](=O)[O-]"},
+    {"id": "L3",  "name": "oxadiazinone-N-nitramine",        "smiles": "O=C1N=C([N+](=O)[O-])C(N[N+](=O)[O-])=NON1"},
+    {"id": "L9",  "name": "hydrazinyl tetranitramine",       "smiles": "NN(C=NC=C(N(N[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L11", "name": "acyl-nitramide nitrate-imine",    "smiles": "O=C(N[N+](=O)[O-])C(N=C[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L13", "name": "oxadiazoline",                    "smiles": "O=[N+]([O-])C=NOC=NN[N+](=O)[O-]"},
+    {"id": "L16", "name": "oxadiazinone-N-nitramine",        "smiles": "O=C1N=C([N+](=O)[O-])C(N[N+](=O)[O-])=NON1"},
+    {"id": "L18", "name": "vinyl azo-amino nitrate",         "smiles": "O=[N+]([O-])C=C(N=NCN[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L19", "name": "acyl C-OH nitramine",             "smiles": "O=CC(O[N+](=O)[O-])[N+](=O)[O-]"},
+    {"id": "L20", "name": "alpha-NO2 acyl-N-nitramine",      "smiles": "O=C1N=C(N[N+](=O)[O-])C(=N1)[N+](=O)[O-]"}
+  ]
+}

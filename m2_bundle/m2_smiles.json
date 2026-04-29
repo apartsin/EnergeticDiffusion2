@@ -1,0 +1,33 @@
+{
+  "comment": "Top-3 leads from merged_top100.md selected for DFT validation. Diverse scaffolds: aromatic isoxazole, oxime-imidazoline, banded oxadiazinone-N-nitramine.",
+  "leads": [
+    {
+      "id": "L1",
+      "rank": 1,
+      "name": "trinitro-isoxazole",
+      "smiles": "O=[N+]([O-])c1noc([N+](=O)[O-])c1[N+](=O)[O-]",
+      "predicted": {"rho": 2.00, "HOF": 144, "D": 9.56, "P": 40.52, "MW": 204, "nNO2": 3, "comp": 0.831, "xtb_gap": 2.61},
+      "source": "guided40k"
+    },
+    {
+      "id": "L2",
+      "rank": 2,
+      "name": "oxime-nitrate-imidazoline",
+      "smiles": "O=[N+]([O-])N=C1NC(O)ON=C1[N+](=O)[O-]",
+      "predicted": {"rho": 1.87, "HOF": -51, "D": 8.96, "P": 34.01, "MW": 205, "nNO2": 2, "comp": 0.769, "xtb_gap": null},
+      "source": "phaseAonly"
+    },
+    {
+      "id": "L3",
+      "rank": 16,
+      "name": "oxadiazinone-N-nitramine",
+      "smiles": "O=C1N=C([N+](=O)[O-])C(N[N+](=O)[O-])=NON1",
+      "predicted": {"rho": 1.93, "HOF": 50, "D": 9.11, "P": 37.22, "MW": 218, "nNO2": 2, "comp": 0.706, "xtb_gap": null},
+      "source": "sa015_pool20k"
+    }
+  ],
+  "anchors": [
+    {"id": "RDX", "name": "RDX (cyclotrimethylene-trinitramine)", "smiles": "[O-][N+](=O)N1CN([N+](=O)[O-])CN([N+](=O)[O-])C1", "ref": {"rho_exp": 1.806, "HOF_kJmol": 70.5, "D_kms": 8.75}},
+    {"id": "TATB", "name": "TATB (1,3,5-triamino-2,4,6-trinitrobenzene)", "smiles": "Nc1c([N+](=O)[O-])c(N)c([N+](=O)[O-])c(N)c1[N+](=O)[O-]", "ref": {"rho_exp": 1.937, "HOF_kJmol": -141, "D_kms": 7.86}}
+  ]
+}

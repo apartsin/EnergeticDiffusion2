@@ -1,0 +1,5 @@
+{
+  "experiment_cmd": "bash run.sh",
+  "results_pattern": "results/*",
+  "job_id": "molmim-3seed-v2-20260428-100453"
+}

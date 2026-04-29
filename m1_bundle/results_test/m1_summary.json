@@ -1,0 +1,70 @@
+{
+  "runs": [
+    {
+      "condition": "C0_unguided",
+      "seed": 0,
+      "guidance_scales": null,
+      "n_smiles_raw": 400,
+      "elapsed_s": 1.7334418296813965,
+      "out_path": "results_test\\m1_sweep_C0_unguided_seed0.txt"
+    },
+    {
+      "condition": "C1_viab",
+      "seed": 0,
+      "guidance_scales": {
+        "viab": 1.0,
+        "sens": 0.0,
+        "sa": 0.0,
+        "sc": 0.0
+      },
+      "n_smiles_raw": 400,
+      "elapsed_s": 1.894416093826294,
+      "out_path": "results_test\\m1_sweep_C1_viab_seed0.txt"
+    },
+    {
+      "condition": "C2_viab_sens",
+      "seed": 0,
+      "guidance_scales": {
+        "viab": 1.0,
+        "sens": 0.3,
+        "sa": 0.0,
+        "sc": 0.0
+      },
+      "n_smiles_raw": 400,
+      "elapsed_s": 1.9254326820373535,
+      "out_path": "results_test\\m1_sweep_C2_viab_sens_seed0.txt"
+    },
+    {
+      "condition": "C3_viab_sens_sa",
+      "seed": 0,
+      "guidance_scales": {
+        "viab": 1.0,
+        "sens": 0.3,
+        "sa": 0.15,
+        "sc": 0.0
+      },
+      "n_smiles_raw": 400,
+      "elapsed_s": 1.9091134071350098,
+      "out_path": "results_test\\m1_sweep_C3_viab_sens_sa_seed0.txt"
+    }
+  ],
+  "args": {
+    "v4b_ckpt": "v4b_best.pt",
+    "v3_ckpt": "v3_best.pt",
+    "limo_ckpt": "limo_best.pt",
+    "score_model": "score_model_v3e.pt",
+    "meta_json": "meta.json",
+    "vocab_json": "vocab.json",
+    "pool_per_run": 200,
+    "n_steps": 40,
+    "cfg_scale": 7.0,
+    "seeds": [
+      0
+    ],
+    "target_density": 1.95,
+    "target_hof": 220.0,
+    "target_d": 9.5,
+    "target_p": 40.0,
+    "results_dir": "results_test"
+  }
+}

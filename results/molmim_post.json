@@ -1,0 +1,39 @@
+{
+  "per_run": [
+    {
+      "condition": "molmim_samples",
+      "seed": 0,
+      "n_validated": 1143,
+      "n_top": 100,
+      "top1_composite": 4.786320700174838,
+      "top1_D_kms": 7.700866222381592,
+      "top1_P_GPa": 25.51531410217285,
+      "top1_rho": 1.7564305067062378,
+      "top1_smiles": "O=c1nc(O)[nH]cc1[N+](=O)[O-]",
+      "topN_mean_composite": 9.144909984224391,
+      "topN_mean_D": 5.266544256210327,
+      "topN_max_D": 7.700866222381592,
+      "topN_internal_diversity": 0.8525354139684417,
+      "topN_n_scaffolds": 95
+    }
+  ],
+  "summary": {
+    "molmim_samples": {
+      "top1_composite_mean": 4.786320700174838,
+      "top1_composite_std": 0.0,
+      "top1_D_kms_mean": 7.700866222381592,
+      "top1_D_kms_std": 0.0,
+      "topN_mean_composite_mean": 9.144909984224391,
+      "topN_mean_composite_std": 0.0,
+      "topN_mean_D_mean": 5.266544256210327,
+      "topN_mean_D_std": 0.0,
+      "topN_max_D_mean": 7.700866222381592,
+      "topN_max_D_std": 0.0,
+      "topN_internal_diversity_mean": 0.8525354139684417,
+      "topN_internal_diversity_std": 0.0,
+      "topN_n_scaffolds_mean": 95.0,
+      "topN_n_scaffolds_std": 0.0,
+      "n_seeds": 1
+    }
+  }
+}

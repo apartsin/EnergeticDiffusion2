@@ -1,0 +1,50 @@
+{
+  "property_names": [
+    "density",
+    "heat_of_formation",
+    "detonation_velocity",
+    "detonation_pressure"
+  ],
+  "n_props": 4,
+  "latent_dim": 1024,
+  "stats": {
+    "density": {
+      "mean": 1.5173766460233356,
+      "std": 0.240559848068495,
+      "count": 19176
+    },
+    "heat_of_formation": {
+      "mean": -97.06099136009243,
+      "std": 284.8394628665202,
+      "count": 2625
+    },
+    "detonation_velocity": {
+      "mean": 5.917688950213777,
+      "std": 1.5201422297709482,
+      "count": 2539
+    },
+    "detonation_pressure": {
+      "mean": 15.038633614369411,
+      "std": 9.001920235535044,
+      "count": 2366
+    }
+  },
+  "v3_cfg": {
+    "hidden": 2048,
+    "n_blocks": 8,
+    "time_dim": 256,
+    "prop_emb_dim": 64,
+    "dropout": 0.0,
+    "T": 1000,
+    "ema_decay": 0.999
+  },
+  "v4b_cfg": {
+    "hidden": 2048,
+    "n_blocks": 8,
+    "time_dim": 256,
+    "prop_emb_dim": 64,
+    "dropout": 0.0,
+    "T": 1000,
+    "ema_decay": 0.999
+  }
+}

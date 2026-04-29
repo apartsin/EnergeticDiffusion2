@@ -1,0 +1,71 @@
+{
+  "conditions": [
+    {
+      "condition": "C0_unguided",
+      "guidance_scales": null,
+      "tau": 1.5,
+      "n": 20000,
+      "elapsed_s": 7.845930337905884,
+      "out_path": "results/m1ss_C0_unguided.txt"
+    },
+    {
+      "condition": "C1_viab_sens",
+      "guidance_scales": {
+        "viab": 1.0,
+        "sens": 0.3,
+        "hazard": 0.0,
+        "sa": 0.0,
+        "sc": 0.0
+      },
+      "tau": 1.5,
+      "n": 20000,
+      "elapsed_s": 9.308046817779541,
+      "out_path": "results/m1ss_C1_viab_sens.txt"
+    },
+    {
+      "condition": "C2_viab_sens_hazard",
+      "guidance_scales": {
+        "viab": 1.0,
+        "sens": 0.3,
+        "hazard": 1.0,
+        "sa": 0.0,
+        "sc": 0.0
+      },
+      "tau": 1.5,
+      "n": 20000,
+      "elapsed_s": 9.548190116882324,
+      "out_path": "results/m1ss_C2_viab_sens_hazard.txt"
+    },
+    {
+      "condition": "C3_hazard_only",
+      "guidance_scales": {
+        "viab": 0.0,
+        "sens": 0.0,
+        "hazard": 2.0,
+        "sa": 0.0,
+        "sc": 0.0
+      },
+      "tau": 1.5,
+      "n": 20000,
+      "elapsed_s": 9.052570104598999,
+      "out_path": "results/m1ss_C3_hazard_only.txt"
+    }
+  ],
+  "tau": 1.5,
+  "args": {
+    "v4b_ckpt": "v4b_best_fp16.pt",
+    "v3_ckpt": "v3_best_fp16.pt",
+    "limo_ckpt": "limo_best_fp16.pt",
+    "score_model": "score_model_v3f.pt",
+    "meta_json": "meta.json",
+    "vocab_json": "vocab.json",
+    "pool_per_run": 10000,
+    "seed": 0,
+    "tau": 1.5,
+    "target_density": 1.95,
+    "target_hof": 220.0,
+    "target_d": 9.5,
+    "target_p": 40.0,
+    "results_dir": "results"
+  }
+}

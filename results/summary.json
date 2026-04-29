@@ -1,0 +1,11 @@
+{
+  "model": "distilbert-base-uncased",
+  "device": "cuda",
+  "epochs": 10,
+  "total_steps": 30,
+  "final_loss": 0.7790383100509644,
+  "eval_loss": 2.1260451873143515,
+  "perplexity": 8.381653785705566,
+  "elapsed_seconds": 1.3151390552520752,
+  "num_texts": 5
+}

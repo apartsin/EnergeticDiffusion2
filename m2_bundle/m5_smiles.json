@@ -1,0 +1,19 @@
+{
+  "comment": "S3 extended DFT: top-10 chem-pass leads from merged top-100",
+  "leads": [
+    {"id":"L1","name":"trinitro-isoxazole","smiles":"O=[N+]([O-])c1noc([N+](=O)[O-])c1[N+](=O)[O-]","predicted":{"rho":2.00,"D":9.56,"P":40.52}},
+    {"id":"L4","name":"5-ring tetrazoline-N-nitramine","smiles":"O=[N+]([O-])C1=NCN=NN1[N+](=O)[O-]","predicted":{"rho":1.87,"D":8.98}},
+    {"id":"L5","name":"acyl oxime nitrate","smiles":"O=C(C=NO[N+](=O)[O-])[N+](=O)[O-]","predicted":{"rho":1.93,"D":9.21}},
+    {"id":"L9","name":"hydrazinyl tetranitramine","smiles":"NN(C=NC=C(N(N[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-])[N+](=O)[O-]","predicted":{"rho":1.88,"D":9.27}},
+    {"id":"L11","name":"acyl-nitramide nitrate-imine","smiles":"O=C(N[N+](=O)[O-])C(N=C[N+](=O)[O-])[N+](=O)[O-]","predicted":{"rho":1.90,"D":9.30}},
+    {"id":"L13","name":"oxadiazoline","smiles":"O=[N+]([O-])C=NOC=NN[N+](=O)[O-]","predicted":{"rho":1.87,"D":9.05}},
+    {"id":"L16","name":"oxadiazinone-N-nitramine","smiles":"O=C1N=C([N+](=O)[O-])C(N[N+](=O)[O-])=NON1","predicted":{"rho":1.93,"D":9.11}},
+    {"id":"L18","name":"vinyl azo-amino nitrate","smiles":"O=[N+]([O-])C=C(N=NCN[N+](=O)[O-])[N+](=O)[O-]","predicted":{"rho":1.89,"D":9.00}},
+    {"id":"L19","name":"acyl C-OH nitramine","smiles":"O=CC(O[N+](=O)[O-])[N+](=O)[O-]","predicted":{"rho":1.88,"D":9.14}},
+    {"id":"L20","name":"alpha-NO2 acyl-N-nitramine","smiles":"O=C1N=C(N[N+](=O)[O-])C(=N1)[N+](=O)[O-]","predicted":{"rho":1.91,"D":9.12}}
+  ],
+  "anchors": [
+    {"id":"RDX","name":"RDX","smiles":"[O-][N+](=O)N1CN([N+](=O)[O-])CN([N+](=O)[O-])C1"},
+    {"id":"TATB","name":"TATB","smiles":"Nc1c([N+](=O)[O-])c(N)c([N+](=O)[O-])c(N)c1[N+](=O)[O-]"}
+  ]
+}

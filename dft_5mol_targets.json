@@ -1,0 +1,44 @@
+{
+  "leads": [
+    {
+      "id": "smiles_lstm_samples",
+      "smiles": "O=c1c2c([N+](=O)[O-])nn([N+](=O)[O-])c2nc2n([N+](=O)[O-])nc([N+](=O)[O-])n12",
+      "D_pred": 9.576448440551758,
+      "rho_pred": 1.956169605255127,
+      "P_pred": 39.9852409362793,
+      "max_tani": 1.0
+    },
+    {
+      "id": "molmim_samples",
+      "smiles": "O=c1nc(O)[nH]cc1[N+](=O)[O-]",
+      "D_pred": 7.700866222381592,
+      "rho_pred": 1.7564305067062378,
+      "P_pred": 25.51531410217285,
+      "max_tani": 0.625
+    },
+    {
+      "id": "C2_viab_sens_hazard",
+      "smiles": "O=[N+]=C(N=NC=N[O-])[N+](=O)[O-]",
+      "D_pred": 9.405143737792969,
+      "rho_pred": 1.9495675563812256,
+      "P_pred": 38.723697662353516,
+      "max_tani": 0.25
+    },
+    {
+      "id": "C3_viab_sens_sa",
+      "smiles": "O=[N+]([O-])C=NOC(=C=N[N+](=O)[O-])[N+](=O)[O-]",
+      "D_pred": 9.268869400024414,
+      "rho_pred": 1.9600919485092163,
+      "P_pred": 38.507965087890625,
+      "max_tani": 0.32432432432432434
+    },
+    {
+      "id": "C0_unguided",
+      "smiles": "O=[N+]([O-])C=NO[N+](=N[O-])[N+](=O)[O-]",
+      "D_pred": 9.576473236083984,
+      "rho_pred": 1.9591639041900635,
+      "P_pred": 40.0105094909668,
+      "max_tani": 0.28125
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+[train] Loading targets from smiles_targets_L4L5.json
+[train] 2 target compounds
+[train] Loading AiZynthFinder ...
+[train] Stock: zinc, Expansion: uspto, Filter: uspto
+
+[train] 1/2 loss=0.0000 target=L4
+  SMILES: O=[N+]([O-])C1=NCN=NN1[N+](=O)[O-]
+  -> 1 routes; best score={'state score': 0.049100689501895424} steps=0 (1s)
+
+[train] 2/2 loss=0.0000 target=L5
+  SMILES: O=C(C=NO[N+](=O)[O-])[N+](=O)[O-]
+  -> 1 routes; best score={'state score': 0.049100689501895424} steps=0 (0s)
+
+[train] -> results/aizynth_L4L5_deep.json
+[train] === DONE ===
