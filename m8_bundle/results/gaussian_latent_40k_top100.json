@@ -1,0 +1,817 @@
+{
+  "method": "Gaussian-latent-40k",
+  "n_raw": 40000,
+  "n_valid_smiles": 38227,
+  "n_novel": 10317,
+  "keep_rate_pct": 25.79,
+  "dgld_keep_rate_pct": 2.42,
+  "n_top": 100,
+  "top_candidates": [
+    {
+      "smiles": "CCNCCCCC=NNCC(=CC(=O)CC)CCC(O)(CC=O)SCC",
+      "maxtan": 0.0,
+      "sa": 4.393,
+      "sc": null,
+      "mw": 399.6,
+      "composite": 0.999003
+    },
+    {
+      "smiles": "CCCC=CN(CF)CCNCC(=O)C=CCC(=O)OCCCC=CN(C)O",
+      "maxtan": 0.0,
+      "sa": 3.919,
+      "sc": null,
+      "mw": 399.51,
+      "composite": 0.998768
+    },
+    {
+      "smiles": "CC(=CCCCNC(=O)NC=COCCCNC(C)NCCCC=O)[N+](=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.148,
+      "sc": null,
+      "mw": 399.49,
+      "composite": 0.99873
+    },
+    {
+      "smiles": "CCOC=C(C)NCC1=CN1COCCC=CC=CCC=C=C(C(C)=O)C(C)=O",
+      "maxtan": 0.0,
+      "sa": 4.262,
+      "sc": null,
+      "mw": 400.52,
+      "composite": 0.998702
+    },
+    {
+      "smiles": "C=C(CCCC=CC(C)C=C(C=O)C=C(C=CC=O)CC=O)CCCCCOC",
+      "maxtan": 0.0,
+      "sa": 4.359,
+      "sc": null,
+      "mw": 400.56,
+      "composite": 0.998602
+    },
+    {
+      "smiles": "CC(C)OCCC=CC(=O)C=C1C=CC(N)CCC=C1NCC=CCCCC=O",
+      "maxtan": 0.0,
+      "sa": 4.329,
+      "sc": null,
+      "mw": 400.56,
+      "composite": 0.998592
+    },
+    {
+      "smiles": "CCCCC(CN([O-])CCC=C(C=O)CCCCO)C(O)OCCCC(C)C",
+      "maxtan": 0.0,
+      "sa": 4.297,
+      "sc": null,
+      "mw": 400.58,
+      "composite": 0.99855
+    },
+    {
+      "smiles": "O=CC=CC=CCC(=O)C=CCOC(=O)COC=C(C#CC(C=O)C=O)C(=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.477,
+      "sc": null,
+      "mw": 401.35,
+      "composite": 0.996632
+    },
+    {
+      "smiles": "C=C(C)C=CN=CCNOCCC(CCCCCOC(C)C)OCCOC=O",
+      "maxtan": 0.0,
+      "sa": 4.197,
+      "sc": null,
+      "mw": 398.54,
+      "composite": 0.99636
+    },
+    {
+      "smiles": "CCCN(CC)CCC(NC(=O)C=O)OC(=O)N(C)C=CN=CNCCNC",
+      "maxtan": 0.0,
+      "sa": 4.451,
+      "sc": null,
+      "mw": 398.51,
+      "composite": 0.99627
+    },
+    {
+      "smiles": "CCOC=NNCC(CCCCOC(=O)CCOC=O)COC=CC=CC=O",
+      "maxtan": 0.0,
+      "sa": 4.248,
+      "sc": null,
+      "mw": 398.46,
+      "composite": 0.99614
+    },
+    {
+      "smiles": "CC(CCC=C=C=O)OCCCCCC=CC(=O)OCOCCC(=O)OCO",
+      "maxtan": 0.0,
+      "sa": 3.934,
+      "sc": null,
+      "mw": 398.45,
+      "composite": 0.99613
+    },
+    {
+      "smiles": "C=C(C=C=O)N(C=O)CCCCCOC(=CCC(C)=O)N(O)OCC(=O)OC",
+      "maxtan": 0.0,
+      "sa": 4.098,
+      "sc": null,
+      "mw": 398.41,
+      "composite": 0.99603
+    },
+    {
+      "smiles": "CCC=COCCOCC(C=CC(C)=CN=CCCC)=C1CC1(C)CCCCC",
+      "maxtan": 0.0,
+      "sa": 4.476,
+      "sc": null,
+      "mw": 401.64,
+      "composite": 0.995912
+    },
+    {
+      "smiles": "CC(C)C=CC=NC=CCCCN1CCC=C1SCNC=CC(=O)C=C1C=C1",
+      "maxtan": 0.0,
+      "sa": 4.498,
+      "sc": null,
+      "mw": 397.59,
+      "composite": 0.99397
+    },
+    {
+      "smiles": "O=CC=CN(OCOc1ccccc1C=O)C(O)=CCCC1=CNCCOCC1",
+      "maxtan": 0.0,
+      "sa": 3.938,
+      "sc": null,
+      "mw": 402.45,
+      "composite": 0.993882
+    },
+    {
+      "smiles": "C=C(O)C(C=CCCC(C)Nc1cccc2c1CNC=C2CCCC=O)NC=O",
+      "maxtan": 0.0,
+      "sa": 4.481,
+      "sc": null,
+      "mw": 397.52,
+      "composite": 0.993798
+    },
+    {
+      "smiles": "CC=NN(N)C=C(C)C(=O)C(C)CCC=CCCCc1ccccc1C(=O)C=O",
+      "maxtan": 0.0,
+      "sa": 3.96,
+      "sc": null,
+      "mw": 397.52,
+      "composite": 0.993798
+    },
+    {
+      "smiles": "CCOCCCN=C(C=CC=NNC=CC(=O)NC=O)CCCC1(O)C=CC=C1",
+      "maxtan": 0.0,
+      "sa": 4.266,
+      "sc": null,
+      "mw": 402.5,
+      "composite": 0.993762
+    },
+    {
+      "smiles": "C=C(C=C(COCC=O)C(C)C=CCC=C1C=C1)CCOCCCCC(=O)OC",
+      "maxtan": 0.0,
+      "sa": 4.246,
+      "sc": null,
+      "mw": 402.53,
+      "composite": 0.993672
+    },
+    {
+      "smiles": "CC=C=CCCCCCCCC(=O)CC(=O)NC=CC=CC(C)CCCNCC",
+      "maxtan": 0.0,
+      "sa": 3.899,
+      "sc": null,
+      "mw": 402.62,
+      "composite": 0.993442
+    },
+    {
+      "smiles": "CCCCC(CCC=O)CCC=CC=CCCOCCCOC(=O)C(=O)OC",
+      "maxtan": 0.0,
+      "sa": 3.547,
+      "sc": null,
+      "mw": 396.52,
+      "composite": 0.99131
+    },
+    {
+      "smiles": "CCCCCCCCCCCNCCCC(=O)C1=CC=C(NNC=O)[N+]CC=C1",
+      "maxtan": 0.0,
+      "sa": 3.678,
+      "sc": null,
+      "mw": 403.59,
+      "composite": 0.991023
+    },
+    {
+      "smiles": "CCC=C1CCCCCC(=O)CCCCCCCCC(C)C(CCCC=O)C=N1",
+      "maxtan": 0.0,
+      "sa": 4.379,
+      "sc": null,
+      "mw": 403.65,
+      "composite": 0.990872
+    },
+    {
+      "smiles": "CCOCOCNC(=N)COCC=C(N)C(=O)CCC=Cc1cc1=NC=CC=O",
+      "maxtan": 0.0,
+      "sa": 4.403,
+      "sc": null,
+      "mw": 404.47,
+      "composite": 0.988832
+    },
+    {
+      "smiles": "CCCCC(C)NCOC(=O)C(=O)CCNNC(=O)C=CC=CCCCC=O",
+      "maxtan": 0.0,
+      "sa": 3.838,
+      "sc": null,
+      "mw": 395.5,
+      "composite": 0.98875
+    },
+    {
+      "smiles": "COC=CC=CCCC(=O)NCCCNC(C)C(=O)N1CCCN1CC(=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.007,
+      "sc": null,
+      "mw": 395.48,
+      "composite": 0.9887
+    },
+    {
+      "smiles": "[N+]CCCC(C=O)=CCCOCCC(=O)CC(=O)C=CCCNCC[N+](=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.03,
+      "sc": null,
+      "mw": 395.46,
+      "composite": 0.98864
+    },
+    {
+      "smiles": "C=C(C=CN=COCCCCC=CC(=O)C=O)CCCNCCC=COC(C)C",
+      "maxtan": 0.0,
+      "sa": 4.064,
+      "sc": null,
+      "mw": 404.55,
+      "composite": 0.988622
+    },
+    {
+      "smiles": "C=C(CCCCC=O)OCCC(OC)C1=CC(=CCCNCNCC)C=CC1=O",
+      "maxtan": 0.0,
+      "sa": 4.238,
+      "sc": null,
+      "mw": 404.55,
+      "composite": 0.988622
+    },
+    {
+      "smiles": "CCC(C=O)C=CC=C(OC=CC(=O)c1ccccc1C=O)C(=O)NC=CC=O",
+      "maxtan": 0.0,
+      "sa": 4.302,
+      "sc": null,
+      "mw": 395.41,
+      "composite": 0.988528
+    },
+    {
+      "smiles": "CCOC=CCCCC(N)C(=O)CCCCCCCN=CC1(C)CCC=C1C=O",
+      "maxtan": 0.0,
+      "sa": 4.306,
+      "sc": null,
+      "mw": 404.6,
+      "composite": 0.988512
+    },
+    {
+      "smiles": "COCCCCOCCCCC1C=CPC1CCCC=CCBr",
+      "maxtan": 0.0,
+      "sa": 4.497,
+      "sc": null,
+      "mw": 405.36,
+      "composite": 0.986607
+    },
+    {
+      "smiles": "CCCCCCCn1cc(CNNC=C(CC=O)[N+](C)[O-])c([N+](=O)C[N+]=O)c1",
+      "maxtan": 0.0,
+      "sa": 4.29,
+      "sc": null,
+      "mw": 394.48,
+      "composite": 0.98619
+    },
+    {
+      "smiles": "CC1=CC(=O)C=CC=CC=CCC=C(CCC=CC#CC=O)COCCOC1=O",
+      "maxtan": 0.0,
+      "sa": 4.257,
+      "sc": null,
+      "mw": 394.47,
+      "composite": 0.986168
+    },
+    {
+      "smiles": "CC(=O)c1ccccc1C1(C)CCCN1C(=O)CC(C)=CC=CC=CCC=CC=O",
+      "maxtan": 0.0,
+      "sa": 3.969,
+      "sc": null,
+      "mw": 405.54,
+      "composite": 0.986155
+    },
+    {
+      "smiles": "CC1=CCC(CCCCCC=CC=O)=C1C=CNCCC=CC=CC1=CC=COC1",
+      "maxtan": 0.0,
+      "sa": 4.225,
+      "sc": null,
+      "mw": 405.58,
+      "composite": 0.986045
+    },
+    {
+      "smiles": "CCCCCC(C)CCC(=O)CCCCCNC(=O)C(C)C=CC1=CCCCO1",
+      "maxtan": 0.0,
+      "sa": 3.757,
+      "sc": null,
+      "mw": 405.62,
+      "composite": 0.985942
+    },
+    {
+      "smiles": "CCC=C(C)CCNC=CCCOC(C)C=C(C)CC=CC=C(C)CCCl",
+      "maxtan": 0.0,
+      "sa": 4.394,
+      "sc": null,
+      "mw": 394.04,
+      "composite": 0.985108
+    },
+    {
+      "smiles": "C=C1OCC(=CC(O)CC(C)C(CC)CC)C1CCCCCNC(=O)C(C)=O",
+      "maxtan": 0.0,
+      "sa": 4.466,
+      "sc": null,
+      "mw": 393.57,
+      "composite": 0.98392
+    },
+    {
+      "smiles": "CCC(=O)Cc1cccn1CCNC(O)CCCCCC(=O)CC1=COCOC1",
+      "maxtan": 0.0,
+      "sa": 3.856,
+      "sc": null,
+      "mw": 406.52,
+      "composite": 0.983692
+    },
+    {
+      "smiles": "COCCCC(N)CCCCC(CC=O)NCCCCCC(=O)COC=C1C#C1",
+      "maxtan": 0.0,
+      "sa": 4.33,
+      "sc": null,
+      "mw": 406.57,
+      "composite": 0.983582
+    },
+    {
+      "smiles": "C=C(C=O)C=C(C)NCCCCCCCCNC=NCCC=CON(C=O)CC",
+      "maxtan": 0.0,
+      "sa": 4.125,
+      "sc": null,
+      "mw": 406.57,
+      "composite": 0.983572
+    },
+    {
+      "smiles": "CC(CCC=O)COC1CCCC(C)OC1CCCCCCCCC#CCC=O",
+      "maxtan": 0.0,
+      "sa": 4.323,
+      "sc": null,
+      "mw": 406.61,
+      "composite": 0.983482
+    },
+    {
+      "smiles": "CC=C=CCC=CCN(C)CCC(C=CCNCCCNN)CCCNCNC",
+      "maxtan": 0.0,
+      "sa": 4.42,
+      "sc": null,
+      "mw": 406.66,
+      "composite": 0.983342
+    },
+    {
+      "smiles": "C=C(C=CCNC(C)C)C=CN=C=CCCC(CCCC)c1ccccc1C=O",
+      "maxtan": 0.0,
+      "sa": 4.244,
+      "sc": null,
+      "mw": 392.59,
+      "composite": 0.981468
+    },
+    {
+      "smiles": "CCCCOCC1=CCCCC(CN(C=CNC(=O)NC(C)=O)CC(C)N)=C1",
+      "maxtan": 0.0,
+      "sa": 4.118,
+      "sc": null,
+      "mw": 392.54,
+      "composite": 0.98136
+    },
+    {
+      "smiles": "C=CCC(CNCCCC=O)C(O)OCCCC(=O)CC1=C(C)C(C)=NC1=O",
+      "maxtan": 0.0,
+      "sa": 4.319,
+      "sc": null,
+      "mw": 392.5,
+      "composite": 0.98124
+    },
+    {
+      "smiles": "COCOC1=C2OCCC(=C=O)CCCN2CNCCCNCCC(=O)CC=C1",
+      "maxtan": 0.0,
+      "sa": 4.357,
+      "sc": null,
+      "mw": 407.51,
+      "composite": 0.981222
+    },
+    {
+      "smiles": "CCC(CC)(CCCCCC(=O)[O-])CCCC(=O)CC(=O)CC=CC(C=O)C=O",
+      "maxtan": 0.0,
+      "sa": 3.853,
+      "sc": null,
+      "mw": 407.53,
+      "composite": 0.981182
+    },
+    {
+      "smiles": "CC=CCCC(C=CC=O)CCCCOC(=O)C(NCCNCC=CC)C(=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.459,
+      "sc": null,
+      "mw": 407.53,
+      "composite": 0.981172
+    },
+    {
+      "smiles": "CCOCCCN(C=NN(N)CCN(C)C(=O)[N+](=O)[O-])CCCN[N+](=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.026,
+      "sc": null,
+      "mw": 392.42,
+      "composite": 0.981043
+    },
+    {
+      "smiles": "CC=C=CC=CCC(CCC(C)=O)CCC(=O)CNOCCCCCCOCC",
+      "maxtan": 0.0,
+      "sa": 3.979,
+      "sc": null,
+      "mw": 407.6,
+      "composite": 0.981012
+    },
+    {
+      "smiles": "C=C(O)CCCCCCNCCCC(C)C(C)CCOOCC=CC=CC=CC",
+      "maxtan": 0.0,
+      "sa": 4.108,
+      "sc": null,
+      "mw": 407.64,
+      "composite": 0.980902
+    },
+    {
+      "smiles": "C=C(CCCC=O)C(C)(C)CCCCCNN=CCCNCCCCCC(C)C",
+      "maxtan": 0.0,
+      "sa": 3.276,
+      "sc": null,
+      "mw": 407.69,
+      "composite": 0.980782
+    },
+    {
+      "smiles": "CCCCC(C)CCCCCC(C)=CC=CC=CC=C1OC1SCNC=O",
+      "maxtan": 0.0,
+      "sa": 4.447,
+      "sc": null,
+      "mw": 391.62,
+      "composite": 0.979053
+    },
+    {
+      "smiles": "C=C1C=CC=CC(=C)CCC(CN)C(=O)OCCc2ccccc2C(=O)CC=C1",
+      "maxtan": 0.0,
+      "sa": 4.263,
+      "sc": null,
+      "mw": 391.51,
+      "composite": 0.978778
+    },
+    {
+      "smiles": "COCNCCC(C)(CCCC=CC=CC=C1C=C1OCCC=O)COC=O",
+      "maxtan": 0.0,
+      "sa": 4.393,
+      "sc": null,
+      "mw": 391.51,
+      "composite": 0.97877
+    },
+    {
+      "smiles": "CC(C=CC(=O)NN(CC=O)C(=O)NCCNC(C)C(C)C)CC=CC(=O)C=O",
+      "maxtan": 0.0,
+      "sa": 4.397,
+      "sc": null,
+      "mw": 408.5,
+      "composite": 0.978752
+    },
+    {
+      "smiles": "C=CC=CC=CCCCNCCOCC(C=O)(CC=C[N+](=O)[O-])CC=C(C)CF",
+      "maxtan": 0.0,
+      "sa": 4.499,
+      "sc": null,
+      "mw": 408.51,
+      "composite": 0.978715
+    },
+    {
+      "smiles": "CCOCNCCN(OCCCC=NNN(N)CCCC[N+](=O)[O-])C(C)=O",
+      "maxtan": 0.0,
+      "sa": 3.989,
+      "sc": null,
+      "mw": 391.47,
+      "composite": 0.978683
+    },
+    {
+      "smiles": "C#CCCOC1=CC(=O)C=CC=CC=CC(=O)OCC(C=O)=CC=NC=CC=C1",
+      "maxtan": 0.0,
+      "sa": 4.368,
+      "sc": null,
+      "mw": 391.42,
+      "composite": 0.978558
+    },
+    {
+      "smiles": "C=CCCCC=C(CCNC)OCN1CC=CC(C(=C)CC)c2ccccc2C1=O",
+      "maxtan": 0.0,
+      "sa": 3.992,
+      "sc": null,
+      "mw": 408.59,
+      "composite": 0.978535
+    },
+    {
+      "smiles": "CC=C=CCCCCCC(NCCCCOCCC=CC(=O)[O-])C(=O)C=CC",
+      "maxtan": 0.0,
+      "sa": 4.072,
+      "sc": null,
+      "mw": 390.54,
+      "composite": 0.97636
+    },
+    {
+      "smiles": "CC1(C)CC(CON(CC(=O)Cc2ccccc2)NCCCC=O)N1C(N)=O",
+      "maxtan": 0.0,
+      "sa": 3.983,
+      "sc": null,
+      "mw": 390.48,
+      "composite": 0.97621
+    },
+    {
+      "smiles": "O=C(C=COCCC(O)C=c1cc2c(o1)=C2)OCCC1(O)CCCCCCC1",
+      "maxtan": 0.0,
+      "sa": 4.154,
+      "sc": null,
+      "mw": 390.48,
+      "composite": 0.97619
+    },
+    {
+      "smiles": "CCC(C=CC=CNC(=O)COCCN(C=C1C=CC=C1)[N+](=O)[O-])=C[N+](=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.18,
+      "sc": null,
+      "mw": 390.4,
+      "composite": 0.97599
+    },
+    {
+      "smiles": "N#CC=CC(=O)OCn1cccc1SCCNCCc1ccccc1Cl",
+      "maxtan": 0.0,
+      "sa": 2.988,
+      "sc": null,
+      "mw": 389.91,
+      "composite": 0.97477
+    },
+    {
+      "smiles": "CCCCCCCCC=CCC=CCCCC(C=O)=CC=CCNCOCC",
+      "maxtan": 0.0,
+      "sa": 3.342,
+      "sc": null,
+      "mw": 389.62,
+      "composite": 0.97406
+    },
+    {
+      "smiles": "O=c1cccccc1C=CC=CNCC=CC1=CC=COCCCC=CCCC1",
+      "maxtan": 0.0,
+      "sa": 4.112,
+      "sc": null,
+      "mw": 389.54,
+      "composite": 0.973848
+    },
+    {
+      "smiles": "C=CCCC(=O)OCC(=C=CCC1=C(C=C=CC)C(=O)N=C1C=O)CCCNC=O",
+      "maxtan": 0.0,
+      "sa": 4.31,
+      "sc": null,
+      "mw": 410.47,
+      "composite": 0.973825
+    },
+    {
+      "smiles": "CC(=O)CCOCC(=CC#CCCC=CCC=CCC=CCCC#CO)C(=O)C=O",
+      "maxtan": 0.0,
+      "sa": 4.097,
+      "sc": null,
+      "mw": 410.51,
+      "composite": 0.973725
+    },
+    {
+      "smiles": "CC=NC(=O)NCCC#CC(=O)N(CC1=C=C1CC=N)C(=O)C=CCCCCCC",
+      "maxtan": 0.0,
+      "sa": 4.379,
+      "sc": null,
+      "mw": 410.52,
+      "composite": 0.973705
+    },
+    {
+      "smiles": "COCCN(C)CCNCCNCNCCC=N[N+](=O)C=C([N+]=O)[N+](=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.193,
+      "sc": null,
+      "mw": 389.44,
+      "composite": 0.973593
+    },
+    {
+      "smiles": "CC(=O)CCC(=N)CCCNN(C)C[N+](=O)CCCCC([N+](=O)[O-])[N+](=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.123,
+      "sc": null,
+      "mw": 389.43,
+      "composite": 0.973583
+    },
+    {
+      "smiles": "CC(=O)NN1CCC(C)=C(C(=O)[O-])COC(=O)CC=CCCC=CC=C1C=O",
+      "maxtan": 0.0,
+      "sa": 4.464,
+      "sc": null,
+      "mw": 389.43,
+      "composite": 0.97357
+    },
+    {
+      "smiles": "CC(C=O)CC(C)(O)CCCCCCCC(C)CCC(C)CCC(C)C(C)C=O",
+      "maxtan": 0.0,
+      "sa": 4.416,
+      "sc": null,
+      "mw": 410.68,
+      "composite": 0.973292
+    },
+    {
+      "smiles": "CCC(C=CC=CC(C=O)=CCCCCCC(C)(C)C)C(C=O)CCCC=O",
+      "maxtan": 0.0,
+      "sa": 4.487,
+      "sc": null,
+      "mw": 388.59,
+      "composite": 0.97148
+    },
+    {
+      "smiles": "CCCCC(=CC=CNCCC1CC1=CCCCCCCC=NNC)C(=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.385,
+      "sc": null,
+      "mw": 388.58,
+      "composite": 0.97144
+    },
+    {
+      "smiles": "C=c1ccccccc(=CC2=C=C2CNCCCC=CNC)cc1CCCC=O",
+      "maxtan": 0.0,
+      "sa": 4.413,
+      "sc": null,
+      "mw": 388.56,
+      "composite": 0.971388
+    },
+    {
+      "smiles": "CC(C)NCCOCCC=CCCC(C)C(C)ONCOCOCCC=O",
+      "maxtan": 0.0,
+      "sa": 4.228,
+      "sc": null,
+      "mw": 388.55,
+      "composite": 0.971373
+    },
+    {
+      "smiles": "C=CCCCC=CC(=O)NC(=O)CC=CC(C)=C(F)C=CC=CNCCC=O",
+      "maxtan": 0.0,
+      "sa": 3.94,
+      "sc": null,
+      "mw": 388.48,
+      "composite": 0.971208
+    },
+    {
+      "smiles": "C=CCCC(COC(P)CCCC(=O)NCCCOC(C)C)C1=CC(OC)=C1",
+      "maxtan": 0.0,
+      "sa": 4.383,
+      "sc": null,
+      "mw": 411.52,
+      "composite": 0.971192
+    },
+    {
+      "smiles": "COCCC=NC=CCC=CCC=CC(O)CCCOC(C)C(=O)CCCCF",
+      "maxtan": 0.0,
+      "sa": 4.393,
+      "sc": null,
+      "mw": 411.56,
+      "composite": 0.971105
+    },
+    {
+      "smiles": "C=CCC=CCOC1=C(C(=C)OCCCC=C(C)COC)CNCC2=C1C=CCC2",
+      "maxtan": 0.0,
+      "sa": 4.01,
+      "sc": null,
+      "mw": 411.59,
+      "composite": 0.971035
+    },
+    {
+      "smiles": "CCC1C=CC=CN=C(C(=O)CCC=CC=Cc2ccccc2)C=CCCCC1",
+      "maxtan": 0.0,
+      "sa": 4.18,
+      "sc": null,
+      "mw": 387.57,
+      "composite": 0.968918
+    },
+    {
+      "smiles": "CCC[N+]N([O-])NCCCCNCOCCCC(C=O)CCCCC(N)=O",
+      "maxtan": 0.0,
+      "sa": 4.222,
+      "sc": null,
+      "mw": 387.53,
+      "composite": 0.968813
+    },
+    {
+      "smiles": "CCCCCC=C(CCCC=O)NCNC(=O)C1C2=CC2=CC=CCN1CO",
+      "maxtan": 0.0,
+      "sa": 4.255,
+      "sc": null,
+      "mw": 387.52,
+      "composite": 0.96881
+    },
+    {
+      "smiles": "COC(=O)c1cccn1CC(=O)NCCCC1C=C=C(C)CCCCCNC1",
+      "maxtan": 0.0,
+      "sa": 4.199,
+      "sc": null,
+      "mw": 387.52,
+      "composite": 0.96881
+    },
+    {
+      "smiles": "CC(C)NCCCCNC(C(=O)CCC=CNC(=O)NCOOC=O)C1CC1=O",
+      "maxtan": 0.0,
+      "sa": 4.447,
+      "sc": null,
+      "mw": 412.49,
+      "composite": 0.968782
+    },
+    {
+      "smiles": "CCCNC(=CC(=O)CN=C[N+](=O)[O-])NNC(=O)NCCCCNN1CCCC1",
+      "maxtan": 0.0,
+      "sa": 3.657,
+      "sc": null,
+      "mw": 412.5,
+      "composite": 0.968762
+    },
+    {
+      "smiles": "C#CC1=C(C=O)CCC1C(=O)NC=CCCCC(=O)NCCCC=C[N+](=O)[O-]",
+      "maxtan": 0.0,
+      "sa": 4.121,
+      "sc": null,
+      "mw": 387.44,
+      "composite": 0.96859
+    },
+    {
+      "smiles": "O=C1CCCCCCCC=CC(=CC2=CC=CC=CC=CCCCCOC2)C(O)O1",
+      "maxtan": 0.0,
+      "sa": 4.449,
+      "sc": null,
+      "mw": 412.57,
+      "composite": 0.968575
+    },
+    {
+      "smiles": "CC(CCCCCCC=O)C(C)C(C)(C=O)CCCCCCCCC1C2=C=C21",
+      "maxtan": 0.0,
+      "sa": 4.477,
+      "sc": null,
+      "mw": 386.62,
+      "composite": 0.96655
+    },
+    {
+      "smiles": "CC#CCCCCC(CCCCCCC(C=O)=CC=C=C(CC)OC)C(C)C",
+      "maxtan": 0.0,
+      "sa": 4.133,
+      "sc": null,
+      "mw": 386.62,
+      "composite": 0.96655
+    },
+    {
+      "smiles": "CC(C)C(=O)CCC=CC=C1CCCN1CCC=C(C=O)NC=CCCC=O",
+      "maxtan": 0.0,
+      "sa": 3.986,
+      "sc": null,
+      "mw": 386.54,
+      "composite": 0.96634
+    },
+    {
+      "smiles": "CC(O)CCN=CC(=O)CCCOCC(CCCC=CCCC=O)C(=O)OCO",
+      "maxtan": 0.0,
+      "sa": 4.268,
+      "sc": null,
+      "mw": 413.51,
+      "composite": 0.966222
+    },
+    {
+      "smiles": "CCCCCCCNOCCC1C(OCCCCOC(=O)OC)=CCC1(C)C=O",
+      "maxtan": 0.0,
+      "sa": 4.055,
+      "sc": null,
+      "mw": 413.56,
+      "composite": 0.966112
+    },
+    {
+      "smiles": "C=C(C)CCCCC=CC(CCCC)=C(CCC=CC=CCC=CC=O)ONC=O",
+      "maxtan": 0.0,
+      "sa": 3.903,
+      "sc": null,
+      "mw": 413.6,
+      "composite": 0.965995
+    },
+    {
+      "smiles": "CCN(CCC(=O)C=CCC(C)(C)C)CC(C)(C=O)CCOC(C)CS",
+      "maxtan": 0.0,
+      "sa": 4.302,
+      "sc": null,
+      "mw": 385.61,
+      "composite": 0.964035
+    }
+  ],
+  "summary": {
+    "top1_smiles": "CCNCCCCC=NNCC(=CC(=O)CC)CCC(O)(CC=O)SCC",
+    "top1_maxtan": 0.0,
+    "top1_composite": 0.999003,
+    "topN_mean_composite": 0.98172994
+  }
+}

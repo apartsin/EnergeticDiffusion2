@@ -54,3 +54,8 @@ NUL.log
 *.tmp
 *.log
 timer.dat
+# Large raw SMILES dumps — hosted externally
+reinvent_bundle/results/*_raw.txt
+m8_bundle/results/*_raw.txt
+m9_bundle/results/*_raw.txt
+m7_bundle/results/**/*.txt

@@ -26,6 +26,8 @@ RESULTS_LOCAL.mkdir(exist_ok=True)
 CORPUS_LOCAL      = PROJECT_ROOT / "baseline_bundle" / "corpus.csv"
 SCRIPTS_DIFF      = PROJECT_ROOT / "scripts" / "diffusion"
 LABELLED_MASTER   = PROJECT_ROOT / "m4_bundle" / "labelled_master.csv"
+REINVENT_PRIOR    = (PROJECT_ROOT / "data" / "raw" / "energetic_external" /
+                     "EMDP" / "De novo" / "reinvent.prior")
 
 image = (
     modal.Image.from_registry(
@@ -48,6 +50,8 @@ image = (
                     remote_path="/data/corpus.csv")
     .add_local_file(str(LABELLED_MASTER),
                     remote_path="/data/labelled_master.csv")
+    .add_local_file(str(REINVENT_PRIOR),
+                    remote_path="/data/reinvent.prior")
 )
 
 app = modal.App("dgld-reinvent-multiseed", image=image)
@@ -56,65 +60,88 @@ results_vol = modal.Volume.from_name("dgld-reinvent-multiseed-results",
                                       create_if_missing=True)
 
 def _make_toml(prior: str, seed: int, workdir: str = "/workspace/reinvent_out") -> str:
-    """Build a valid REINVENT 4 TOML — mirrors the working modal_reinvent_40k.py config."""
-    import textwrap
-    return textwrap.dedent(f"""
-        run_type = "reinforcement_learning"
-        model_file = "{prior}"
-        output_dir = "{workdir}"
-        use_checkpoint = false
-        tb_logdir = ""
-        random_seed = {seed}
+    """Build a valid REINVENT 4 TOML matching the current GitHub HEAD schema.
 
-        [parameters]
-        summary_csv_prefix = "{workdir}/summary"
+    Schema change vs. earlier releases: model/agent/checkpoint keys and
+    run-control flags (use_checkpoint, random_seed) now live under [parameters],
+    not at the top level.  Reference: EMDP denovo_staged_learning.toml.
+    """
+    return textwrap.dedent(f"""
+        run_type = "staged_learning"
+        device = "cuda:0"
+        tb_logdir = "{workdir}/tb"
         json_out_config = "{workdir}/out_config.json"
 
-        [parameters.diversity_filter]
+        [parameters]
+        prior_file = "{prior}"
+        agent_file = "{prior}"
+        summary_csv_prefix = "{workdir}/summary"
+        use_checkpoint = false
+        batch_size = 128
+        unique_sequences = true
+        randomize_smiles = true
+
+        [learning_strategy]
+        type = "dap"
+        sigma = 128
+        rate = 0.0001
+
+        [diversity_filter]
         type = "IdenticalMurckoScaffold"
         bucket_size = 25
-
-        [parameters.inception]
-        memory_size = 20
-        sample_size = 5
-        smiles = []
+        minscore = 0.2
+        minsimilarity = 0.4
+        penalty_multiplier = 0.5
 
         [[stage]]
-        chkpt_file = "{workdir}/agent.chkpt"
+        chkpt_file = "{workdir}/stage.chkpt"
         termination = "simple"
         max_steps = 2000
 
         [stage.scoring]
-        type = "custom"
+        type = "geometric_mean"
 
         [[stage.scoring.component]]
-        [stage.scoring.component.CustomAlerts]
-        [[stage.scoring.component.CustomAlerts.endpoint]]
-        name = "chno_only"
-        weight = 1.0
-        [stage.scoring.component.CustomAlerts.endpoint.params]
-        smarts = ["[!#6;!#1;!#7;!#8]",
-                  "[C]([N+](=O)[O-])([N+](=O)[O-])([N+](=O)[O-])([N+](=O)[O-])"]
+        [stage.scoring.component.GroupCount]
+        [[stage.scoring.component.GroupCount.endpoint]]
+        name = "nitro_count"
+        weight = 2.0
+        params.smarts = "[N+](=O)[O-]"
+        transform.type = "sigmoid"
+        transform.high = 3.0
+        transform.low = 0.0
+        transform.k = 0.25
+
+        [[stage.scoring.component]]
+        [stage.scoring.component.GroupCount]
+        [[stage.scoring.component.GroupCount.endpoint]]
+        name = "n_heterocycle"
+        weight = 1.5
+        params.smarts = "[nR]"
+        transform.type = "sigmoid"
+        transform.high = 4.0
+        transform.low = 0.0
+        transform.k = 0.25
+
+        [[stage.scoring.component]]
+        [stage.scoring.component.NumHeteroAtoms]
+        [[stage.scoring.component.NumHeteroAtoms.endpoint]]
+        name = "heteroatom_count"
+        weight = 0.6
+        transform.type = "sigmoid"
+        transform.high = 8.0
+        transform.low = 2.0
+        transform.k = 0.25
 
         [[stage.scoring.component]]
         [stage.scoring.component.SAScore]
         [[stage.scoring.component.SAScore.endpoint]]
         name = "sa_score"
         weight = 1.5
-        [stage.scoring.component.SAScore.endpoint.transform]
-        type = "reverse_sigmoid"
-        high = 4.5
-        low  = 1.0
-        k    = 0.4
-
-        [[stage.scoring.component]]
-        [stage.scoring.component.MatchingSubstructure]
-        [[stage.scoring.component.MatchingSubstructure.endpoint]]
-        name = "n_fraction_proxy"
-        weight = 2.0
-        [stage.scoring.component.MatchingSubstructure.endpoint.params]
-        smarts = ["[nH0]", "[n]", "[N+](=O)[O-]", "[N-]=[N+]=[N-]", "[N]=[N]"]
-        use_chirality = false
+        transform.type = "reverse_sigmoid"
+        transform.high = 4.5
+        transform.low  = 1.0
+        transform.k    = 0.4
     """)
 
 
@@ -139,28 +166,33 @@ def run_reinvent_seed(seed: int) -> dict:
     workdir = Path("/workspace/reinvent_out")
     workdir.mkdir(parents=True, exist_ok=True)
 
-    # Find REINVENT prior
-    reinvent_pkg = Path(subprocess.check_output(
-        ["python", "-c", "import reinvent; print(reinvent.__file__)"], text=True
-    ).strip()).parent
-    prior_path = None
-    for p in sorted(reinvent_pkg.rglob("*.prior")):
-        prior_path = p; break
-    if prior_path is None:
-        for p in sorted(reinvent_pkg.rglob("*.pt")):
-            if "reinvent" in p.name.lower():
-                prior_path = p; break
-    print(f"[reinvent s={seed}] prior: {prior_path}", flush=True)
+    # Use the bundled REINVENT prior uploaded with the image
+    prior_path = Path("/data/reinvent.prior")
+    if not prior_path.exists():
+        # Fallback: search the installed package (should not be needed)
+        reinvent_pkg = Path(subprocess.check_output(
+            ["python", "-c", "import reinvent; print(reinvent.__file__)"], text=True
+        ).strip()).parent
+        for p in sorted(reinvent_pkg.rglob("*.prior")):
+            prior_path = p; break
+    print(f"[reinvent s={seed}] prior: {prior_path} (exists={prior_path.exists()})", flush=True)
+    if not prior_path.exists():
+        return {"seed": seed, "error": "prior not found", "rc": -1}
 
     toml_content = _make_toml(str(prior_path), seed, str(workdir))
     toml_path = workdir / f"config_s{seed}.toml"
     toml_path.write_text(toml_content)
+    print(f"[reinvent s={seed}] TOML written to {toml_path}", flush=True)
+    print(f"[reinvent s={seed}] TOML content:\n{toml_content}", flush=True)
 
     log_path = workdir / f"run_s{seed}.log"
     print(f"[reinvent s={seed}] Running RL ...", flush=True)
     t0 = _time.time()
     cmd = ["reinvent", "-l", str(log_path), str(toml_path)]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=7200)
+    # Propagate seed via PYTHONHASHSEED so REINVENT's internal RNG is deterministic
+    import os as _os
+    env = {**_os.environ, "PYTHONHASHSEED": str(seed)}
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=7200, env=env)
     elapsed = _time.time() - t0
     print(f"[reinvent s={seed}] RL done in {elapsed:.0f}s rc={result.returncode}",
           flush=True)
@@ -212,7 +244,9 @@ def run_reinvent_seed(seed: int) -> dict:
             seen.add(c); valid.append(c)
 
     n_memorised = sum(1 for s in valid if s in master_set)
-    filtered = [s for s in valid if chem_filter(s, props=None)[0]]
+    filtered = [s for s in valid
+                if Chem.MolFromSmiles(s).GetNumHeavyAtoms() >= 10
+                and chem_filter(s, props=None)[0]]
 
     def n_frac(s):
         m = Chem.MolFromSmiles(s)

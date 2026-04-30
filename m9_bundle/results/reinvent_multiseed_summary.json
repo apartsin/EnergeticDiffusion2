@@ -4,19 +4,33 @@
     2
   ],
   "seed42_from_prev_run": true,
-  "elapsed_s": 20.8,
+  "elapsed_s": 1673.2,
   "runs": [
     {
       "seed": 1,
-      "error": "no SMILES",
-      "rc": 1,
-      "stderr": "alidator__.validate_python(data, self_instance=self)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\npydantic_core._pydantic_core.ValidationError: 4 validation errors for ReinventConfig\nmodel_file\n  Extra inputs are not permitted [type=extra_forbidden, input_value='None', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\noutput_dir\n  Extra inputs are not permitted [type=extra_forbidden, input_value='/workspace/reinvent_out', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nuse_checkpoint\n  Extra inputs are not permitted [type=extra_forbidden, input_value=False, input_type=bool]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrandom_seed\n  Extra inputs are not permitted [type=extra_forbidden, input_value=1, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\n"
+      "n_raw": 255999,
+      "n_valid": 245379,
+      "n_chem_pass": 179041,
+      "n_memorised": 107,
+      "memorisation_rate": 0.0004,
+      "top1_smiles": "Nn1cnnc1",
+      "top1_n_frac": 0.6667,
+      "top1_max_tanimoto": 0.3158,
+      "top1_sa": 3.691,
+      "elapsed_rl_s": 1390.5
     },
     {
       "seed": 2,
-      "error": "no SMILES",
-      "rc": 1,
-      "stderr": "alidator__.validate_python(data, self_instance=self)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\npydantic_core._pydantic_core.ValidationError: 4 validation errors for ReinventConfig\nmodel_file\n  Extra inputs are not permitted [type=extra_forbidden, input_value='None', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\noutput_dir\n  Extra inputs are not permitted [type=extra_forbidden, input_value='/workspace/reinvent_out', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nuse_checkpoint\n  Extra inputs are not permitted [type=extra_forbidden, input_value=False, input_type=bool]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\nrandom_seed\n  Extra inputs are not permitted [type=extra_forbidden, input_value=2, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden\n"
+      "n_raw": 255997,
+      "n_valid": 244690,
+      "n_chem_pass": 184117,
+      "n_memorised": 100,
+      "memorisation_rate": 0.0004,
+      "top1_smiles": "c1cnc2nnnn2c1",
+      "top1_n_frac": 0.5556,
+      "top1_max_tanimoto": 0.3784,
+      "top1_sa": 2.911,
+      "elapsed_rl_s": 1374.0
     }
   ]
 }

@@ -1,0 +1,713 @@
+{
+  "method": "Gaussian-latent-40k",
+  "n_raw": 40000,
+  "n_valid": 34675,
+  "n_chem_pass": 22403,
+  "n_feasible": 19340,
+  "n_novel": 19258,
+  "keep_rate_pct": 48.145,
+  "top1_smiles": "NC=NCNNCCCNn1cnnn1",
+  "top1_n_frac": 0.6,
+  "top_candidates": [
+    {
+      "smiles": "NC=NCNNCCCNn1cnnn1",
+      "sa": 4.256,
+      "sc": 3.436,
+      "max_tanimoto": 0.3333,
+      "n_frac": 0.6
+    },
+    {
+      "smiles": "N=[N+]([O-])N=NN=NN=NNC([O-])O",
+      "sa": 6.194,
+      "sc": 2.169,
+      "max_tanimoto": 0.2188,
+      "n_frac": 0.6923
+    },
+    {
+      "smiles": "[NH]N=NN=NNN=NNC1=C=CNC(=NNN=C[N+](=O)[O-])N1",
+      "sa": 6.087,
+      "sc": 3.823,
+      "max_tanimoto": 0.2222,
+      "n_frac": 0.6818
+    },
+    {
+      "smiles": "CN(C=NNN[N+](=O)[O-])CNC=CNN(N)CNCN(N=NN)NN",
+      "sa": 5.501,
+      "sc": 3.59,
+      "max_tanimoto": 0.2069,
+      "n_frac": 0.64
+    },
+    {
+      "smiles": "CN(N)CCc1ncnnn1",
+      "sa": 3.642,
+      "sc": 2.948,
+      "max_tanimoto": 0.2895,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "NC(=O)NCCN1NN=NN(N)C([N+](=O)[O-])N1",
+      "sa": 4.755,
+      "sc": 3.353,
+      "max_tanimoto": 0.283,
+      "n_frac": 0.5882
+    },
+    {
+      "smiles": "C=[N+]([O-])N(CNN)[N+](N)[O-]",
+      "sa": 5.196,
+      "sc": 2.076,
+      "max_tanimoto": 0.2368,
+      "n_frac": 0.6
+    },
+    {
+      "smiles": "CN(C)NCNCCN(N)N=NN(CCNNCN1N=N1)[N+](=O)[O-]",
+      "sa": 4.903,
+      "sc": 3.529,
+      "max_tanimoto": 0.25,
+      "n_frac": 0.5833
+    },
+    {
+      "smiles": "CN(N=NN=C[N+](=O)[O-])N1C=C1NNNCN=N[N+](N)[O-]",
+      "sa": 5.648,
+      "sc": 3.253,
+      "max_tanimoto": 0.2222,
+      "n_frac": 0.619
+    },
+    {
+      "smiles": "NC1(N)NNC1N[N+](=O)[O-]",
+      "sa": 5.279,
+      "sc": 2.241,
+      "max_tanimoto": 0.3448,
+      "n_frac": 0.6
+    },
+    {
+      "smiles": "NCNCC(N)NC=NN=NN[N+](=O)[O-]",
+      "sa": 5.309,
+      "sc": 3.314,
+      "max_tanimoto": 0.275,
+      "n_frac": 0.6
+    },
+    {
+      "smiles": "NNNC(=CNNC(=O)[N+]C=NNO)[N+](N)[O-]",
+      "sa": 5.257,
+      "sc": 2.778,
+      "max_tanimoto": 0.24,
+      "n_frac": 0.5882
+    },
+    {
+      "smiles": "C=CN=NN(N)Nc1cn2n1C2",
+      "sa": 5.402,
+      "sc": 2.944,
+      "max_tanimoto": 0.1698,
+      "n_frac": 0.5833
+    },
+    {
+      "smiles": "O=[N+]([O-])NCN1CCNN=N1",
+      "sa": 4.738,
+      "sc": 2.327,
+      "max_tanimoto": 0.325,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "[N+]N(C=O)C(=CNCNN=NNC(=O)NN)[N+]=N[O-]",
+      "sa": 5.598,
+      "sc": 3.309,
+      "max_tanimoto": 0.2,
+      "n_frac": 0.5789
+    },
+    {
+      "smiles": "CC(CC(=O)c1nnnn1N)NCN",
+      "sa": 4.043,
+      "sc": 2.811,
+      "max_tanimoto": 0.3269,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "N=C1C=NNN([N+](=O)[O-])CN1",
+      "sa": 4.955,
+      "sc": 2.6,
+      "max_tanimoto": 0.3043,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "CNN1CC(N)(NNN)NCC[N+]1C",
+      "sa": 5.576,
+      "sc": 3.522,
+      "max_tanimoto": 0.1786,
+      "n_frac": 0.5714
+    },
+    {
+      "smiles": "CN1NC(NOC=C[N+](=O)[O-])NN=NN1N",
+      "sa": 5.487,
+      "sc": 2.938,
+      "max_tanimoto": 0.2593,
+      "n_frac": 0.5625
+    },
+    {
+      "smiles": "C=[N+](N)CC=NCNCN(N)C(=O)NNNN=C[N+]([N+])[O-]",
+      "sa": 5.674,
+      "sc": 3.743,
+      "max_tanimoto": 0.1935,
+      "n_frac": 0.5714
+    },
+    {
+      "smiles": "CCNCNNN[N+](=O)[O-]",
+      "sa": 4.253,
+      "sc": 2.33,
+      "max_tanimoto": 0.4688,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CC=C(N)Cc1nn(N)[nH]1",
+      "sa": 4.284,
+      "sc": 2.468,
+      "max_tanimoto": 0.2326,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "NCCN([O-])NC=NN[N+]=O",
+      "sa": 5.266,
+      "sc": 2.877,
+      "max_tanimoto": 0.1714,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "CN=NN(C[N+]=O)NCC#N",
+      "sa": 5.28,
+      "sc": 2.531,
+      "max_tanimoto": 0.2308,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "CCOCNNC(O)NCNNNC=CC(NN=NNNN)N(N)NN[O-]",
+      "sa": 6.249,
+      "sc": 3.924,
+      "max_tanimoto": 0.1739,
+      "n_frac": 0.5926
+    },
+    {
+      "smiles": "NC(N)N(O)NC(O)C=N[N+]1=NN=C1",
+      "sa": 5.831,
+      "sc": 3.262,
+      "max_tanimoto": 0.1707,
+      "n_frac": 0.5714
+    },
+    {
+      "smiles": "C=NN(N)C=CN[N+]C1=C(NCN[N+](=O)[O-])N=N1",
+      "sa": 5.535,
+      "sc": 3.014,
+      "max_tanimoto": 0.2759,
+      "n_frac": 0.5556
+    },
+    {
+      "smiles": "CC([O-])NCN=NN=NN=NN([O-])C=NCN=NNNC=O",
+      "sa": 6.242,
+      "sc": 3.107,
+      "max_tanimoto": 0.1613,
+      "n_frac": 0.5909
+    },
+    {
+      "smiles": "NCCN=CN(C=NN(CN[N+](=O)[O-])N[N+](=O)[O-])NN1CN=CN1",
+      "sa": 5.285,
+      "sc": 3.448,
+      "max_tanimoto": 0.2603,
+      "n_frac": 0.5417
+    },
+    {
+      "smiles": "O=C1CC=NNC=NN=NN1",
+      "sa": 5.366,
+      "sc": 2.582,
+      "max_tanimoto": 0.234,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "N=NN=C(O)C=NNC=NN=C[N+](=O)[O-]",
+      "sa": 5.172,
+      "sc": 2.695,
+      "max_tanimoto": 0.2391,
+      "n_frac": 0.5333
+    },
+    {
+      "smiles": "O=NNN=C[N+](=O)NN=C[N+](=O)[O-]",
+      "sa": 5.277,
+      "sc": 2.106,
+      "max_tanimoto": 0.3226,
+      "n_frac": 0.5385
+    },
+    {
+      "smiles": "N=C[N+](=O)C(N)NN[N+](=O)[O-]",
+      "sa": 5.425,
+      "sc": 2.421,
+      "max_tanimoto": 0.36,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "CC(=O)CNCCC1=NN1C=NCN=NNN=NC=NN",
+      "sa": 5.004,
+      "sc": 4.014,
+      "max_tanimoto": 0.2174,
+      "n_frac": 0.5238
+    },
+    {
+      "smiles": "C[N+](C=C(C=O)[N+][N+])N=NN=NC(N)=CN=NC=NNNCN[N+](C)=O",
+      "sa": 6.082,
+      "sc": 3.62,
+      "max_tanimoto": 0.1692,
+      "n_frac": 0.5769
+    },
+    {
+      "smiles": "C=[N+]([O-])N(N)C(N)C(N)CNNCCNNNNC(N)[O-]",
+      "sa": 5.975,
+      "sc": 3.705,
+      "max_tanimoto": 0.1754,
+      "n_frac": 0.5714
+    },
+    {
+      "smiles": "CNN=[N+]N([O-])C=N[N+](=O)[O-]",
+      "sa": 5.482,
+      "sc": 2.35,
+      "max_tanimoto": 0.3158,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "CN(N=NN=C[N+](=O)[O-])NNC=CN[N+](=O)[O-]",
+      "sa": 5.173,
+      "sc": 2.731,
+      "max_tanimoto": 0.2558,
+      "n_frac": 0.5294
+    },
+    {
+      "smiles": "CNN=C([N+](=N)[O-])[N+](=O)[O-]",
+      "sa": 4.588,
+      "sc": 1.892,
+      "max_tanimoto": 0.3704,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "[N+]C(=NC=O)NN=CNNCCCN",
+      "sa": 4.599,
+      "sc": 3.099,
+      "max_tanimoto": 0.2308,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "O=CNNNC=N[N+](=O)[O-]",
+      "sa": 4.627,
+      "sc": 1.865,
+      "max_tanimoto": 0.3939,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "C=c1oc2n1CN([N+](=O)N=NN)N=2",
+      "sa": 5.403,
+      "sc": 3.422,
+      "max_tanimoto": 0.24,
+      "n_frac": 0.5385
+    },
+    {
+      "smiles": "CN(NC=NN=CCNC=N)N[N+](C)=O",
+      "sa": 5.299,
+      "sc": 2.628,
+      "max_tanimoto": 0.2037,
+      "n_frac": 0.5333
+    },
+    {
+      "smiles": "N=[N+]([O-])C([O-])C=NCC(=N[N+]=NN=N[O-])NN",
+      "sa": 6.399,
+      "sc": 2.409,
+      "max_tanimoto": 0.18,
+      "n_frac": 0.5882
+    },
+    {
+      "smiles": "NC=NNN(C=O)[N+](=O)[O-]",
+      "sa": 4.685,
+      "sc": 1.815,
+      "max_tanimoto": 0.3333,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "O=[N+]([O-])CCNN1C=NC=NN1",
+      "sa": 4.698,
+      "sc": 2.206,
+      "max_tanimoto": 0.2941,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "O=[N+]([O-])N1NCCC=NN1",
+      "sa": 4.7,
+      "sc": 2.244,
+      "max_tanimoto": 0.3023,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CN=CNNNC1C=CN=N1",
+      "sa": 5.612,
+      "sc": 2.206,
+      "max_tanimoto": 0.2041,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "CNNCCNN(C)[N+](=O)N=CNNC[N+](C)N=O",
+      "sa": 5.277,
+      "sc": 3.235,
+      "max_tanimoto": 0.2115,
+      "n_frac": 0.5263
+    },
+    {
+      "smiles": "O=[N+]([O-])C=CN=NN(N=NN=CNNNC=C[N+](=O)[O-])[N+](=O)[O-]",
+      "sa": 5.2,
+      "sc": 2.385,
+      "max_tanimoto": 0.2857,
+      "n_frac": 0.5217
+    },
+    {
+      "smiles": "CC=NNN=CN=NN=CNC[O-]",
+      "sa": 5.558,
+      "sc": 2.836,
+      "max_tanimoto": 0.1915,
+      "n_frac": 0.5385
+    },
+    {
+      "smiles": "O=C1N=[N+]C(NNN=NC=C[N+](=O)[O-])=N1",
+      "sa": 5.454,
+      "sc": 2.782,
+      "max_tanimoto": 0.2407,
+      "n_frac": 0.5333
+    },
+    {
+      "smiles": "CN(NN=N[N+](=O)[O-])C(N)NC[O-]",
+      "sa": 5.562,
+      "sc": 2.981,
+      "max_tanimoto": 0.275,
+      "n_frac": 0.5385
+    },
+    {
+      "smiles": "N=NON(CN)CCN[N+](=O)[O-]",
+      "sa": 4.792,
+      "sc": 2.402,
+      "max_tanimoto": 0.4286,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CN(NN(C=O)CNNNC=NC(N)=O)[N+](=O)[O-]",
+      "sa": 4.799,
+      "sc": 2.627,
+      "max_tanimoto": 0.3043,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CC(C=O)CNNC=NCn1nn[nH]cn[nH]1",
+      "sa": 5.391,
+      "sc": 3.845,
+      "max_tanimoto": 0.2881,
+      "n_frac": 0.5294
+    },
+    {
+      "smiles": "NCCCNNCC=NNN([O-])[N+]=O",
+      "sa": 4.811,
+      "sc": 3.109,
+      "max_tanimoto": 0.1842,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "Cc1cn(NN)n1CN=CNN(C)CN=NN=C[N+](=O)[O-]",
+      "sa": 5.288,
+      "sc": 3.741,
+      "max_tanimoto": 0.2381,
+      "n_frac": 0.5238
+    },
+    {
+      "smiles": "CNCCCNC=NNN=CN[N+](=O)[O-]",
+      "sa": 4.254,
+      "sc": 2.982,
+      "max_tanimoto": 0.2727,
+      "n_frac": 0.4667
+    },
+    {
+      "smiles": "CC([N+])([O-])NCN=NNCNN=C[N+](N)=O",
+      "sa": 6.178,
+      "sc": 2.859,
+      "max_tanimoto": 0.2292,
+      "n_frac": 0.5625
+    },
+    {
+      "smiles": "CCN(C=O)CNC(=N)N=NCC=NN=N",
+      "sa": 4.961,
+      "sc": 2.993,
+      "max_tanimoto": 0.2222,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "O=CCOC=NN=CNN=NN=NN=CN[O-]",
+      "sa": 5.567,
+      "sc": 2.141,
+      "max_tanimoto": 0.2131,
+      "n_frac": 0.5294
+    },
+    {
+      "smiles": "N=C(N)NC(N)N([O-])CO",
+      "sa": 4.987,
+      "sc": 1.916,
+      "max_tanimoto": 0.2903,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "C[N+](=O)N=NN(N)CCOC=N",
+      "sa": 4.993,
+      "sc": 2.604,
+      "max_tanimoto": 0.2667,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "NC(N)CN([N+](=O)[O-])[N+](=O)[O-]",
+      "sa": 4.1,
+      "sc": 2.295,
+      "max_tanimoto": 0.4,
+      "n_frac": 0.4545
+    },
+    {
+      "smiles": "CCNC(O)N(N)N=C(N)N=NC[N+](=O)[O-]",
+      "sa": 5.04,
+      "sc": 3.017,
+      "max_tanimoto": 0.3111,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CCCNC(=C[N+](=O)[O-])NC(N=N)=NN=NNCCN(C)C",
+      "sa": 4.148,
+      "sc": 4.082,
+      "max_tanimoto": 0.2778,
+      "n_frac": 0.4545
+    },
+    {
+      "smiles": "CNN=C(CCCC[N+](=O)Nn1n(N[N+](=O)[O-])n2[nH]n12)C1N=CC=CC(=NN)N=NNN1",
+      "sa": 6.321,
+      "sc": 4.095,
+      "max_tanimoto": 0.2184,
+      "n_frac": 0.5625
+    },
+    {
+      "smiles": "CNNCCNCC(N)=O",
+      "sa": 3.071,
+      "sc": 2.65,
+      "max_tanimoto": 0.3333,
+      "n_frac": 0.4
+    },
+    {
+      "smiles": "CC(N=N)NNCNC=O",
+      "sa": 5.083,
+      "sc": 2.418,
+      "max_tanimoto": 0.2368,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CC([O-])NCNC(=N)NCNN",
+      "sa": 5.084,
+      "sc": 2.139,
+      "max_tanimoto": 0.25,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CN=CNCNCOC(C)=N[N+](N)NCNN([N+])[N+]([O-])O",
+      "sa": 5.608,
+      "sc": 3.11,
+      "max_tanimoto": 0.2203,
+      "n_frac": 0.5238
+    },
+    {
+      "smiles": "[NH]C(N)N=N[N+](=O)CC1=CNCN1ON",
+      "sa": 5.805,
+      "sc": 3.446,
+      "max_tanimoto": 0.2,
+      "n_frac": 0.5333
+    },
+    {
+      "smiles": "[N+]C(O)(N=CNC(N)NCCCN)N=NN[N+]([O-])O",
+      "sa": 5.687,
+      "sc": 3.256,
+      "max_tanimoto": 0.1915,
+      "n_frac": 0.5263
+    },
+    {
+      "smiles": "C[N+]([O-])N([N+])NCNC=O",
+      "sa": 5.172,
+      "sc": 1.878,
+      "max_tanimoto": 0.3429,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "NNC=CC=CNNCNCn1[nH]o1",
+      "sa": 5.196,
+      "sc": 2.915,
+      "max_tanimoto": 0.1607,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CCC(NN)NN=CNN=c1cc([N+](=O)[O-])[nH][nH]1",
+      "sa": 5.2,
+      "sc": 2.825,
+      "max_tanimoto": 0.3061,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "NCN1NC=CN=C1[N+]=O",
+      "sa": 5.212,
+      "sc": 3.229,
+      "max_tanimoto": 0.2222,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CNCN(N=O)C(C)=CNN",
+      "sa": 4.321,
+      "sc": 2.544,
+      "max_tanimoto": 0.2941,
+      "n_frac": 0.4545
+    },
+    {
+      "smiles": "N=c1nc1NC=C1C[N+](=O)NN(C(N)NC(N)NN(N)[N+](=O)[O-])C1=O",
+      "sa": 5.654,
+      "sc": 4.011,
+      "max_tanimoto": 0.2338,
+      "n_frac": 0.52
+    },
+    {
+      "smiles": "O=[N+](O)NCCNNCCNCNC=NNNCNCC1NCNC1N1C=NNN1",
+      "sa": 5.965,
+      "sc": 4.016,
+      "max_tanimoto": 0.1867,
+      "n_frac": 0.5333
+    },
+    {
+      "smiles": "C[N+]([O-])[N+]C(N)C=NNCNCN1CNCNN1C=NC(N)=O",
+      "sa": 5.771,
+      "sc": 3.89,
+      "max_tanimoto": 0.2419,
+      "n_frac": 0.5217
+    },
+    {
+      "smiles": "C=Nc1nc(OCC)nn1N[N+]=NC=O",
+      "sa": 4.688,
+      "sc": 3.185,
+      "max_tanimoto": 0.2982,
+      "n_frac": 0.4667
+    },
+    {
+      "smiles": "C=[N+](C)C1NN=NN=C1[N+](=O)[O-]",
+      "sa": 5.369,
+      "sc": 2.375,
+      "max_tanimoto": 0.2955,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "N[N+](=O)CC=NC=NNN([O-])[N+](=O)[O-]",
+      "sa": 5.372,
+      "sc": 2.287,
+      "max_tanimoto": 0.2564,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CC(N)C=NCNC=NC(=O)NC(=N)N=N",
+      "sa": 5.372,
+      "sc": 3.449,
+      "max_tanimoto": 0.2321,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "CC=C([N+](=N)NNCCN)[N+](=O)[O-]",
+      "sa": 4.634,
+      "sc": 2.481,
+      "max_tanimoto": 0.303,
+      "n_frac": 0.4615
+    },
+    {
+      "smiles": "O=CN1CCCN(N=NNO)NC1",
+      "sa": 4.635,
+      "sc": 2.773,
+      "max_tanimoto": 0.1951,
+      "n_frac": 0.4615
+    },
+    {
+      "smiles": "N#CN=CC=CC=NN=Nc1cnc[nH]1",
+      "sa": 4.748,
+      "sc": 3.072,
+      "max_tanimoto": 0.2083,
+      "n_frac": 0.4667
+    },
+    {
+      "smiles": "NCC=CNCNCNCN1C=NNN([N+](=O)[O-])C1",
+      "sa": 4.905,
+      "sc": 3.441,
+      "max_tanimoto": 0.2407,
+      "n_frac": 0.4737
+    },
+    {
+      "smiles": "NC=NC1=NCN=NNNNC(N2C=C[N+]2=O)N([N+](=O)[O-])C1",
+      "sa": 6.365,
+      "sc": 4.39,
+      "max_tanimoto": 0.2394,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "N=[N+]([O-])NCCNNN=CC=C[N+](=O)[O-]",
+      "sa": 4.799,
+      "sc": 2.592,
+      "max_tanimoto": 0.3333,
+      "n_frac": 0.4667
+    },
+    {
+      "smiles": "N[N+](=O)c1ncncc(O[O-])[nH]cn[nH]n1C=NN[N+](=O)[O-]",
+      "sa": 5.493,
+      "sc": 4.024,
+      "max_tanimoto": 0.3,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "O=CN1NCC([N+][O-])=NN1",
+      "sa": 5.495,
+      "sc": 2.598,
+      "max_tanimoto": 0.2391,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "N=[N+]C1NN2CN2C([O-])=C1N",
+      "sa": 6.412,
+      "sc": 2.926,
+      "max_tanimoto": 0.1698,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "NCCCCNCN1CNN=NC1[N+]=O",
+      "sa": 4.839,
+      "sc": 3.871,
+      "max_tanimoto": 0.1778,
+      "n_frac": 0.4667
+    },
+    {
+      "smiles": "CN(N=NNNCN[N+](=O)[O-])C1NC(O)CNC=NC(N)N1",
+      "sa": 6.428,
+      "sc": 3.359,
+      "max_tanimoto": 0.2537,
+      "n_frac": 0.5455
+    },
+    {
+      "smiles": "N=NC(C=CC(=O)CN=CN)N=NNN=NN1CCC1N",
+      "sa": 5.995,
+      "sc": 4.187,
+      "max_tanimoto": 0.1972,
+      "n_frac": 0.5238
+    },
+    {
+      "smiles": "C=[N+](C=NC=CNN)N=CN(CC=NNNC=O)N[N+](=O)[O-]",
+      "sa": 5.523,
+      "sc": 3.555,
+      "max_tanimoto": 0.2308,
+      "n_frac": 0.5
+    },
+    {
+      "smiles": "C#CNC=NN=C[N+](N)=O",
+      "sa": 5.546,
+      "sc": 2.349,
+      "max_tanimoto": 0.1905,
+      "n_frac": 0.5
+    }
+  ]
+}
