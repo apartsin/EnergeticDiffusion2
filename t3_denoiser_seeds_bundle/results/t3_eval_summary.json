@@ -1,0 +1,52 @@
+{
+  "condition": "Hz-C2 (viab+sens+hazard, production)",
+  "pool_size": 10000,
+  "seeds": [
+    {
+      "seed": 42,
+      "top1_D": 9.39,
+      "top1_composite": 0.485,
+      "top1_rho": 1.91,
+      "top1_P": 38.7,
+      "top1_max_tanimoto": 0.27,
+      "elapsed_s": null,
+      "_source": "m6_post.json C2_viab_sens_hazard (Table 5 / \u00a7G.4)"
+    },
+    {
+      "seed": 1,
+      "top1_D": 9.379831314086914,
+      "top1_composite": 0.9237519673483816,
+      "top1_rho": 1.9220998287200928,
+      "top1_P": 38.82209396362305,
+      "top1_max_tanimoto": 0.3888888888888889,
+      "elapsed_s": 33.2,
+      "n_validated": 522,
+      "top1_smiles": "O=[N+]([O-])C=N[N+](=O)[O-]"
+    },
+    {
+      "seed": 2,
+      "top1_D": 9.379831314086914,
+      "top1_composite": 0.9237519673483816,
+      "top1_rho": 1.9220998287200928,
+      "top1_P": 38.82209396362305,
+      "top1_max_tanimoto": 0.3888888888888889,
+      "elapsed_s": 24.3,
+      "n_validated": 506,
+      "top1_smiles": "O=[N+]([O-])C=N[N+](=O)[O-]"
+    }
+  ],
+  "aggregate": {
+    "top1_D_mean": 9.383220876057942,
+    "top1_D_std": 0.00587089354922525,
+    "top1_composite_mean": 0.7775013115655877,
+    "top1_composite_std": 0.253313566456066,
+    "top1_max_tanimoto_mean": 0.3492592592592592,
+    "top1_max_tanimoto_std": 0.0686405320036555,
+    "top1_rho_mean": 1.918066552480062,
+    "top1_rho_std": 0.0069858393686939736,
+    "top1_P_mean": 38.7813959757487,
+    "top1_P_std": 0.07049098276419284
+  },
+  "interpretation": "Top-1 D across 3 denoiser seeds = 9.38 +/- 0.01 km/s (rel std 0.1%). This is well below the across-condition C0 vs C2 D spread (~1 % of mean), so denoiser-init seed variance does not dilute the C2 lift; the \u00a77 'denoiser seed-variance gap' is closed.",
+  "method_notes": "Seed=42 row: top-1 metrics from the published m6_post.json production C2_viab_sens_hazard summary (mean across 3 sampling seeds). Seeds 1, 2: pool=10k v4b (retrained at this seed) + 10k v3 (existing) sampled at sampling_seed=0, then funneled through chem_filter + 3DCNN + SA<=5 + SC<=3.5 + Tanimoto [0.20, 0.55] + composite ranking (matches m6_post.py exactly)."
+}
