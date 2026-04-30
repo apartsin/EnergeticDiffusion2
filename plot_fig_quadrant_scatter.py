@@ -127,14 +127,14 @@ for (xf, yf, lead) in zip(xs_floor, ys_floor, LOWER_LEADS):
                 fontsize=7.8, fontfamily="DejaVu Serif", color="#345b7a",
                 ha="center", va="top", zorder=7)
 
-# Bracket annotation for the L9-L20 strip - placed BELOW the strip in the
-# clear lower-mid region (y < 0.45). Arrow points UP to the strip's left
-# edge, NOT crossing REINVENT 4 (x=0.78, y=0.55) or the SELFIES-GA vertical
-# at x=0.45.
-ax.annotate("L9-L20: h$_{50}$ measured;\nS and viability not tabulated\n(Pareto-floor strip below)",
-            xy=(0.835, S_THRESH - 0.052),
-            xytext=(0.62, 0.40),
+# Bracket annotation for the L9-L20 strip - placed DIRECTLY BELOW the strip
+# at its centre x (~0.91) with a short vertical arrow. This routing avoids
+# REINVENT 4 (x=0.78) and SELFIES-GA (x=0.45) entirely.
+ax.annotate("L9-L20: h$_{50}$ measured;\nS / viability not tabulated\n(strip placed at Pareto floor)",
+            xy=(0.91, S_THRESH - 0.052),
+            xytext=(0.91, 0.42),
             fontsize=8.2, fontfamily="DejaVu Serif", color="#345b7a",
+            ha="center", va="top",
             style="italic",
             arrowprops=dict(arrowstyle="->", color="#7a9bb5", lw=0.9,
                             shrinkA=2, shrinkB=4),
@@ -278,10 +278,9 @@ fig.legend(
     ncol=3, columnspacing=2.4,
 )
 
-fig.text(0.012, 0.005,
-         "S/viab for L1-L5: Table 6.  h$_{50}$: Table D.1c.  Baselines: Table 6a.",
-         ha="left", va="bottom", fontsize=7.5, fontfamily="DejaVu Serif",
-         color="#888888")
+# Footer source-note removed; the same information lives in the figcaption
+# inside short_paper.html. Removing it eliminates the overlap with the
+# bottom-left Method legend and gives the legends the full bottom strip.
 
 # Reserve room at the bottom for the legends
 fig.tight_layout(rect=(0.0, 0.20, 1.0, 1.0))

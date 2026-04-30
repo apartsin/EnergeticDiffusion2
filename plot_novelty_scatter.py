@@ -26,6 +26,23 @@ DGLD_CONDS = {"C0_unguided", "C1_viab", "C1_viab_sens", "C2_viab_sens",
 LSTM_CONDS = {"smiles_lstm_samples"}
 MOLMIM_CONDS = {"molmim_samples"}
 
+# Hardcoded baseline points (Table 6a / short_paper.html ~line 605).
+# REINVENT 4 top-1 from reinvent_bundle/results/reinvent_unimol_top100.json:
+#   D=9.02 km/s, rho=1.853 g/cm^3, P=34.5 GPa, max-Tanimoto=0.49 -> novelty=0.51.
+# SELFIES-GA 40k best-novel from baseline_bundle/results/selfies_ga_competitor_dft.json:
+#   D_surrogate=9.737 km/s, rho_surrogate=1.994, max-Tanimoto=0.35 -> novelty=0.65;
+#   D_DFT=6.28 km/s collapse per Section 5.13 audit.
+REINVENT_POINT = {"novelty": 0.51, "D": 9.02, "rho": 1.8527, "P": 34.5151}
+SELFIES_GA = {
+    "novelty": 0.65,
+    "D_surrogate": 9.737,
+    "D_DFT": 6.28,
+    "rho_surrogate": 1.994,
+    # P not anchored against DFT for the novel candidate; omit from rho/P panels.
+}
+REINVENT_COLOR = "#3a8a3a"
+SELFIES_COLOR = "#7b3294"
+
 # Literature anchors with experimental D, rho, P
 ANCHORS = [
     # name,  novelty, D km/s, rho g/cm3, P GPa
@@ -40,7 +57,7 @@ fig, axes = plt.subplots(1, 3, figsize=(15.5, 4.7), dpi=150, sharex=True)
 axA, axB, axC = axes
 
 PROPS = [
-    (axA, "top1_D_kms", "D (km/s)\n[3D-CNN surrogate]", (7.0, 10.0), "D",   3),  # ANCHORS index for D
+    (axA, "top1_D_kms", "D (km/s)\n[3D-CNN surrogate]", (5.8, 10.0), "D",   3),  # ANCHORS index for D; lowered floor for SELFIES-GA D_DFT=6.28
     (axB, "top1_rho",   r"$\rho$ (g/cm$^3$)" + "\n[3D-CNN surrogate]", (1.55, 2.10), "rho", 4),
     (axC, "top1_P_GPa", "P (GPa)\n[3D-CNN surrogate]", (22.0, 45.0), "P",   5),
 ]
@@ -65,6 +82,42 @@ def plot_panel(ax, ykey, ylabel, ylim, prop, _anchor_idx):
             ax.scatter(r["novelty"], r[ykey], s=120, marker="D",
                        facecolor="#e8a830", edgecolor="black", linewidths=0.7,
                        alpha=0.9, zorder=3)
+    # REINVENT 4 top-1 (single point on every panel)
+    rx = REINVENT_POINT["novelty"]
+    ry = {"D": REINVENT_POINT["D"], "rho": REINVENT_POINT["rho"],
+          "P": REINVENT_POINT["P"]}[prop]
+    ax.scatter(rx, ry, s=130, marker="s",
+               facecolor=REINVENT_COLOR, edgecolor="black", linewidths=0.7,
+               alpha=0.95, zorder=4)
+
+    # SELFIES-GA: D panel shows surrogate->DFT collapse arrow with two triangles;
+    # rho panel shows the novel candidate at rho_surrogate; P panel skipped.
+    sx = SELFIES_GA["novelty"]
+    if prop == "D":
+        y_top = SELFIES_GA["D_surrogate"]
+        y_bot = SELFIES_GA["D_DFT"]
+        ax.scatter(sx, y_top, s=130, marker="^",
+                   facecolor=SELFIES_COLOR, edgecolor="black", linewidths=0.7,
+                   alpha=0.95, zorder=4)
+        ax.scatter(sx, y_bot, s=130, marker="v",
+                   facecolor=SELFIES_COLOR, edgecolor="black", linewidths=0.7,
+                   alpha=0.95, zorder=4)
+        ax.annotate("", xy=(sx, y_bot + 0.05), xytext=(sx, y_top - 0.05),
+                    arrowprops=dict(arrowstyle="->", color=SELFIES_COLOR,
+                                    lw=1.6, shrinkA=0, shrinkB=0),
+                    zorder=5)
+        ax.annotate("surrogate → DFT\n(3.5 km/s artefact)",
+                    xy=(sx, (y_top + y_bot) / 2.0),
+                    xytext=(sx - 0.18, (y_top + y_bot) / 2.0),
+                    fontsize=7.5, color=SELFIES_COLOR, ha="right", va="center",
+                    zorder=5)
+    elif prop == "rho":
+        ax.scatter(sx, SELFIES_GA["rho_surrogate"], s=130, marker="^",
+                   facecolor=SELFIES_COLOR, edgecolor="black", linewidths=0.7,
+                   alpha=0.95, zorder=4)
+    # P panel: SELFIES-GA top-1 was a corpus rediscovery; novel candidate
+    # P_surrogate not anchored, so skip per spec.
+
     # Anchors
     for name, nov, D, rho, P in ANCHORS:
         y = {"D": D, "rho": rho, "P": P}[prop]
@@ -108,11 +161,15 @@ handles = [
                    label="SMILES-LSTM top-1 (1 seed; Tanimoto = 1.000 = exact LM match)"),
     mpatches.Patch(facecolor="#e8a830", edgecolor="black",
                    label="MolMIM 70M top-1 (drug-domain pretrain)"),
+    mpatches.Patch(facecolor=REINVENT_COLOR, edgecolor="black",
+                   label="REINVENT 4 top-1 (square; N-fraction proxy reward)"),
+    mpatches.Patch(facecolor=SELFIES_COLOR, edgecolor="black",
+                   label="SELFIES-GA 40k novel (\u25b2 surrogate, \u25bc DFT; D collapse)"),
     mpatches.Patch(facecolor="#7f7f7f", edgecolor="black",
                    label="literature anchors (RDX/HMX/CL-20/TATB/PETN, experimental)"),
 ]
-fig.legend(handles=handles, loc="upper center", ncol=4, framealpha=0.95,
-           fontsize=8.5, bbox_to_anchor=(0.5, 1.02))
+fig.legend(handles=handles, loc="upper center", ncol=3, framealpha=0.95,
+           fontsize=8.5, bbox_to_anchor=(0.5, 1.04))
 fig.suptitle("Top-1 candidates of each method on three target properties:\n"
              "DGLD occupies the productive quadrant (novel + HMX-class) on every axis",
              fontsize=11, fontweight="bold", y=1.10)

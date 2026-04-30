@@ -1,0 +1,94 @@
+{
+  "id": "E1",
+  "smiles": "O=[N+]([O-])c1nnon1",
+  "errors": [],
+  "n_atoms_parent": 8,
+  "e_parent_hartree": -25.803539144686,
+  "n_candidate_bonds": 8,
+  "bonds": [
+    {
+      "atom_a": 0,
+      "atom_b": 1,
+      "syms": "O-N",
+      "frag_smiles": [
+        "[OH]",
+        "[O-][N+]c1nnon1"
+      ],
+      "e_frag1_hartree": -4.428374823718,
+      "e_frag2_hartree": -21.721063349687,
+      "bde_hartree": -0.34589902871900335,
+      "bde_kcal_per_mol": -217.055,
+      "skipped": false
+    },
+    {
+      "atom_a": 1,
+      "atom_b": 3,
+      "syms": "N-C",
+      "frag_smiles": [
+        "O=[N+][O-]",
+        "[c]1nnon1"
+      ],
+      "e_frag1_hartree": -10.90610167773,
+      "e_frag2_hartree": -14.749776915599,
+      "bde_hartree": 0.1476605513569993,
+      "bde_kcal_per_mol": 92.658,
+      "skipped": false
+    },
+    {
+      "atom_a": 1,
+      "atom_b": 2,
+      "syms": "N-O",
+      "frag_smiles": [
+        "O=[N+]c1nnon1",
+        "[O-]"
+      ],
+      "e_frag1_hartree": -21.73720879678,
+      "e_frag2_hartree": -3.769421097051,
+      "bde_hartree": 0.2969092508549984,
+      "bde_kcal_per_mol": 186.313,
+      "skipped": false
+    },
+    {
+      "atom_a": 3,
+      "atom_b": 4,
+      "syms": "C-N",
+      "skipped": true,
+      "reason": "ring-bond, not 2 fragments"
+    },
+    {
+      "atom_a": 4,
+      "atom_b": 5,
+      "syms": "N-N",
+      "skipped": true,
+      "reason": "ring-bond, not 2 fragments"
+    },
+    {
+      "atom_a": 5,
+      "atom_b": 6,
+      "syms": "N-O",
+      "skipped": true,
+      "reason": "ring-bond, not 2 fragments"
+    },
+    {
+      "atom_a": 6,
+      "atom_b": 7,
+      "syms": "O-N",
+      "skipped": true,
+      "reason": "ring-bond, not 2 fragments"
+    },
+    {
+      "atom_a": 7,
+      "atom_b": 3,
+      "syms": "N-C",
+      "skipped": true,
+      "reason": "ring-bond, not 2 fragments"
+    }
+  ],
+  "weakest_bond": {
+    "atom_a": 0,
+    "atom_b": 1,
+    "syms": "O-N",
+    "bde_kcal_per_mol": -217.055
+  },
+  "_elapsed_s": 0.8
+}

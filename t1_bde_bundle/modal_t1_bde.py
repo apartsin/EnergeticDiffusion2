@@ -50,12 +50,24 @@ image = (
         "wget", "tar", "xz-utils", "ca-certificates",
         "libgomp1", "build-essential", "git",
     )
-    # xtb 6.6.1 official static Linux binary
+    # xtb 6.6.1 official static Linux binary.  The tarball extracts to
+    # /opt/xtb-6.6.1/ (NOT /opt/xtb-dist/), so we resolve the actual top-level
+    # directory at build time and symlink every binary into /usr/local/bin so
+    # `xtb` is on PATH.  Build fails fast if the binary is missing or unrunnable.
     .run_commands(
         "cd /opt && wget -q https://github.com/grimme-lab/xtb/releases/download/v6.6.1/xtb-6.6.1-linux-x86_64.tar.xz",
         "cd /opt && tar -xf xtb-6.6.1-linux-x86_64.tar.xz && rm xtb-6.6.1-linux-x86_64.tar.xz",
-        "ln -s /opt/xtb-dist/bin/xtb /usr/local/bin/xtb",
+        # Find whichever directory the tarball produced (xtb-6.6.1 in 6.6.1) and
+        # symlink its bin/share into the standard locations.
+        "XTB_DIR=$(ls -d /opt/xtb-* | head -n1) && "
+        "ln -sf $XTB_DIR/bin/xtb /usr/local/bin/xtb && "
+        "ln -sf $XTB_DIR/bin/xtb-python /usr/local/bin/xtb-python 2>/dev/null || true && "
+        "mkdir -p /usr/local/share && "
+        "ln -sf $XTB_DIR/share/xtb /usr/local/share/xtb",
+        # Fail-fast verification at image build time.
+        "xtb --version",
     )
+    .env({"XTBPATH": "/usr/local/share/xtb"})
     .pip_install("rdkit==2024.3.5", "numpy")
 )
 
