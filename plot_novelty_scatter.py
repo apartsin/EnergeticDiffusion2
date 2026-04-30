@@ -27,21 +27,36 @@ LSTM_CONDS = {"smiles_lstm_samples"}
 MOLMIM_CONDS = {"molmim_samples"}
 
 # Hardcoded baseline points (Table 6a / short_paper.html ~line 605).
-# REINVENT 4 top-1 from reinvent_bundle/results/reinvent_unimol_top100.json:
-#   D=9.02 km/s, rho=1.853 g/cm^3, P=34.5 GPa, max-Tanimoto=0.49 -> novelty=0.51.
+# REINVENT 4 top-1 (Table 6a; seed-42 aminotetrazine top-1 by composite):
+#   D=9.02 km/s, rho=1.853 g/cm^3, P=34.5 GPa, max-Tanimoto=0.57 -> novelty=0.43.
 # SELFIES-GA 40k best-novel from baseline_bundle/results/selfies_ga_competitor_dft.json:
-#   D_surrogate=9.737 km/s, rho_surrogate=1.994, max-Tanimoto=0.35 -> novelty=0.65;
+#   D_surrogate=9.737 km/s (=9.74), rho_surrogate=1.994, max-Tanimoto=0.35 -> novelty=0.65;
 #   D_DFT=6.28 km/s collapse per Section 5.13 audit.
-REINVENT_POINT = {"novelty": 0.51, "D": 9.02, "rho": 1.8527, "P": 34.5151}
+REINVENT_POINT = {"novelty": 0.43, "D": 9.02, "rho": 1.8527, "P": 34.5151}
 SELFIES_GA = {
     "novelty": 0.65,
-    "D_surrogate": 9.737,
+    "D_surrogate": 9.74,
     "D_DFT": 6.28,
     "rho_surrogate": 1.994,
     # P not anchored against DFT for the novel candidate; omit from rho/P panels.
 }
 REINVENT_COLOR = "#3a8a3a"
 SELFIES_COLOR = "#7b3294"
+
+# Memorisation rates from Table 6a; marker-area encoding: s = base * (1 - memo).
+# DGLD = 0.0 (no LM memorisation), MolMIM ~0 (n.d.), REINVENT 4 = 0.001,
+# SMILES-LSTM = 0.183, SELFIES-GA = 0.74.
+MEMO = {
+    "DGLD": 0.0,
+    "LSTM": 0.183,
+    "MOLMIM": 0.0,
+    "REINVENT": 0.001,
+    "SELFIES_GA": 0.74,
+}
+
+def memo_scale(method: str, base: float) -> float:
+    """Marker area scaled by (1 - memorisation rate)."""
+    return base * (1.0 - MEMO[method])
 
 # Literature anchors with experimental D, rho, P
 ANCHORS = [
@@ -53,7 +68,8 @@ ANCHORS = [
     ("PETN", 0.0, 8.50, 1.77, 33.0),
 ]
 
-fig, axes = plt.subplots(1, 3, figsize=(15.5, 4.7), dpi=150, sharex=True)
+fig, axes = plt.subplots(1, 3, figsize=(15.5, 4.7), dpi=150, sharex=True,
+                         gridspec_kw={"width_ratios": [2, 1, 1]})
 axA, axB, axC = axes
 
 PROPS = [
@@ -64,55 +80,51 @@ PROPS = [
 ANCHOR_IDX = {"D": 2, "rho": 3, "P": 4}
 
 def plot_panel(ax, ykey, ylabel, ylim, prop, _anchor_idx):
-    # DGLD
+    # DGLD (memo = 0; full size)
     for r in data:
         if r["condition"] in DGLD_CONDS and r["novelty"] is not None and r.get(ykey):
-            ax.scatter(r["novelty"], r[ykey], s=85, marker="o",
+            ax.scatter(r["novelty"], r[ykey], s=memo_scale("DGLD", 85), marker="o",
                        facecolor="#2a73c8", edgecolor="black", linewidths=0.6,
                        alpha=0.85, zorder=3)
-    # LSTM
+    # LSTM (memo = 0.183; marker shrunk to ~82% of base)
     for r in data:
         if r["condition"] in LSTM_CONDS and r["novelty"] is not None and r.get(ykey):
-            ax.scatter(r["novelty"], r[ykey], s=160, marker="X",
+            ax.scatter(r["novelty"], r[ykey], s=memo_scale("LSTM", 160), marker="X",
                        facecolor="#d6473a", edgecolor="black", linewidths=0.9,
                        alpha=0.95, zorder=4)
-    # MolMIM
+    # MolMIM (memo n.d. ~ 0; full size)
     for r in data:
         if r["condition"] in MOLMIM_CONDS and r["novelty"] is not None and r.get(ykey):
-            ax.scatter(r["novelty"], r[ykey], s=120, marker="D",
+            ax.scatter(r["novelty"], r[ykey], s=memo_scale("MOLMIM", 120), marker="D",
                        facecolor="#e8a830", edgecolor="black", linewidths=0.7,
                        alpha=0.9, zorder=3)
-    # REINVENT 4 top-1 (single point on every panel)
+    # REINVENT 4 top-1 (single point on every panel; memo = 0.001 -> full size)
     rx = REINVENT_POINT["novelty"]
     ry = {"D": REINVENT_POINT["D"], "rho": REINVENT_POINT["rho"],
           "P": REINVENT_POINT["P"]}[prop]
-    ax.scatter(rx, ry, s=130, marker="s",
+    ax.scatter(rx, ry, s=memo_scale("REINVENT", 130), marker="s",
                facecolor=REINVENT_COLOR, edgecolor="black", linewidths=0.7,
                alpha=0.95, zorder=4)
 
     # SELFIES-GA: D panel shows surrogate->DFT collapse arrow with two triangles;
     # rho panel shows the novel candidate at rho_surrogate; P panel skipped.
     sx = SELFIES_GA["novelty"]
+    # SELFIES-GA memo = 0.74; markers shrunk to 26% of base.
     if prop == "D":
+        # Main panel A: keep the two markers (surrogate / DFT) so the encoding is
+        # consistent across panels; the dedicated collapse inset (added below)
+        # carries the explanatory annotation.
         y_top = SELFIES_GA["D_surrogate"]
         y_bot = SELFIES_GA["D_DFT"]
-        ax.scatter(sx, y_top, s=130, marker="^",
+        ax.scatter(sx, y_top, s=memo_scale("SELFIES_GA", 130), marker="^",
                    facecolor=SELFIES_COLOR, edgecolor="black", linewidths=0.7,
                    alpha=0.95, zorder=4)
-        ax.scatter(sx, y_bot, s=130, marker="v",
+        ax.scatter(sx, y_bot, s=memo_scale("SELFIES_GA", 130), marker="v",
                    facecolor=SELFIES_COLOR, edgecolor="black", linewidths=0.7,
                    alpha=0.95, zorder=4)
-        ax.annotate("", xy=(sx, y_bot + 0.05), xytext=(sx, y_top - 0.05),
-                    arrowprops=dict(arrowstyle="->", color=SELFIES_COLOR,
-                                    lw=1.6, shrinkA=0, shrinkB=0),
-                    zorder=5)
-        ax.annotate("surrogate → DFT\n(3.5 km/s artefact)",
-                    xy=(sx, (y_top + y_bot) / 2.0),
-                    xytext=(sx - 0.18, (y_top + y_bot) / 2.0),
-                    fontsize=7.5, color=SELFIES_COLOR, ha="right", va="center",
-                    zorder=5)
     elif prop == "rho":
-        ax.scatter(sx, SELFIES_GA["rho_surrogate"], s=130, marker="^",
+        ax.scatter(sx, SELFIES_GA["rho_surrogate"],
+                   s=memo_scale("SELFIES_GA", 130), marker="^",
                    facecolor=SELFIES_COLOR, edgecolor="black", linewidths=0.7,
                    alpha=0.95, zorder=4)
     # P panel: SELFIES-GA top-1 was a corpus rediscovery; novel candidate
@@ -137,6 +149,35 @@ def plot_panel(ax, ykey, ylabel, ylim, prop, _anchor_idx):
 
 for ax, ykey, ylabel, ylim, prop, idx in PROPS:
     plot_panel(ax, ykey, ylabel, ylim, prop, idx)
+
+# SELFIES-GA collapse inset on panel A (lower-left). Two markers connected by
+# an arrow at novelty = 0.65: triangle-up at surrogate D = 9.74, triangle-down
+# at DFT-anchored D = 6.28; the 3.5 km/s gap is the headline collapse.
+ins = axA.inset_axes([0.04, 0.04, 0.28, 0.40])
+sx = SELFIES_GA["novelty"]
+y_top = SELFIES_GA["D_surrogate"]
+y_bot = SELFIES_GA["D_DFT"]
+ins.scatter([sx], [y_top], s=80, marker="^",
+            facecolor=SELFIES_COLOR, edgecolor="black", linewidths=0.6, zorder=3)
+ins.scatter([sx], [y_bot], s=80, marker="v",
+            facecolor=SELFIES_COLOR, edgecolor="black", linewidths=0.6, zorder=3)
+ins.annotate("", xy=(sx, y_bot + 0.15), xytext=(sx, y_top - 0.15),
+             arrowprops=dict(arrowstyle="->", color=SELFIES_COLOR,
+                             lw=1.4, shrinkA=0, shrinkB=0),
+             zorder=4)
+ins.text(sx + 0.04, (y_top + y_bot) / 2.0,
+         "9.74 → 6.28\n(3.5 km/s artefact)",
+         fontsize=6.5, color=SELFIES_COLOR, ha="left", va="center")
+ins.set_xlim(sx - 0.10, sx + 0.40)
+ins.set_ylim(y_bot - 0.6, y_top + 0.6)
+ins.set_title("SELFIES-GA: surrogate vs DFT",
+              fontsize=7, color=SELFIES_COLOR, pad=2)
+ins.tick_params(axis="both", which="both", labelsize=6, length=2)
+ins.set_xticks([sx]); ins.set_xticklabels(["0.65"])
+ins.set_yticks([y_bot, y_top]); ins.set_yticklabels(["6.28", "9.74"])
+ins.grid(True, linestyle=":", alpha=0.35)
+for sp in ins.spines.values():
+    sp.set_edgecolor(SELFIES_COLOR); sp.set_linewidth(0.6)
 
 # Panel-level highlights for the productive quadrant on each axis
 THRESHOLDS = {0: 9.0, 1: 1.85, 2: 35.0}  # D, rho, P "HMX-class" thresholds
@@ -167,8 +208,10 @@ handles = [
                    label="SELFIES-GA 40k novel (\u25b2 surrogate, \u25bc DFT; D collapse)"),
     mpatches.Patch(facecolor="#7f7f7f", edgecolor="black",
                    label="literature anchors (RDX/HMX/CL-20/TATB/PETN, experimental)"),
+    mpatches.Patch(facecolor="none", edgecolor="none",
+                   label="marker area \u221d 1 \u2212 memorisation rate (Table 6a)"),
 ]
-fig.legend(handles=handles, loc="upper center", ncol=3, framealpha=0.95,
+fig.legend(handles=handles, loc="upper center", ncol=4, framealpha=0.95,
            fontsize=8.5, bbox_to_anchor=(0.5, 1.04))
 fig.suptitle("Top-1 candidates of each method on three target properties:\n"
              "DGLD occupies the productive quadrant (novel + HMX-class) on every axis",
