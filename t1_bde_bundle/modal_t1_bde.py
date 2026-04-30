@@ -6,9 +6,13 @@ For each compound:
     3. Enumerate candidate homolytic bond cleavages:
          L1: every C-N(NO2) and ring N-O / C-O bond
          E1: every ring N-O / N-N bond and the C-NO2 bond
-    4. For each bond (a, b), break it, generate two radical SMILES via RDKit
-       fragment, regenerate 3D geometry, run xTB --opt tight (UHF=1) on each
-       fragment.  BDE = E(rad_a) + E(rad_b) - E(parent), in kcal/mol.
+    4. For each bond (a, b), break it, partition parent atoms into two
+       connected groups (Chem.GetMolFrags), and build each fragment's XYZ
+       block directly from the parent's 3D coordinates (NO SMILES
+       round-trip, NO re-embedding, NO implicit H added). Each fragment is
+       a true open-shell radical at the broken-bond atom; xTB runs with
+       --opt tight, charge=0, uhf=1 per fragment.
+       BDE = E(rad_a) + E(rad_b) - E(parent), in kcal/mol.
     5. Save per-bond results sorted ascending; report the weakest BDE.
 
 Output:
@@ -101,14 +105,17 @@ def run_bde_remote(compound_id: str, smiles: str) -> dict:
         return out
 
     # ---------------- helpers ----------------
-    def smiles_to_xyz_block(smi: str) -> tuple[str, int]:
+    def smiles_to_mol_3d(smi: str):
+        """Build a RDKit Mol with explicit Hs and a single 3D conformer
+        (ETKDGv3 + MMFF94/UFF). Returns the Mol object so callers can both
+        emit an XYZ block AND use the *same* atom indexing + coordinates
+        for downstream fragment building."""
         mol = Chem.MolFromSmiles(smi)
         if mol is None:
             raise ValueError(f"RDKit cannot parse SMILES: {smi}")
         mol = Chem.AddHs(mol)
         params = AllChem.ETKDGv3(); params.randomSeed = 42
         if AllChem.EmbedMolecule(mol, params) != 0:
-            # fallback: more attempts
             params.maxAttempts = 200
             if AllChem.EmbedMolecule(mol, params) != 0:
                 raise RuntimeError(f"ETKDGv3 embed failed for {smi}")
@@ -119,12 +126,27 @@ def run_bde_remote(compound_id: str, smiles: str) -> dict:
                 AllChem.UFFOptimizeMolecule(mol, maxIters=500)
             except Exception:
                 pass
+        return mol
+
+    def mol_to_xyz_block(mol, comment: str = "") -> str:
         conf = mol.GetConformer()
-        lines = [str(mol.GetNumAtoms()), smi]
+        lines = [str(mol.GetNumAtoms()), comment]
         for i, atom in enumerate(mol.GetAtoms()):
             p = conf.GetAtomPosition(i)
             lines.append(f"{atom.GetSymbol()} {p.x:.6f} {p.y:.6f} {p.z:.6f}")
-        return "\n".join(lines), mol.GetNumAtoms()
+        return "\n".join(lines)
+
+    def fragment_xyz_block(parent_mol, atom_indices, comment: str = "") -> str:
+        """Build an XYZ block for a subset of parent atoms using the
+        parent's *existing* 3D coordinates. No re-embedding, no implicit
+        H added: each open valence becomes a radical site."""
+        conf = parent_mol.GetConformer()
+        lines = [str(len(atom_indices)), comment]
+        for atom_idx in atom_indices:
+            atom = parent_mol.GetAtomWithIdx(int(atom_idx))
+            p = conf.GetAtomPosition(int(atom_idx))
+            lines.append(f"{atom.GetSymbol()} {p.x:.6f} {p.y:.6f} {p.z:.6f}")
+        return "\n".join(lines)
 
     def run_xtb(xyz_block: str, charge: int, uhf: int, tag: str) -> float:
         with tempfile.TemporaryDirectory() as td:
@@ -168,7 +190,9 @@ def run_bde_remote(compound_id: str, smiles: str) -> dict:
 
     # ---------------- step 1: parent geometry + xTB --------------
     print(f"[t1:{compound_id}] parent SMILES -> 3D ...", flush=True)
-    parent_xyz, n_atoms = smiles_to_xyz_block(smiles)
+    parent_mol = smiles_to_mol_3d(smiles)
+    n_atoms = parent_mol.GetNumAtoms()
+    parent_xyz = mol_to_xyz_block(parent_mol, comment=smiles)
     out["n_atoms_parent"] = n_atoms
 
     print(f"[t1:{compound_id}] xtb parent --opt tight ...", flush=True)
@@ -176,11 +200,11 @@ def run_bde_remote(compound_id: str, smiles: str) -> dict:
     out["e_parent_hartree"] = e_parent_ha
 
     # ---------------- step 2: enumerate candidate bonds ----------
-    mol_parsed = Chem.MolFromSmiles(smiles)
-    if mol_parsed is None:
-        raise RuntimeError("parent SMILES failed second parse")
-    mol_parsed = Chem.AddHs(mol_parsed)
-    AllChem.EmbedMolecule(mol_parsed, AllChem.ETKDGv3())
+    # IMPORTANT: reuse the *same* parent_mol (with its 3D conformer) so that
+    # atom indices in candidate_bonds match the indices we will later carve
+    # out into per-fragment XYZ blocks. Re-embedding from SMILES would give
+    # a different atom ordering and break the index correspondence.
+    mol_parsed = parent_mol
 
     candidate_bonds: list[tuple[int, int, str, str]] = []
     for bond in mol_parsed.GetBonds():
@@ -199,83 +223,70 @@ def run_bde_remote(compound_id: str, smiles: str) -> dict:
     out["n_candidate_bonds"] = len(candidate_bonds)
 
     # ---------------- step 3: per-bond homolytic BDE -------------
+    # Coordinate-preserving graph split:
+    #   * Make an editable copy of parent_mol, RemoveBond(a, b).
+    #   * Chem.GetMolFrags(asMols=False) returns lists of atom indices into
+    #     the *original* parent atom ordering.
+    #   * For each fragment, carve out an XYZ block using parent's existing
+    #     3D coordinates (NO SMILES round-trip, NO re-embedding, NO implicit
+    #     H added). Each fragment is a true open-shell radical at the broken
+    #     bond atom -> uhf=1, charge=0.
     bond_results: list[dict] = []
     for (a, b, sa, sb) in candidate_bonds:
         try:
-            # Make an editable copy and cleave the bond
-            ed_mol = Chem.RWMol(mol_parsed)
+            ed_mol = Chem.RWMol(parent_mol)
             ed_mol.RemoveBond(a, b)
-            # set radical electron on each side
-            ed_mol.GetAtomWithIdx(a).SetNumRadicalElectrons(
-                ed_mol.GetAtomWithIdx(a).GetNumRadicalElectrons() + 1
+            frag_mol_nosan = ed_mol.GetMol()
+            # asMols=False gives tuples of atom indices into parent ordering.
+            # sanitizeFrags=False because the open valence would otherwise
+            # confuse RDKit; we only need the connectivity partition.
+            frag_atom_groups = Chem.GetMolFrags(
+                frag_mol_nosan, asMols=False, sanitizeFrags=False,
             )
-            ed_mol.GetAtomWithIdx(b).SetNumRadicalElectrons(
-                ed_mol.GetAtomWithIdx(b).GetNumRadicalElectrons() + 1
-            )
-            frag_mol = ed_mol.GetMol()
-            try:
-                Chem.SanitizeMol(frag_mol, sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL ^
-                                 Chem.SanitizeFlags.SANITIZE_PROPERTIES)
-            except Exception:
-                pass
-            frags = Chem.GetMolFrags(frag_mol, asMols=True, sanitizeFrags=False)
-            if len(frags) != 2:
-                # didn't separate (was in a ring); skip
+            if len(frag_atom_groups) != 2:
                 bond_results.append({
                     "atom_a": a, "atom_b": b, "syms": f"{sa}-{sb}",
                     "skipped": True, "reason": "ring-bond, not 2 fragments",
                 })
                 continue
 
-            frag_smiles = []
-            frag_es = []
-            for fi, fmol in enumerate(frags):
-                try:
-                    fsmi = Chem.MolToSmiles(fmol)
-                except Exception as e:
-                    raise RuntimeError(f"fragment {fi} smiles failed: {e}")
-                # number of unpaired electrons -> uhf
-                n_rad = sum(at.GetNumRadicalElectrons() for at in fmol.GetAtoms())
-                uhf = n_rad  # gfn2 uses unpaired-electron count
+            # Order: fragment containing atom a first, atom b second
+            if a in frag_atom_groups[0]:
+                groups_ordered = (frag_atom_groups[0], frag_atom_groups[1])
+            else:
+                groups_ordered = (frag_atom_groups[1], frag_atom_groups[0])
 
-                # generate 3D for fragment via SMILES round-trip
-                fmol_h = Chem.MolFromSmiles(fsmi, sanitize=False)
-                if fmol_h is None:
-                    raise RuntimeError(f"fragment {fi} re-parse failed: {fsmi}")
-                try:
-                    Chem.SanitizeMol(fmol_h, sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL ^
-                                     Chem.SanitizeFlags.SANITIZE_PROPERTIES)
-                except Exception:
-                    pass
-                fmol_h = Chem.AddHs(fmol_h)
-                params = AllChem.ETKDGv3(); params.randomSeed = 42
-                if AllChem.EmbedMolecule(fmol_h, params) != 0:
-                    params.maxAttempts = 200
-                    if AllChem.EmbedMolecule(fmol_h, params) != 0:
-                        raise RuntimeError(f"fragment {fi} embed failed: {fsmi}")
-                try:
-                    AllChem.UFFOptimizeMolecule(fmol_h, maxIters=500)
-                except Exception:
-                    pass
-                conf = fmol_h.GetConformer()
-                xyz_lines = [str(fmol_h.GetNumAtoms()), fsmi]
-                for i, atom in enumerate(fmol_h.GetAtoms()):
-                    p = conf.GetAtomPosition(i)
-                    xyz_lines.append(f"{atom.GetSymbol()} {p.x:.6f} {p.y:.6f} {p.z:.6f}")
-                xyz_block = "\n".join(xyz_lines)
-
+            frag_formulas: list[str] = []
+            frag_es: list[float] = []
+            for fi, atom_indices in enumerate(groups_ordered):
+                # Composition string for diagnostics (replaces SMILES tag)
+                sym_counter = Counter(
+                    parent_mol.GetAtomWithIdx(int(i)).GetSymbol()
+                    for i in atom_indices
+                )
+                formula = "".join(
+                    f"{s}{sym_counter[s]}" for s in sorted(sym_counter)
+                )
+                # For homolytic single-bond cleavage, each fragment gains
+                # exactly one unpaired electron at the broken-bond atom.
+                uhf = 1
+                xyz_block = fragment_xyz_block(
+                    parent_mol, atom_indices,
+                    comment=f"{compound_id}_bond{a}-{b}_frag{fi}_{formula}",
+                )
                 e_frag_ha = run_xtb(
                     xyz_block, charge=0, uhf=uhf,
                     tag=f"frag-{a}_{b}-{fi}",
                 )
-                frag_smiles.append(fsmi)
+                frag_formulas.append(formula)
                 frag_es.append(e_frag_ha)
 
             bde_ha = (frag_es[0] + frag_es[1]) - e_parent_ha
             bde_kcal = bde_ha * HARTREE_TO_KCAL
             bond_results.append({
                 "atom_a": a, "atom_b": b, "syms": f"{sa}-{sb}",
-                "frag_smiles": frag_smiles,
+                "frag_formulas": frag_formulas,
+                "frag_atom_counts": [len(groups_ordered[0]), len(groups_ordered[1])],
                 "e_frag1_hartree": frag_es[0],
                 "e_frag2_hartree": frag_es[1],
                 "bde_hartree": bde_ha,

@@ -7,129 +7,165 @@
   "n_candidate_bonds": 14,
   "bonds": [
     {
-      "atom_a": 7,
-      "atom_b": 8,
-      "syms": "N-O",
-      "frag_smiles": [
-        "O=[N+]([O-])c1noc([N+][O-])c1[N+](=O)[O-]",
-        "[OH]"
-      ],
-      "e_frag1_hartree": -42.112287853396,
-      "e_frag2_hartree": -4.428374823718,
-      "bde_hartree": -0.3559947776659982,
-      "bde_kcal_per_mol": -223.39,
-      "skipped": false
-    },
-    {
-      "atom_a": 11,
-      "atom_b": 12,
-      "syms": "N-O",
-      "frag_smiles": [
-        "O=[N+]([O-])c1noc([N+](=O)[O-])c1[N+][O-]",
-        "[OH]"
-      ],
-      "e_frag1_hartree": -42.10651258102,
-      "e_frag2_hartree": -4.428374823718,
-      "bde_hartree": -0.35021950528999923,
-      "bde_kcal_per_mol": -219.766,
-      "skipped": false
-    },
-    {
-      "atom_a": 0,
-      "atom_b": 1,
-      "syms": "O-N",
-      "frag_smiles": [
-        "[OH]",
-        "O=[N+]([O-])c1onc([N+][O-])c1[N+](=O)[O-]"
-      ],
-      "e_frag1_hartree": -4.428374823718,
-      "e_frag2_hartree": -42.10146041392,
-      "bde_hartree": -0.3451673381900022,
-      "bde_kcal_per_mol": -216.596,
-      "skipped": false
-    },
-    {
       "atom_a": 6,
       "atom_b": 7,
       "syms": "C-N",
-      "frag_smiles": [
-        "O=[N+]([O-])c1[c]onc1[N+](=O)[O-]",
-        "O=[N+][O-]"
+      "frag_formulas": [
+        "C3N3O5",
+        "N1O2"
       ],
-      "e_frag1_hartree": -35.141561829166,
-      "e_frag2_hartree": -10.90610167773,
-      "bde_hartree": 0.1370043925520008,
-      "bde_kcal_per_mol": 85.972,
+      "frag_atom_counts": [
+        11,
+        3
+      ],
+      "e_frag1_hartree": -35.141562340877,
+      "e_frag2_hartree": -10.906101737084,
+      "bde_hartree": 0.1370038214869993,
+      "bde_kcal_per_mol": 85.971,
       "skipped": false
     },
     {
       "atom_a": 10,
       "atom_b": 11,
       "syms": "C-N",
-      "frag_smiles": [
-        "O=[N+]([O-])c1[c]c([N+](=O)[O-])on1",
-        "O=[N+][O-]"
+      "frag_formulas": [
+        "C3N3O5",
+        "N1O2"
       ],
-      "e_frag1_hartree": -35.133135447289,
-      "e_frag2_hartree": -10.90610167773,
-      "bde_hartree": 0.14543077442900199,
-      "bde_kcal_per_mol": 91.259,
+      "frag_atom_counts": [
+        11,
+        3
+      ],
+      "e_frag1_hartree": -35.13313435583,
+      "e_frag2_hartree": -10.906101737214,
+      "bde_hartree": 0.1454318064039981,
+      "bde_kcal_per_mol": 91.26,
       "skipped": false
     },
     {
       "atom_a": 1,
       "atom_b": 3,
       "syms": "N-C",
-      "frag_smiles": [
-        "O=[N+][O-]",
-        "O=[N+]([O-])c1[c]noc1[N+](=O)[O-]"
+      "frag_formulas": [
+        "N1O2",
+        "C3N3O5"
       ],
-      "e_frag1_hartree": -10.90610167773,
-      "e_frag2_hartree": -35.131439213292,
-      "bde_hartree": 0.14712700842600412,
-      "bde_kcal_per_mol": 92.324,
-      "skipped": false
-    },
-    {
-      "atom_a": 1,
-      "atom_b": 2,
-      "syms": "N-O",
-      "frag_smiles": [
-        "O=[N+]c1noc([N+](=O)[O-])c1[N+](=O)[O-]",
-        "[O-]"
+      "frag_atom_counts": [
+        3,
+        11
       ],
-      "e_frag1_hartree": -42.132594161554,
-      "e_frag2_hartree": -3.769421097051,
-      "bde_hartree": 0.282652640842997,
-      "bde_kcal_per_mol": 177.367,
-      "skipped": false
-    },
-    {
-      "atom_a": 11,
-      "atom_b": 13,
-      "syms": "N-O",
-      "frag_smiles": [
-        "O=[N+]c1c([N+](=O)[O-])noc1[N+](=O)[O-]",
-        "[O-]"
-      ],
-      "e_frag1_hartree": -42.128877084586,
-      "e_frag2_hartree": -3.769421097051,
-      "bde_hartree": 0.28636971781099874,
-      "bde_kcal_per_mol": 179.7,
+      "e_frag1_hartree": -10.906101738366,
+      "e_frag2_hartree": -35.131440600329,
+      "bde_hartree": 0.14712556075299688,
+      "bde_kcal_per_mol": 92.323,
       "skipped": false
     },
     {
       "atom_a": 7,
       "atom_b": 9,
       "syms": "N-O",
-      "frag_smiles": [
-        "O=[N+]c1onc([N+](=O)[O-])c1[N+](=O)[O-]",
-        "[O-]"
+      "frag_formulas": [
+        "C3N4O6",
+        "O1"
       ],
-      "e_frag1_hartree": -42.127346021925,
+      "frag_atom_counts": [
+        13,
+        1
+      ],
+      "e_frag1_hartree": -42.143325972241,
       "e_frag2_hartree": -3.769421097051,
-      "bde_hartree": 0.2879007804720004,
-      "bde_kcal_per_mol": 180.66,
+      "bde_hartree": 0.27192083015599877,
+      "bde_kcal_per_mol": 170.633,
+      "skipped": false
+    },
+    {
+      "atom_a": 0,
+      "atom_b": 1,
+      "syms": "O-N",
+      "frag_formulas": [
+        "O1",
+        "C3N4O6"
+      ],
+      "frag_atom_counts": [
+        1,
+        13
+      ],
+      "e_frag1_hartree": -3.769421097051,
+      "e_frag2_hartree": -42.132594620355,
+      "bde_hartree": 0.2826521820419998,
+      "bde_kcal_per_mol": 177.367,
+      "skipped": false
+    },
+    {
+      "atom_a": 1,
+      "atom_b": 2,
+      "syms": "N-O",
+      "frag_formulas": [
+        "C3N4O6",
+        "O1"
+      ],
+      "frag_atom_counts": [
+        13,
+        1
+      ],
+      "e_frag1_hartree": -42.132594302506,
+      "e_frag2_hartree": -3.769421097051,
+      "bde_hartree": 0.2826524998910003,
+      "bde_kcal_per_mol": 177.367,
+      "skipped": false
+    },
+    {
+      "atom_a": 11,
+      "atom_b": 12,
+      "syms": "N-O",
+      "frag_formulas": [
+        "C3N4O6",
+        "O1"
+      ],
+      "frag_atom_counts": [
+        13,
+        1
+      ],
+      "e_frag1_hartree": -42.128877868643,
+      "e_frag2_hartree": -3.769421097051,
+      "bde_hartree": 0.2863689337539981,
+      "bde_kcal_per_mol": 179.699,
+      "skipped": false
+    },
+    {
+      "atom_a": 11,
+      "atom_b": 13,
+      "syms": "N-O",
+      "frag_formulas": [
+        "C3N4O6",
+        "O1"
+      ],
+      "frag_atom_counts": [
+        13,
+        1
+      ],
+      "e_frag1_hartree": -42.128877729915,
+      "e_frag2_hartree": -3.769421097051,
+      "bde_hartree": 0.28636907248200316,
+      "bde_kcal_per_mol": 179.699,
+      "skipped": false
+    },
+    {
+      "atom_a": 7,
+      "atom_b": 8,
+      "syms": "N-O",
+      "frag_formulas": [
+        "C3N4O6",
+        "O1"
+      ],
+      "frag_atom_counts": [
+        13,
+        1
+      ],
+      "e_frag1_hartree": -42.127345082353,
+      "e_frag2_hartree": -3.769421097051,
+      "bde_hartree": 0.2879017200439975,
+      "bde_kcal_per_mol": 180.661,
       "skipped": false
     },
     {
@@ -169,10 +205,10 @@
     }
   ],
   "weakest_bond": {
-    "atom_a": 7,
-    "atom_b": 8,
-    "syms": "N-O",
-    "bde_kcal_per_mol": -223.39
+    "atom_a": 6,
+    "atom_b": 7,
+    "syms": "C-N",
+    "bde_kcal_per_mol": 85.971
   },
-  "_elapsed_s": 6.8
+  "_elapsed_s": 7.6
 }

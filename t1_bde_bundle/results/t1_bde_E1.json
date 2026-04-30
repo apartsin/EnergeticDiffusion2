@@ -7,30 +7,20 @@
   "n_candidate_bonds": 8,
   "bonds": [
     {
-      "atom_a": 0,
-      "atom_b": 1,
-      "syms": "O-N",
-      "frag_smiles": [
-        "[OH]",
-        "[O-][N+]c1nnon1"
-      ],
-      "e_frag1_hartree": -4.428374823718,
-      "e_frag2_hartree": -21.721063349687,
-      "bde_hartree": -0.34589902871900335,
-      "bde_kcal_per_mol": -217.055,
-      "skipped": false
-    },
-    {
       "atom_a": 1,
       "atom_b": 3,
       "syms": "N-C",
-      "frag_smiles": [
-        "O=[N+][O-]",
-        "[c]1nnon1"
+      "frag_formulas": [
+        "N1O2",
+        "C1N3O1"
       ],
-      "e_frag1_hartree": -10.90610167773,
-      "e_frag2_hartree": -14.749776915599,
-      "bde_hartree": 0.1476605513569993,
+      "frag_atom_counts": [
+        3,
+        5
+      ],
+      "e_frag1_hartree": -10.906101738339,
+      "e_frag2_hartree": -14.749776919109,
+      "bde_hartree": 0.1476604872379994,
       "bde_kcal_per_mol": 92.658,
       "skipped": false
     },
@@ -38,14 +28,36 @@
       "atom_a": 1,
       "atom_b": 2,
       "syms": "N-O",
-      "frag_smiles": [
-        "O=[N+]c1nnon1",
-        "[O-]"
+      "frag_formulas": [
+        "C1N4O2",
+        "O1"
       ],
-      "e_frag1_hartree": -21.73720879678,
+      "frag_atom_counts": [
+        7,
+        1
+      ],
+      "e_frag1_hartree": -21.737208819119,
       "e_frag2_hartree": -3.769421097051,
-      "bde_hartree": 0.2969092508549984,
+      "bde_hartree": 0.29690922851599666,
       "bde_kcal_per_mol": 186.313,
+      "skipped": false
+    },
+    {
+      "atom_a": 0,
+      "atom_b": 1,
+      "syms": "O-N",
+      "frag_formulas": [
+        "O1",
+        "C1N4O2"
+      ],
+      "frag_atom_counts": [
+        1,
+        7
+      ],
+      "e_frag1_hartree": -3.769421097051,
+      "e_frag2_hartree": -21.737032994058,
+      "bde_hartree": 0.2970850535769962,
+      "bde_kcal_per_mol": 186.424,
       "skipped": false
     },
     {
@@ -85,10 +97,10 @@
     }
   ],
   "weakest_bond": {
-    "atom_a": 0,
-    "atom_b": 1,
-    "syms": "O-N",
-    "bde_kcal_per_mol": -217.055
+    "atom_a": 1,
+    "atom_b": 3,
+    "syms": "N-C",
+    "bde_kcal_per_mol": 92.658
   },
   "_elapsed_s": 0.8
 }
