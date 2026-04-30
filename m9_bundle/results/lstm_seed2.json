@@ -1,0 +1,12 @@
+{
+  "seed": 2,
+  "n_raw": 10000,
+  "n_valid": 7222,
+  "n_chem_pass": 6872,
+  "n_exact_rediscovery": 1295,
+  "memorisation_rate": 0.1793,
+  "top1_smiles": "CN=[N+]=[N-]",
+  "top1_n_frac": 0.75,
+  "top1_max_tanimoto": 1.0,
+  "train_elapsed_s": 59.2
+}
