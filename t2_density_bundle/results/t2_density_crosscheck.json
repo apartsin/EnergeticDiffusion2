@@ -1,0 +1,38 @@
+{
+  "L1": {
+    "id": "L1",
+    "smiles": "O=[N+]([O-])c1noc([N+](=O)[O-])c1[N+](=O)[O-]",
+    "rho_paper": 2.09,
+    "formula": "C3N4O7",
+    "n_atoms": 14,
+    "M_amu": 204.054,
+    "V_mol_AA3": 130.21,
+    "V_mol_cm3_per_mol": 78.4124,
+    "bracket_g_per_cm3": {
+      "pk_0.65": 1.6915,
+      "pk_0.69": 1.7956,
+      "pk_0.72": 1.8737
+    },
+    "delta_pk069_vs_paper_abs": -0.2944,
+    "delta_pk069_vs_paper_pct": -14.09,
+    "_elapsed_s": 0.05
+  },
+  "E1": {
+    "id": "E1",
+    "smiles": "O=[N+]([O-])c1nnon1",
+    "rho_paper": 2.04,
+    "formula": "C1N4O3",
+    "n_atoms": 8,
+    "M_amu": 116.036,
+    "V_mol_AA3": 75.876,
+    "V_mol_cm3_per_mol": 45.6928,
+    "bracket_g_per_cm3": {
+      "pk_0.65": 1.6507,
+      "pk_0.69": 1.7522,
+      "pk_0.72": 1.8284
+    },
+    "delta_pk069_vs_paper_abs": -0.2878,
+    "delta_pk069_vs_paper_pct": -14.11,
+    "_elapsed_s": 0.01
+  }
+}
