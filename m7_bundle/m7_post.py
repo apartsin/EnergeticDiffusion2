@@ -13,7 +13,9 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).parent
+SCRIPTS_DIFF = HERE.parent / "scripts" / "diffusion"
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(SCRIPTS_DIFF))
 
 
 def main():
@@ -38,7 +40,7 @@ def main():
     from rdkit.Chem.Scaffolds import MurckoScaffold
     RDLogger.DisableLog("rdApp.*")
 
-    from chem_filter import chem_filter_batch
+    from chem_filter import chem_filter
     from feasibility_utils import (real_sa, real_sc, SA_DROP_ABOVE, SC_DROP_ABOVE,
                                      composite_feasibility_penalty)
     from unimol_validator import UniMolValidator
@@ -96,8 +98,8 @@ def main():
             seen.add(c); dedup.append(c)
     print(f"[m7pp] After canon+dedup: {len(dedup)}"); sys.stdout.flush()
 
-    # Chem filter
-    keep_chem = chem_filter_batch(dedup)
+    # Chem filter (chemistry-only, no property bounds at this stage)
+    keep_chem = [chem_filter(s, props=None)[0] for s in dedup]
     smis = [s for s, ok in zip(dedup, keep_chem) if ok]
     print(f"[m7pp] After chem filter: {len(smis)}"); sys.stdout.flush()
 
@@ -139,22 +141,27 @@ def main():
     sc_final = [real_sc(s) for s in smis]
     for i, s in enumerate(smis):
         row = {"smiles": s, "sa": sa_final[i], "sc": sc_final[i], "maxtan": max_tans[keep_novel][i]}
-        for k, v in zip(pn, [preds[j][i] if i < len(preds[j]) else None for j in range(len(pn))]):
+        for k in pn:
+            if k not in preds:
+                continue
+            raw_val = float(preds[k][i])
+            import math
+            if math.isnan(raw_val):
+                continue
             mapped = name_map.get(k, k)
-            raw_val = preds[pn.index(k)][i] if k in pn else None
-            if raw_val is not None:
-                row[mapped] = float(raw_val * stats[k]["std"] + stats[k]["mean"])
+            row[mapped] = raw_val  # validator already returns physical units
         rows.append(row)
 
-    # Sort by composite (ascending = better)
+    # Sort by composite (ascending = better):
+    # sum of normalized property distances + SA/SC penalty
+    _mapped_to_orig = {"density": "density", "HOF_S": "heat_of_formation",
+                       "DetoD": "detonation_velocity", "DetoP": "detonation_pressure"}
     for r in rows:
-        r["composite"] = composite_feasibility_penalty(
-            r.get("density", 0), r.get("HOF_S", 0),
-            r.get("DetoD", 0), r.get("DetoP", 0),
-            r["sa"], r["sc"],
-            target_raw["density"], target_raw["heat_of_formation"],
-            target_raw["detonation_velocity"], target_raw["detonation_pressure"]
+        prop_dist = sum(
+            abs(r.get(mk, 0.0) - target_raw[ok]) / max(stats[ok]["std"], 1e-6)
+            for mk, ok in _mapped_to_orig.items()
         )
+        r["composite"] = prop_dist + composite_feasibility_penalty(r["sa"], r["sc"], 0.5, 0.25)
     rows.sort(key=lambda r: r["composite"])
     top = rows[:args.top_n]
 

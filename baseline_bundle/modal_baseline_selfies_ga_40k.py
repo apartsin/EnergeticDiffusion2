@@ -1,0 +1,241 @@
+"""Modal wrapper — SELFIES-GA compute-matched baseline at 40k pool.
+
+Closes the "compute-matched (40k) SELFIES-GA comparison is future work"
+statement from §6 item 3 of the DGLD paper.
+
+Run parameters:
+    pool = 40 000 molecules  (matches DGLD pool size per lane)
+    15 generations           (reduced from 30 to stay within timeout on A100)
+    top-100 output
+
+Uses A100 (40 GB) instead of T4 for UniMol throughput:
+    - UniMol batch inference ~4x faster than T4
+    - Estimated wall time: 3-8 hours for 40k * 15 gen
+
+Results land in:
+    baseline_bundle/results/selfies_ga_40k_top100.json
+    baseline_bundle/results/selfies_ga_40k_top100.csv
+
+Usage:
+    python -m modal run baseline_bundle/modal_baseline_selfies_ga_40k.py
+"""
+from __future__ import annotations
+
+import json
+import time
+from pathlib import Path
+
+import modal
+
+HERE          = Path(__file__).parent.resolve()
+PROJECT_ROOT  = HERE.parent
+RESULTS_LOCAL = HERE / "results"
+RESULTS_LOCAL.mkdir(exist_ok=True)
+
+SMOKE_MODEL_LOCAL  = (PROJECT_ROOT
+                      / "data/raw/energetic_external/EMDP/Data/smoke_model")
+SCRIPTS_DIFF_LOCAL = PROJECT_ROOT / "scripts/diffusion"
+
+import importlib.util
+_spec = importlib.util.find_spec("unimol_tools")
+UNIMOL_WEIGHTS_LOCAL = (
+    Path(_spec.origin).parent / "weights" if _spec else None
+)
+
+image = (
+    modal.Image.from_registry(
+        "nvidia/cuda:12.4.1-devel-ubuntu22.04", add_python="3.11"
+    )
+    .apt_install(
+        "git", "build-essential",
+        "libxrender1", "libxext6",
+    )
+    .pip_install(
+        "torch==2.4.1",
+        index_url="https://download.pytorch.org/whl/cu124",
+    )
+    .pip_install(
+        "unimol_tools==0.1.5",
+        "selfies==2.1.1",
+        "huggingface_hub",
+    )
+    .add_local_dir(
+        str(HERE),
+        remote_path="/baseline_bundle",
+        ignore=lambda p: (
+            p.suffix not in (".py", ".csv", ".json")
+            or "results" in str(p)
+        ),
+    )
+    .add_local_dir(
+        str(SCRIPTS_DIFF_LOCAL),
+        remote_path="/scripts_diff",
+        ignore=lambda p: p.suffix != ".py",
+    )
+    .add_local_dir(
+        str(SMOKE_MODEL_LOCAL),
+        remote_path="/smoke_model",
+    )
+    .add_local_dir(
+        str(UNIMOL_WEIGHTS_LOCAL),
+        remote_path="/usr/local/lib/python3.11/site-packages/unimol_tools/weights",
+        ignore=lambda p: p.suffix in (".py",) or "__pycache__" in str(p),
+    )
+)
+
+app = modal.App("dgld-selfies-ga-40k", image=image)
+
+
+@app.function(
+    gpu="A100",
+    timeout=10 * 60 * 60,   # 10 h ceiling; expected 3-8 h for 40k * 15 gen
+    memory=40_960,           # 40 GB RAM; A100 node typically provides this
+)
+def run_selfies_ga_40k_remote(
+    n_pool: int = 40_000,
+    n_gen: int = 15,
+    n_top: int = 100,
+    elite_frac: float = 0.50,
+    new_frac: float = 0.20,
+    max_mut: int = 3,
+    seed: int = 42,
+    with_novelty: bool = False,
+) -> dict:
+    """Run the SELFIES-GA at 40k pool on A100 and return results dict."""
+    import sys
+    import time
+
+    sys.path.insert(0, "/baseline_bundle")
+    sys.path.insert(0, "/scripts_diff")
+
+    from pathlib import Path
+    import numpy as np
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+    import torch
+
+    print(f"[remote] CUDA available: {torch.cuda.is_available()}", flush=True)
+    if torch.cuda.is_available():
+        print(f"[remote] GPU: {torch.cuda.get_device_name(0)}", flush=True)
+
+    from baseline_selfies_ga import load_corpus_smiles, run_ga  # type: ignore
+    from unimol_validator import UniMolValidator              # type: ignore
+
+    corpus_path = Path("/baseline_bundle/corpus.csv")
+    model_dir   = Path("/smoke_model")
+
+    print(f"[remote] Loading corpus from {corpus_path} ...", flush=True)
+    corpus_smiles = load_corpus_smiles(corpus_path, max_n=50_000)
+    print(f"[remote]   {len(corpus_smiles)} valid corpus entries", flush=True)
+
+    print(f"[remote] Loading UniMol validator from {model_dir} ...", flush=True)
+    validator = UniMolValidator(model_dir)
+
+    ref_fps = None
+    if with_novelty:
+        import random
+        rng = random.Random(seed)
+        ref_sample = rng.sample(corpus_smiles, min(5000, len(corpus_smiles)))
+        ref_fps = []
+        for smi in ref_sample:
+            mol = Chem.MolFromSmiles(smi)
+            if mol:
+                ref_fps.append(AllChem.GetMorganFingerprintAsBitVect(mol, 2, 2048))
+        print(f"[remote]   {len(ref_fps)} reference fps", flush=True)
+
+    t0 = time.time()
+    top_candidates = run_ga(
+        corpus_smiles=corpus_smiles,
+        validator=validator,
+        n_pool=n_pool,
+        n_gen=n_gen,
+        n_top=n_top,
+        elite_frac=elite_frac,
+        new_frac=new_frac,
+        max_mutations=max_mut,
+        seed=seed,
+        ref_fps=ref_fps,
+    )
+    elapsed = time.time() - t0
+
+    payload = {
+        "method":         "SELFIES-GA-40k",
+        "n_pool":         n_pool,
+        "n_gen":          n_gen,
+        "n_top":          len(top_candidates),
+        "seed":           seed,
+        "elapsed_s":      round(elapsed, 1),
+        "top_candidates": top_candidates,
+        "summary": {
+            "top1_composite":      top_candidates[0]["composite"] if top_candidates else None,
+            "top1_D_kms":          top_candidates[0]["d"]         if top_candidates else None,
+            "top1_P_GPa":          top_candidates[0]["p"]         if top_candidates else None,
+            "top1_rho":            top_candidates[0]["rho"]        if top_candidates else None,
+            "topN_mean_composite": float(np.mean([r["composite"] for r in top_candidates]))
+                                   if top_candidates else None,
+            "topN_mean_D":         float(np.mean([r["d"] for r in top_candidates
+                                                   if r["d"] is not None]))
+                                   if top_candidates else None,
+            "topN_max_D":          float(max(r["d"] for r in top_candidates
+                                              if r["d"] is not None))
+                                   if top_candidates else None,
+        },
+    }
+    print(f"\n[remote] Done. {len(top_candidates)} candidates in {elapsed:.0f}s",
+          flush=True)
+    if top_candidates:
+        r0 = top_candidates[0]
+        print(f"  #1: comp={r0['composite']:.4f}  rho={r0['rho']:.3f}  "
+              f"D={r0['d']:.2f}  P={r0['p']:.2f}", flush=True)
+    return payload
+
+
+@app.local_entrypoint()
+def main():
+    import csv
+
+    print("[local] Submitting SELFIES-GA 40k to Modal A100 ...", flush=True)
+    t0 = time.time()
+
+    results = run_selfies_ga_40k_remote.remote(
+        n_pool=40_000,
+        n_gen=15,
+        n_top=100,
+        elite_frac=0.50,
+        new_frac=0.20,
+        max_mut=3,
+        seed=42,
+        with_novelty=False,
+    )
+
+    elapsed_local = time.time() - t0
+    print(f"[local] Remote call returned in {elapsed_local:.0f}s total", flush=True)
+
+    out_json = RESULTS_LOCAL / "selfies_ga_40k_top100.json"
+    out_json.write_text(json.dumps(results, indent=2), encoding="utf-8")
+    print(f"[local] JSON -> {out_json}", flush=True)
+
+    candidates = results.get("top_candidates", [])
+    out_csv = RESULTS_LOCAL / "selfies_ga_40k_top100.csv"
+    if candidates:
+        fieldnames = ["rank", "composite", "rho", "hof", "d", "p", "maxtan", "smiles"]
+        with open(out_csv, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+            writer.writeheader()
+            for i, row in enumerate(candidates, 1):
+                writer.writerow({"rank": i, **row})
+        print(f"[local] CSV  -> {out_csv}", flush=True)
+
+    s = results.get("summary", {})
+    print(f"\n[local] Summary:")
+    print(f"  top1 composite : {s.get('top1_composite')}")
+    print(f"  top1 D (km/s)  : {s.get('top1_D_kms')}")
+    print(f"  top1 P (GPa)   : {s.get('top1_P_GPa')}")
+    print(f"  top1 rho       : {s.get('top1_rho')}")
+    print(f"  topN mean D    : {s.get('topN_mean_D')}")
+    print(f"  topN max D     : {s.get('topN_max_D')}")
+    print(f"  elapsed (remote): {results.get('elapsed_s')}s")
+
+    if s.get("top1_composite") is None:
+        raise SystemExit("[local] FAILED: no valid candidates returned")
+    print("[local] PASSED")

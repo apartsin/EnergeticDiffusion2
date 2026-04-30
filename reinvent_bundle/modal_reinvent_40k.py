@@ -64,15 +64,19 @@ image = (
         "torch==2.4.1",
         index_url="https://download.pytorch.org/whl/cu124",
     )
-    # REINVENT 4 (AstraZeneca) + chemistry utilities
+    # Chemistry utilities available on Modal's mirror
     .pip_install(
-        "reinvent==4.4.12",   # latest stable; installs the `reinvent` CLI
         "rdkit==2024.3.5",
-        "sascorer",           # RDKit-SA scorer (Ertl & Schuffenhauer)
         "networkx",
-        "tomli",              # TOML parser (stdlib in 3.11 but explicit for safety)
+        "tomli",
         "numpy",
         "pandas",
+    )
+    # REINVENT 4 installed from GitHub (not on Modal's PyPI mirror).
+    # sascorer is not installed separately: _sa_score() falls back to
+    # rdkit.Contrib.SA_Score.sascorer which ships with rdkit>=2024.
+    .run_commands(
+        "pip install git+https://github.com/MolecularAI/REINVENT4.git",
     )
     # Embed chem_filter + corpus (no model weights needed)
     .add_local_file(
@@ -86,6 +90,9 @@ image = (
 )
 
 app = modal.App("dgld-reinvent-40k", image=image)
+
+# Persistent volume so results survive local CLI crashes
+results_vol = modal.Volume.from_name("dgld-reinvent-results", create_if_missing=True)
 
 # ---------------------------------------------------------------------------
 # Helper: build REINVENT TOML configuration (written inside the remote fn)
@@ -200,6 +207,7 @@ use_chirality = false
     gpu="A100",
     timeout=8 * 60 * 60,   # 8 h ceiling; expected ~2-4 h for 40k unique SMILES
     memory=40_960,
+    volumes={"/results": results_vol},
 )
 def run_reinvent_40k_remote(
     n_target: int = 40_000,
@@ -351,7 +359,6 @@ def run_reinvent_40k_remote(
     cmd = [
         "reinvent",
         "-l", str(log_path),
-        "run",
         str(toml_path),
     ]
     print(f"[remote] Running: {' '.join(cmd)}", flush=True)
@@ -450,6 +457,14 @@ def run_reinvent_40k_remote(
     out_raw.write_text("\n".join(valid_smiles), encoding="utf-8")
     print(f"[remote] Saved {len(valid_smiles)} SMILES to {out_raw}",
           flush=True)
+
+    # Persist to Modal Volume so results survive if local client disconnects
+    vol_out = Path("/results/reinvent_40k_raw.txt")
+    vol_out.write_text("\n".join(valid_smiles), encoding="utf-8")
+    results_vol.commit()
+    print(f"[remote] Committed {len(valid_smiles)} SMILES to Modal Volume /results/",
+          flush=True)
+    print("=== DONE ===", flush=True)
 
     return {
         "method":        "REINVENT4-40k",

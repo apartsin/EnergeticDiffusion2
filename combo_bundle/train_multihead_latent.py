@@ -89,6 +89,8 @@ def main():
     ap.add_argument("--lr",      type=float, default=2e-4)
     ap.add_argument("--sigma_max", type=float, default=2.0)
     ap.add_argument("--max_rows", type=int, default=None)
+    ap.add_argument("--no_tier_gate", action="store_true",
+                    help="Ablation: disable Tier-C/D masking on perf head (train on all rows)")
     args = ap.parse_args()
 
     out_dir = Path(args.out); out_dir.mkdir(parents=True, exist_ok=True)
@@ -172,14 +174,17 @@ def main():
         l_sc = (l_sc * sc_mask[ids].float()).sum() / sc_mask[ids].float().sum().clamp(min=1)
         # Sensitivity
         l_sens = F.smooth_l1_loss(out["sens"], (y_sens[ids] - sens_mu) / sens_sd)
-        # Perf (masked)
+        # Perf (masked, unless --no_tier_gate disables masking for ablation)
         l_perf = torch.tensor(0.0, device=z.device)
-        if perf is not None and perf_mu is not None and isinstance(perf_mask, torch.Tensor):
+        if perf is not None and perf_mu is not None:
             target = (perf[ids] - perf_mu) / perf_sd
             l = F.smooth_l1_loss(out["perf"], target, reduction="none")
-            mask_b = perf_mask[ids].float()
-            if mask_b.dim() == 1: mask_b = mask_b.unsqueeze(-1)
-            l_perf = (l * mask_b).sum() / mask_b.sum().clamp(min=1)
+            if args.no_tier_gate or not isinstance(perf_mask, torch.Tensor):
+                l_perf = l.mean()
+            else:
+                mask_b = perf_mask[ids].float()
+                if mask_b.dim() == 1: mask_b = mask_b.unsqueeze(-1)
+                l_perf = (l * mask_b).sum() / mask_b.sum().clamp(min=1)
         total = l_v + l_sa + l_sc + l_sens + 0.5 * l_perf
         return total, dict(viab=l_v.item(), sa=l_sa.item(), sc=l_sc.item(),
                             sens=l_sens.item(), perf=l_perf.item())

@@ -1,0 +1,71 @@
+{
+  "lanes": [
+    {
+      "lane": "L0_C0_seed3",
+      "seed": 3,
+      "cfg_w": 7.0,
+      "gscales": null,
+      "n": 20000,
+      "elapsed_s": 13.1,
+      "out_path": "/results/m7/m7_L0_C0_seed3.txt"
+    },
+    {
+      "lane": "L1_C0_seed4",
+      "seed": 4,
+      "cfg_w": 7.0,
+      "gscales": null,
+      "n": 20000,
+      "elapsed_s": 12.8,
+      "out_path": "/results/m7/m7_L1_C0_seed4.txt"
+    },
+    {
+      "lane": "L2_C4_highw",
+      "seed": 3,
+      "cfg_w": 12.0,
+      "gscales": null,
+      "n": 20000,
+      "elapsed_s": 12.9,
+      "out_path": "/results/m7/m7_L2_C4_highw.txt"
+    },
+    {
+      "lane": "L3_C5_viab4",
+      "seed": 3,
+      "cfg_w": 7.0,
+      "gscales": {
+        "viab": 4.0,
+        "sens": 0.3,
+        "hazard": 0.0,
+        "sa": 0.0,
+        "sc": 0.0
+      },
+      "n": 20000,
+      "elapsed_s": 15.5,
+      "out_path": "/results/m7/m7_L3_C5_viab4.txt"
+    },
+    {
+      "lane": "L4_C6_hazviab",
+      "seed": 3,
+      "cfg_w": 7.0,
+      "gscales": {
+        "viab": 0.5,
+        "sens": 0.0,
+        "hazard": 3.0,
+        "sa": 0.0,
+        "sc": 0.0
+      },
+      "n": 20000,
+      "elapsed_s": 15.5,
+      "out_path": "/results/m7/m7_L4_C6_hazviab.txt"
+    }
+  ],
+  "args": {
+    "v4b_ckpt": "/models/v4b_best.pt",
+    "v3_ckpt": "/models/v3_best.pt",
+    "limo_ckpt": "/models/limo_best.pt",
+    "score_model": "/models/score_model_v3f.pt",
+    "meta_json": "/app/meta.json",
+    "vocab_json": "/app/vocab.json",
+    "pool_per_run": 10000,
+    "results_dir": "/results/m7"
+  }
+}
