@@ -43,26 +43,26 @@ XTB_FILES = [
 # ---------------------------------------------------------------------------
 # Palette
 # ---------------------------------------------------------------------------
-PASS_BORDER     = "#3a7a4a"
+PASS_BORDER     = "#0072B2"  # Wong 2011 blue (colorblind-safe)
 PARTIAL_BORDER  = "#c97a1f"
-FAIL_BORDER     = "#aa3a3a"
-PASS_BG         = "#e8f5e8"
+FAIL_BORDER     = "#D55E00"  # Wong 2011 vermilion (colorblind-safe)
+PASS_BG         = "#deebf7"  # very light blue
 PARTIAL_BG      = "#fff4e6"
-FAIL_BG         = "#fde2e2"
+FAIL_BG         = "#fdebd0"  # very light vermilion/cream
 TEXT_NAVY       = "#1f2c3a"
 TEXT_SLATE      = "#5a6a7a"
-BADGE_PASS_FILL = "#cfe7d2"
-BADGE_PASS_EDGE = "#3a7a4a"
-BADGE_PASS_TEXT = "#1f4a2a"
+BADGE_PASS_FILL = "#cfe5f6"
+BADGE_PASS_EDGE = "#0072B2"
+BADGE_PASS_TEXT = "#1f3a5a"
 BADGE_NEUTRAL_FILL = "#e3ecf4"
 BADGE_NEUTRAL_EDGE = "#27445d"
 BADGE_NEUTRAL_TEXT = "#1f2c3a"
 BADGE_WARN_FILL = "#ffe7c8"
 BADGE_WARN_EDGE = "#c97a1f"
 BADGE_WARN_TEXT = "#7a4a10"
-BADGE_FAIL_FILL = "#f4cccc"
-BADGE_FAIL_EDGE = "#aa3a3a"
-BADGE_FAIL_TEXT = "#5a1f1f"
+BADGE_FAIL_FILL = "#fadcc4"
+BADGE_FAIL_EDGE = "#D55E00"
+BADGE_FAIL_TEXT = "#5a3010"
 BADGE_NA_FILL   = "#ececec"
 BADGE_NA_EDGE   = "#909090"
 BADGE_NA_TEXT   = "#5a5a5a"
@@ -269,6 +269,17 @@ def draw_card(ax, lead):
             color=border_col, family="serif",
             ha="right", va="top", zorder=6,
         )
+
+    # Colorblind-safe shape indicator (bottom-right):
+    # filled circle for pass, filled triangle for fail. Disambiguates
+    # pass/fail status without relying on hue alone.
+    shape_marker = "●" if verdict_kind == "pass" else "▲"
+    ax.text(
+        0.96, 0.04, shape_marker,
+        fontsize=14, color=border_col,
+        family="sans-serif",
+        ha="right", va="bottom", zorder=6,
+    )
 
     # 1. Structure (top ~55% of card)
     img = render_mol(lead["smiles"], size=(440, 320))

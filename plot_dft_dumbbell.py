@@ -95,6 +95,14 @@ def main():
     axL.set_xlabel("Detonation velocity D (km/s)")
     axL.axvline(9.0, color="#59A14F", linestyle=":", linewidth=1.0,
                 label="HMX-class threshold (9.0 km/s)")
+    # L1 K-J calibrated D reference line
+    axL.axvline(8.25, color="0.45", linestyle="--", linewidth=1.0,
+                label=r"L1 $D_{K\!-\!J,\mathrm{cal}}$ = 8.25 km/s")
+    # Inline label at top of L1 reference line for visual clarity
+    ymax = len(rows) - 0.5
+    axL.text(8.25, ymax, r" L1 $D_{K\!-\!J,\mathrm{cal}}$=8.25",
+             fontsize=7.5, color="0.35", ha="left", va="top",
+             rotation=90)
     axL.legend(loc="lower right", fontsize=8, frameon=False)
     axL.set_title("Per-lead dumbbell: CNN-predicted vs DFT-KJ (calibrated) D",
                   fontsize=10)
@@ -118,6 +126,30 @@ def main():
                  label=f"linear fit, Pearson r={rval:.2f}, p={pval:.2g}")
         axR.legend(loc="best", fontsize=8, frameon=False)
     axR.axhline(0, color="0.5", linestyle="--", linewidth=0.8)
+
+    # Reference anchors (literature K-J calibrated values for canonical
+    # energetics). f_N = 0.378 for all three since they share C/H/N/O
+    # stoichiometry of (3,6,6,6); residual = D_KJ_cal - D_CNN.
+    anchors = [
+        ("RDX",   0.378, -1.32),
+        ("HMX",   0.378, -1.58),
+        ("FOX-7", 0.378, -1.17),
+    ]
+    ax_offsets = {
+        "RDX":   (8, 4),
+        "HMX":   (8, -10),
+        "FOX-7": (-46, -4),
+    }
+    for nm, fN, res in anchors:
+        axR.scatter([fN], [res], marker="*", s=160,
+                    facecolor="#FFD24A", edgecolor="black",
+                    linewidth=0.8, zorder=5)
+        dx, dy = ax_offsets.get(nm, (8, 4))
+        axR.annotate(nm, (fN, res),
+                     fontsize=8, fontweight="bold",
+                     xytext=(dx, dy), textcoords="offset points",
+                     color="#1f2c3a", zorder=6)
+
     axR.set_xlabel("N fraction (N atoms / total atoms)")
     axR.set_ylabel("D residual: DFT-KJ-cal minus CNN (km/s)")
     axR.set_title("Residual vs N fraction (per lead)", fontsize=10)
