@@ -1,0 +1,26 @@
+[
+  {
+    "seed": 1,
+    "n_validated": 522,
+    "top1_smiles": "O=[N+]([O-])C=N[N+](=O)[O-]",
+    "top1_composite": 0.9237519673483816,
+    "top1_D": 9.379831314086914,
+    "top1_P": 38.82209396362305,
+    "top1_rho": 1.9220998287200928,
+    "top1_max_tanimoto": 0.3888888888888889,
+    "elapsed_s": 33.2,
+    "sample_elapsed_s": 14.0
+  },
+  {
+    "seed": 2,
+    "n_validated": 506,
+    "top1_smiles": "O=[N+]([O-])C=N[N+](=O)[O-]",
+    "top1_composite": 0.9237519673483816,
+    "top1_D": 9.379831314086914,
+    "top1_P": 38.82209396362305,
+    "top1_rho": 1.9220998287200928,
+    "top1_max_tanimoto": 0.3888888888888889,
+    "elapsed_s": 24.3,
+    "sample_elapsed_s": 13.9
+  }
+]
